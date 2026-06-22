@@ -1,0 +1,3 @@
+interface:
+  display_name: "箇条書き化推敲"
+  short_description: "日本語の並列情報を必要に応じて箇条書きへ整える"
