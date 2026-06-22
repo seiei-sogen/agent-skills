@@ -1,2 +1,3 @@
-# natural-japanese-rewriter-skill
-日本語改善スキル
+# agent-skills
+
+agent-skills
