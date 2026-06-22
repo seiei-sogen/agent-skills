@@ -1,6 +1,6 @@
 ---
 name: sentence-linebreak
-description: Add rendered per-sentence hard line breaks to Markdown and AsciiDoc prose. For Markdown, append `<br>` at sentence ends. For AsciiDoc, append ` +` at the end of each sentence line. Preserve code blocks, tables, front matter, and structural markup.
+description: Add rendered per-sentence hard line breaks to Markdown and AsciiDoc prose. For Markdown, append HTML br tags at sentence ends. For AsciiDoc, append the hard line break marker at the end of each sentence line. Preserve code blocks, tables, front matter, and structural markup.
 ---
 
 # Sentence Linebreak Skill

@@ -1,0 +1,14 @@
+{
+  "files": [
+    "SKILL.md",
+    "README.md",
+    "manifest.txt",
+    "agents/openai.yaml",
+    "scripts/sentence_linebreak.py",
+    "examples/sample.md",
+    "examples/sample.adoc",
+    "examples/expected.md",
+    "examples/expected.adoc",
+    "tests/test_sentence_linebreak.py"
+  ]
+}
