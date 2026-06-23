@@ -1,0 +1,4 @@
+interface:
+  display_name: "Iterative Review Improve"
+  short_description: "Review and improve an input through five refinement loops."
+  default_prompt: "Review input, improve it, repeat the review/improvement cycle five times."
