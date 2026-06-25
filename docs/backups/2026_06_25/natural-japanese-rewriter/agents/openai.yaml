@@ -1,0 +1,3 @@
+interface:
+  display_name: "自然な日本語への推敲"
+  short_description: "LLMくさい日本語や翻訳調の日本語を自然で読みやすく整える"

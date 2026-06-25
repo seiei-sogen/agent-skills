@@ -1,3 +1,3 @@
 interface:
   display_name: "自然な日本語への推敲"
-  short_description: "LLMくさい日本語や翻訳調の日本語を自然で読みやすく整える"
+  short_description: "README、仕様書、PR説明文、UI文言などの日本語を原意を保って自然に整える"

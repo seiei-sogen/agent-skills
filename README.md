@@ -19,6 +19,7 @@ mkdir -p "$CODEX_HOME/skills"
 cp -R skills/bullet-list-rewriter "$CODEX_HOME/skills/bullet-list-rewriter"
 cp -R skills/iterative-review-improve "$CODEX_HOME/skills/iterative-review-improve"
 cp -R skills/natural-japanese-rewriter "$CODEX_HOME/skills/natural-japanese-rewriter"
+cp -R skills/natural-japanese-rewrite-analyzer "$CODEX_HOME/skills/natural-japanese-rewrite-analyzer"
 cp -R skills/sentence-linebreak-skill "$CODEX_HOME/skills/sentence-linebreak"
 ```
 
@@ -31,6 +32,7 @@ mkdir -p "$CODEX_HOME"/skills
 cp -R skills/bullet-list-rewriter "$CODEX_HOME"/skills/bullet-list-rewriter
 cp -R skills/iterative-review-improve "$CODEX_HOME"/skills/iterative-review-improve
 cp -R skills/natural-japanese-rewriter "$CODEX_HOME"/skills/natural-japanese-rewriter
+cp -R skills/natural-japanese-rewrite-analyzer "$CODEX_HOME"/skills/natural-japanese-rewrite-analyzer
 cp -R skills/sentence-linebreak-skill "$CODEX_HOME"/skills/sentence-linebreak
 ```
 
@@ -45,6 +47,7 @@ mkdir -p "$CODEX_HOME/skills"
 ln -sfn "$PWD/skills/bullet-list-rewriter" "$CODEX_HOME/skills/bullet-list-rewriter"
 ln -sfn "$PWD/skills/iterative-review-improve" "$CODEX_HOME/skills/iterative-review-improve"
 ln -sfn "$PWD/skills/natural-japanese-rewriter" "$CODEX_HOME/skills/natural-japanese-rewriter"
+ln -sfn "$PWD/skills/natural-japanese-rewrite-analyzer" "$CODEX_HOME/skills/natural-japanese-rewrite-analyzer"
 ln -sfn "$PWD/skills/sentence-linebreak-skill" "$CODEX_HOME/skills/sentence-linebreak"
 ```
 
@@ -57,11 +60,16 @@ mkdir -p "$CODEX_HOME"/skills
 ln -sfn "$PWD"/skills/bullet-list-rewriter "$CODEX_HOME"/skills/bullet-list-rewriter
 ln -sfn "$PWD"/skills/iterative-review-improve "$CODEX_HOME"/skills/iterative-review-improve
 ln -sfn "$PWD"/skills/natural-japanese-rewriter "$CODEX_HOME"/skills/natural-japanese-rewriter
+ln -sfn "$PWD"/skills/natural-japanese-rewrite-analyzer "$CODEX_HOME"/skills/natural-japanese-rewrite-analyzer
 ln -sfn "$PWD"/skills/sentence-linebreak-skill "$CODEX_HOME"/skills/sentence-linebreak
 ```
 
 Start a new Codex session after installing.
-The sentence linebreak skill is installed as `sentence-linebreak`, matching the `name:` field in its `SKILL.md`.
+
+For normal Japanese proofreading and rewriting requests, use `natural-japanese-rewriter`.
+`natural-japanese-rewrite-analyzer` is the preceding analysis skill used by `natural-japanese-rewriter` to preserve meaning before rewriting.
+
+`sentence-linebreak-skill` is installed as `sentence-linebreak`, matching the `name:` field in its `SKILL.md`.
 
 ## Install for CodeBuddy with npx skill
 
@@ -71,6 +79,7 @@ This is useful for CodeBuddy-style skill loading, but it does not make the skill
 ```bash
 SKILL_BASE_URL=https://github.com/seiei-sogen/agent-skills/tree/main npx skill skills/bullet-list-rewriter
 SKILL_BASE_URL=https://github.com/seiei-sogen/agent-skills/tree/main npx skill skills/natural-japanese-rewriter
+SKILL_BASE_URL=https://github.com/seiei-sogen/agent-skills/tree/main npx skill skills/natural-japanese-rewrite-analyzer
 SKILL_BASE_URL=https://github.com/seiei-sogen/agent-skills/tree/main npx skill skills/sentence-linebreak-skill
 ```
 
@@ -79,4 +88,5 @@ SKILL_BASE_URL=https://github.com/seiei-sogen/agent-skills/tree/main npx skill s
 - `skills/bullet-list-rewriter` (`bullet-list-rewriter`): 日本語の列挙、条件、手順、注意点などを、意味とトーンを保ったまま箇条書きへ再構成する。
 - `skills/iterative-review-improve` (`iterative-review-improve`): 入力に対してレビューと改善を5回繰り返し、最終的な改善版を作る。
 - `skills/natural-japanese-rewriter` (`natural-japanese-rewriter`): LLMくさい日本語や硬い翻訳調の日本語を、原意と技術的意味を保って自然に直す。
+- `skills/natural-japanese-rewrite-analyzer` (`natural-japanese-rewrite-analyzer`): 日本語リライト前に保護範囲、述語、項、付加部、曖昧さを分析する。
 - `skills/sentence-linebreak-skill` (`sentence-linebreak`): Markdown と AsciiDoc の文章に一文ごとの `<br>` / ` +` を追加する。
