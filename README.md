@@ -10,6 +10,8 @@ If `CODEX_HOME` is unset, Codex uses `~/.codex`.
 
 From a local clone of this repository:
 
+Bash / zsh:
+
 ```bash
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 mkdir -p "$CODEX_HOME/skills"
@@ -20,7 +22,21 @@ cp -R skills/natural-japanese-rewriter "$CODEX_HOME/skills/natural-japanese-rewr
 cp -R skills/sentence-linebreak-skill "$CODEX_HOME/skills/sentence-linebreak"
 ```
 
+fish:
+
+```fish
+set -q CODEX_HOME; or set CODEX_HOME $HOME/.codex
+mkdir -p "$CODEX_HOME"/skills
+
+cp -R skills/bullet-list-rewriter "$CODEX_HOME"/skills/bullet-list-rewriter
+cp -R skills/iterative-review-improve "$CODEX_HOME"/skills/iterative-review-improve
+cp -R skills/natural-japanese-rewriter "$CODEX_HOME"/skills/natural-japanese-rewriter
+cp -R skills/sentence-linebreak-skill "$CODEX_HOME"/skills/sentence-linebreak
+```
+
 For local development, use symlinks instead of copies:
+
+Bash / zsh:
 
 ```bash
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
@@ -30,6 +46,18 @@ ln -sfn "$PWD/skills/bullet-list-rewriter" "$CODEX_HOME/skills/bullet-list-rewri
 ln -sfn "$PWD/skills/iterative-review-improve" "$CODEX_HOME/skills/iterative-review-improve"
 ln -sfn "$PWD/skills/natural-japanese-rewriter" "$CODEX_HOME/skills/natural-japanese-rewriter"
 ln -sfn "$PWD/skills/sentence-linebreak-skill" "$CODEX_HOME/skills/sentence-linebreak"
+```
+
+fish:
+
+```fish
+set -q CODEX_HOME; or set CODEX_HOME $HOME/.codex
+mkdir -p "$CODEX_HOME"/skills
+
+ln -sfn "$PWD"/skills/bullet-list-rewriter "$CODEX_HOME"/skills/bullet-list-rewriter
+ln -sfn "$PWD"/skills/iterative-review-improve "$CODEX_HOME"/skills/iterative-review-improve
+ln -sfn "$PWD"/skills/natural-japanese-rewriter "$CODEX_HOME"/skills/natural-japanese-rewriter
+ln -sfn "$PWD"/skills/sentence-linebreak-skill "$CODEX_HOME"/skills/sentence-linebreak
 ```
 
 Start a new Codex session after installing.
