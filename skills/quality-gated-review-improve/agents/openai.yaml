@@ -1,0 +1,4 @@
+interface:
+  display_name: "Quality Gated Review Improve"
+  short_description: "Improve input until it meets a quality score."
+  default_prompt: "Review the input, improve it, score quality, and loop until it reaches the quality threshold."
