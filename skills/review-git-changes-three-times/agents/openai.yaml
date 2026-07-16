@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Git Changes Three Times"
+  short_description: "Review and fix current Git changes in three passes."
+  default_prompt: "Use $review-git-changes-three-times to review and fix my current Git changes through exactly three passes, including any necessary documentation updates."
