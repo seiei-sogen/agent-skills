@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git ブランチ名提案"
+  short_description: "ファイルパスや文章から Git ブランチ名を提案します"
+  default_prompt: "$suggest-git-branch-name を使って、入力したファイルパスまたは文章から Git ブランチ名を提案してください。"
