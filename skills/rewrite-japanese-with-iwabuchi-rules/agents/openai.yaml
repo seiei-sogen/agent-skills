@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rewrite Japanese with Iwabuchi Rules"
+  short_description: "Review Japanese prose with stable Iwabuchi rule IDs."
+  default_prompt: "Use $rewrite-japanese-with-iwabuchi-rules to review and revise this Japanese text with stable rule IDs."
