@@ -1,0 +1,4 @@
+interface:
+  display_name: "実行時アクティビティ図生成"
+  short_description: "要件定義書と実装計画書から実行時フロー図とPNGを生成"
+  default_prompt: "$generate-runtime-activity-diagrams を使って、要件定義書と実装計画書から実行時フローのPlantUMLとPNGを生成してください。"
