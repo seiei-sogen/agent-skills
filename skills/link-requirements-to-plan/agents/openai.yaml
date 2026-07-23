@@ -1,0 +1,4 @@
+interface:
+  display_name: "要件定義書と実装計画書の紐づけ"
+  short_description: "要件定義書と実装計画書の各 node に UUID v7 を割り当て、トレーサビリティを確立します"
+  default_prompt: "$link-requirements-to-plan を使って、要件定義書と実装計画書の各 node に UUID v7 を割り当て、実装計画書の node に参照元の要件 node の UUID を関連づけてください。"
