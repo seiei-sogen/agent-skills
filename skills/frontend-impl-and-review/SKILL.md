@@ -1,11 +1,15 @@
 ---
 name: frontend-impl-and-review
-description: フロントエンド実装後に規約レビュー・自動修正・報告を一気通貫で行う
-argument-hint: <task description>
-user-invocable: true
+description: ユーザーが `$frontend-impl-and-review` と明示的に呼び出した場合に限り、フロントエンド実装後の規約レビュー・自動修正・報告を一気通貫で行う。通常のフロントエンド実装依頼では自動起動しない
 ---
 
 # Frontend 実装 & レビュー
+
+## 起動条件
+
+* 現在のユーザーメッセージに `$frontend-impl-and-review` が明示されている場合だけ実行する。
+* 通常のフロントエンド実装・修正・レビュー依頼から暗黙に起動してはならない。
+* 明示呼び出しなしで読み込まれた場合は、以降の Phase を実行せず、通常の手順で依頼へ対応する。
 
 フロントエンドの実装を行い、完了後に `docs/review/frontend.md` に基づくセルフレビューを実施する。
 直接影響の違反は修正し、間接的・判断が難しい違反は報告文書として保存する。
