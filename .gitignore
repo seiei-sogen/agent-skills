@@ -2,3 +2,5 @@ llm-agent-skills.adoc
 # CocoIndex Code (ccc)
 /.cocoindex_code/
 .tokensave
+
+.claude/.headroom_wrap_marker.json
