@@ -1,5 +1,5 @@
 ---
-name: gh-update-pr
+name: pr-update-gh
 description: 現在の Git ブランチに紐づく既存の GitHub PR を gh CLI で特定し、差分とコミット履歴から初見の読者にも分かる日本語の説明本文を作成して更新する。PR 本文を実際に書き換えてほしい依頼で使い、文章案の生成だけには使わない。
 ---
 

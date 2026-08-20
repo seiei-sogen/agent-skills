@@ -1,4 +1,4 @@
 interface:
   display_name: "PR説明を更新"
   short_description: "現在のブランチに紐づくPR本文を平易な説明へ更新する"
-  default_prompt: "$gh-update-pr を使って、現在のブランチに紐づく PR の説明を更新してください。"
+  default_prompt: "$pr-update-gh を使って、現在のブランチに紐づく PR の説明を更新してください。"
