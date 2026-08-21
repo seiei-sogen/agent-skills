@@ -1,0 +1,4 @@
+interface:
+  display_name: "要件からPRまで"
+  short_description: "要件書またはGitHub issueから実装・レビュー・PR作成まで進める"
+  default_prompt: "Use $pipe-requirements-to-pr to take a req-*.adoc file or GitHub issue URL through requirements refinement, implementation, review, and pull request creation."
