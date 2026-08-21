@@ -1,0 +1,4 @@
+interface:
+  display_name: "AsciiDocをカラフルHTMLへ"
+  short_description: "AsciiDocをCSS埋め込み済みの見やすい単体HTMLへ変換する"
+  default_prompt: "Use $asciidoc-to-colorful-html to convert docs/guide.adoc into a polished standalone HTML file."

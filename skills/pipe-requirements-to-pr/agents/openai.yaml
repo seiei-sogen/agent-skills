@@ -1,0 +1,4 @@
+interface:
+  display_name: "要件からPRまで"
+  short_description: "要件調査から実装・レビュー・PR作成までを一気通貫で進める"
+  default_prompt: "Use $pipe-requirements-to-pr to take req-example.adoc through investigation, requirements refinement, implementation, review, and pull request creation."
