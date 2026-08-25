@@ -1,0 +1,4 @@
+interface:
+  display_name: "やさしい引き継ぎメモ"
+  short_description: "現在のやり取りを平易なAsciiDocへまとめて保存する"
+  default_prompt: "$handoff を使って、現在のやり取りを docs/handoff 配下へ引き継いでください。"

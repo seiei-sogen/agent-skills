@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit & Push"
+  short_description: "ブランチのissue IDを反映してcommitしpushする"
+  default_prompt: "$commit-push を使って、現在の未コミット差分をコミットし、現在のブランチを push してください。"
