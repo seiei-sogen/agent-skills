@@ -24,6 +24,7 @@ implementation-plan-<issue-token>-<topic>.adoc
 req-<topic>.html
 implementation-plan-<issue-token>-<topic>.html
 review-guide-<issue-token>-<topic>.adoc
+review-guide-<issue-token>-<topic>.html
 ```
 
 既存ファイルがある場合は内容と現在の対象が一致するか確認する。同名の別用途ファイルは上書きせず停止する。
@@ -83,7 +84,7 @@ AsciiDoc として、少なくとも次を含める。
 
 ## HTML 派生成果物
 
-`req-<topic>.html` と `implementation-plan-<issue-token>-<topic>.html` は、品質ゲートを通過した同名の AsciiDoc から `asciidoc-to-colorful-html` で生成する。
+`req-<topic>.html`、`implementation-plan-<issue-token>-<topic>.html`、`review-guide-<issue-token>-<topic>.html` は、検証を通過した同名の AsciiDoc から `asciidoc-to-colorful-html` で生成する。
 
 - CSS とローカル画像を埋め込み、単一ファイルで表示できる状態にする。
 - HTML の内容変更は変換元の AsciiDoc へ反映し、HTML を再生成する。
