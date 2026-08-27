@@ -1,0 +1,4 @@
+interface:
+  display_name: "要件ドラフトを調査・自動壁打ちしてPR"
+  short_description: "事前調査JSONを根拠に要件を自動壁打ち・品質改善してPR化する"
+  default_prompt: "$grilling-auto-to-quality-requirements-pr を使い、要件定義書下書きのパスから事前調査・自動壁打ち・品質改善・PR作成まで進めてください。"
