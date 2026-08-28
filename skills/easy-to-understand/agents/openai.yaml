@@ -1,0 +1,4 @@
+interface:
+  display_name: "やさしく説明"
+  short_description: "難しい内容を、予備知識なしでも分かる平易な説明へ変える"
+  default_prompt: "$easy-to-understand を使って、直前のやり取りをやさしく説明してください。"
