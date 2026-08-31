@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit Message Generator"
+  short_description: "差分とブランチ名から簡潔なコミットメッセージを生成"
+  default_prompt: "$commit-message-generator を使って、現在の差分からコミットメッセージを生成してください。"
