@@ -834,7 +834,7 @@ Phase 10 では、最終 commit、push、PR 本文の反映と再取得確認を
 </dd>
 <dt class="hdlist1">変更後の責務</dt>
 <dd>
-<p>語義候補、述語ノード、指示対象ノード、項の辺を構築し、ゼロ項、主題化、並列共有、態、名詞化、軽動詞を分析する。
+<p>語義候補、語義ごとの格フレームと項スロット、述語ノード、指示対象ノード、項の辺を ID で関連付け、ゼロ項、主題化、並列共有、態、名詞化、軽動詞を分析する。
 問題を9種のコードで分類し、候補を一意にできない場合は未確定のまま親へ渡す。</p>
 </dd>
 <dt class="hdlist1">実装内容</dt>
@@ -846,6 +846,9 @@ Phase 10 では、最終 commit、push、PR 本文の反映と再取得確認を
 </li>
 <li>
 <p>述語候補、語義候補、指示対象、項スロット、文間参照の順に分析する。</p>
+</li>
+<li>
+<p>語義候補、格フレーム、項スロットへ ID を付け、各項を対応する語義候補へ結ぶ。</p>
 </li>
 <li>
 <p>表面の助詞、意味役割、実現形式、復元可能性、根拠を別フィールドにする。</p>
@@ -867,10 +870,10 @@ Phase 10 では、最終 commit、push、PR 本文の反映と再取得確認を
 <div class="ulist">
 <ul>
 <li>
-<p><code>T-01</code> から <code>T-06</code> で、主題、ゼロ項、共有項、主体切り替え、名詞化、方向を表現できるか確認する。</p>
+<p><code>T-01</code> から <code>T-06</code>、<code>T-16</code> から <code>T-18</code> で、主題、ゼロ項、共有項、主体切り替え、名詞化、方向、語義別格フレーム、旧互換投影を表現できるか確認する。</p>
 </li>
 <li>
-<p>YAML 例が構造として読み取れ、同じ参加者を ID で共有できるか確認する。</p>
+<p>YAML 例が構造として読み取れ、同じ参加者と語義別の項スロットを ID で関連付けられるか確認する。</p>
 </li>
 <li>
 <p><code>skill-creator</code> の validator を実行する。</p>
@@ -953,6 +956,12 @@ Phase 10 では、最終 commit、push、PR 本文の反映と再取得確認を
 <p>analyzer が利用できない場合も同じグラフ契約で縮退し、正規フィールドから旧互換ビューを導出する。</p>
 </li>
 <li>
+<p>旧 <code>omitted_args</code> には、一意に復元できる <code>clear</code> のゼロ項だけを投影する。</p>
+</li>
+<li>
+<p>複数候補では全格フレームが合意する旧ラベルと指示対象だけを、重複なく投影する。</p>
+</li>
+<li>
 <p><code>references/detailed-rules.md</code> の読み取り条件を維持する。</p>
 </li>
 </ul>
@@ -963,7 +972,7 @@ Phase 10 では、最終 commit、push、PR 本文の反映と再取得確認を
 <div class="ulist">
 <ul>
 <li>
-<p><code>T-07</code> から <code>T-15</code> で、モダリティ、発話行為、敬語、保護範囲、方向、曖昧性、縮退動作、構造比較、復元後の再検証を行える指示か確認する。</p>
+<p><code>T-07</code> から <code>T-15</code>、<code>T-17</code>、<code>T-18</code> で、モダリティ、発話行為、敬語、保護範囲、方向、曖昧性、縮退動作、構造比較、復元後の再検証、旧互換投影を行える指示か確認する。</p>
 </li>
 <li>
 <p><code>polish</code> では内部メモを出さず、<code>diagnostic</code> だけが問題と修復関係を示すことを確認する。</p>
@@ -1097,7 +1106,7 @@ Phase 10 では、最終 commit、push、PR 本文の反映と再取得確認を
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-02</code> から <code>AC-07</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Task 1</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>T-01</code> から <code>T-06</code>、analyzer の validator</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>T-01</code> から <code>T-06</code>、<code>T-16</code>、analyzer の validator</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-08</code> から <code>AC-10</code></p></td>
@@ -1112,7 +1121,7 @@ Phase 10 では、最終 commit、push、PR 本文の反映と再取得確認を
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-14</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Task 2</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>T-12</code> と <code>T-13</code> の縮退契約レビュー</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>T-12</code>、<code>T-13</code>、<code>T-17</code>、<code>T-18</code> の縮退契約レビュー</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-15</code></p></td>
@@ -1209,10 +1218,16 @@ python /home/agir_wsl/.local/share/orca/codex-runtime-home/home/skills/.system/s
 <p><code>natural-japanese-rewrite-analyzer</code> を、語義候補、述語ノード、指示対象ノード、項の辺、ゼロ項、問題コード、意味不変条件を持つ分析スキルへ拡張した。</p>
 </li>
 <li>
+<p>語義候補、格フレーム、項スロット、項の辺を ID で結び、複数語義の互換性のない意味役割を統合しない契約へ強化した。</p>
+</li>
+<li>
 <p><code>natural-japanese-rewriter</code> を、意味グラフ、上位レイヤー、修復判断、制約付き生成、意味回帰、出力の6 Phase へ更新した。</p>
 </li>
 <li>
 <p>親スキルの縮退実行へ正規フィールドから互換ビューを導出する規則を追加し、analyzer 利用時と同じ競合解消契約にそろえた。</p>
+</li>
+<li>
+<p>複数の語義候補から旧ビューを作る場合は、全候補に共通する旧ラベルと指示対象だけを1回投影する決定的な規則を追加した。</p>
 </li>
 <li>
 <p>文書構造を原文と候補文で対応比較し、原文復帰後の候補文全体を再検証する回帰ゲートへ強化した。</p>
@@ -1275,12 +1290,12 @@ python /home/agir_wsl/.local/share/orca/codex-runtime-home/home/skills/.system/s
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Phase 10 指摘の契約検査</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">成功</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">縮退時の互換ビュー導出、文書構造の原文比較、原文復帰後の全体再検証を確認</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">縮退時の互換ビュー導出、文書構造の原文比較、原文復帰後の全体再検証、語義別格フレーム参照、<code>omitted_args</code> の復元可能性フィルター、複数候補の決定的な重複排除を確認</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">文書品質ゲート再評価</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">99/100</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">3件のレビュー指摘を要件から反映し、意味・構造・失敗時挙動の整合を確認。モデル実行時の意味解析精度は機械的に保証できないため1点を留保</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">最終レビューまでの指摘を要件から反映し、意味・構造・互換性・失敗時挙動の整合を確認。モデル実行時の意味解析精度は機械的に保証できないため1点を留保</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">修正前バックアップとの整合</p></td>
@@ -1300,7 +1315,7 @@ python /home/agir_wsl/.local/share/orca/codex-runtime-home/home/skills/.system/s
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Phase 10 独立フォワードテスト</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">成功</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">構造化 Markdown、analyzer 不在の AsciiDoc、モダリティ回帰の負例で、構造保持、互換ビュー導出、復元後の全体再検証を確認</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">構造化 Markdown、analyzer 不在の AsciiDoc、モダリティ回帰、複数語義の格フレーム、旧ビューの候補横断合意と重複排除を確認</p></td>
 </tr>
 </tbody>
 </table>
@@ -1406,6 +1421,23 @@ python /home/agir_wsl/.local/share/orca/codex-runtime-home/home/skills/.system/s
 <p>未解決箇所を原文へ戻すときは依存する編集を原子的修復単位として戻し、復元後の候補文全体を再検証するよう変更した。</p>
 </li>
 </ul>
+</div>
+<div class="paragraph">
+<p>同修正後の最終レビューで P1 が1件、P2 が1件見つかり、要件を先に更新して修正した。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>語義候補、格フレーム、項スロットへ ID を付け、各項が対応する語義候補のフレームを参照するよう変更した。</p>
+</li>
+<li>
+<p>旧 <code>omitted_args</code> には、指示対象を一意に復元できる <code>clear</code> のゼロ項だけを投影し、未解決のゼロ項を除外した。</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>独立フォワードテストで、複数の語義候補に同じ省略参加者が現れる場合の旧ビュー投影が一意でないことを検出した。
+全投影元が同じ <code>legacy_label</code>、指示対象、実現形式に合意する項だけを1回記録し、候補間で競合する項は正規グラフと <code>ambiguities</code> に残す規則へ修正した。</p>
 </div>
 </div>
 </div>

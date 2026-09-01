@@ -112,7 +112,7 @@ ____
 `natural-japanese-rewrite-analyzer` は、リライト前に次を行う。
 
 . 動詞、形容詞述語、サ変名詞、出来事名詞、埋込み節の述語を抽出する。
-. 同じ表記でも語義が複数あり得る場合は、語義候補と格フレーム候補を保持する。
+. 同じ表記でも語義が複数あり得る場合は、語義候補、格フレーム候補、項スロットへそれぞれ ID を付けて保持する。
 . 文中の同じ参加者を共有できる指示対象ノードとして登録する。
 . 各述語の項スロットを指示対象ノードへ結び、表面にない項もゼロ項として保持する。
 . ゼロ項の候補を、同一節、同一文の別述語、直前文、現在の主題、書き手、読み手、一般主体の順に探索する。
@@ -124,6 +124,7 @@ ____
 
 各項スロットでは、少なくとも次を別々に記録する。
 
+* 対応する語義候補 ID、格フレーム ID、項スロット ID
 * 述語の語義が選択する項、選択的斜格、付加部、判定不能の別
 * 表面の助詞または構文
 * 意味役割と、必要な場合のドメイン役割
@@ -156,18 +157,34 @@ predicates:
     omitted_args: []
     lemma: 見出し語
     predicate_type: verb | adjective | verbal-noun | event-noun | embedded
-    sense_candidates: []
+    sense_candidates:
+      - id: sense-1
+        gloss: 語義候補
+        case_frames:
+          - id: frame-1
+            slots:
+              - id: slot-1
+                role: 意味役割
+                domain_role: ドメイン固有役割または null
+                kind: core | selected-oblique | adjunct | uncertain
+                legacy_label: 旧 args で使う単一ラベルまたは null
+                surface_particles: []
+    sense: sense-1 | unknown
     voice: active | passive | causative | causative-passive | potential | not-applicable | unknown
     polarity: positive | negative
     tense: 原文の時制または unknown
     aspect: 原文のアスペクトまたは unknown
     modality: {}
     arguments:
-      - role: 意味役割
+      - sense_id: sense-1
+        frame_id: frame-1
+        slot_id: slot-1
+        role: 意味役割
         domain_role: ドメイン固有役割または null
         kind: core | selected-oblique | adjunct | uncertain
         surface: 原文の項または null
         surface_particle: 表面の助詞または null
+        syntactic_relation: 統語関係または unknown
         realization: overt | zero | relative-gap | nominalized | generic | unresolved
         discourse_role: topic | topic-continuation | focus | contrast | none | unknown
         referent: entity-1 | null
@@ -184,8 +201,16 @@ rewrite_policy: []
 `modality` は、可能性、義務、許可、推量、断定の強さなど、原文に存在する属性だけを持つ。
 `graph_invariants` は、リライト後にも保つ述語、指示対象、意味役割、極性、モダリティを列挙する。
 `surface` と `arguments` を正規フィールドとする。
+各 `argument` は `sense_id`、`frame_id`、`slot_id` で `sense_candidates` 内の一つの格フレームと項スロットを参照する。
+複数の語義候補で格フレームが異なる場合は、項を語義候補ごとに分け、互換性のない役割を一つの `argument` へ統合しない。
 `verb`、`args`、`omitted_args` は、analyzer 利用時と親スキルの縮退実行時のどちらでも正規フィールドから導出する互換ビューとする。
-`args` は表面助詞または旧ラベルをキーにした mapping、`omitted_args` は `realization: zero` の項を並べた sequence とし、正規フィールドと矛盾する場合は正規フィールドを優先して矛盾を `ambiguities` に記録する。
+`legacy_label` は v1 の `args` と `omitted_args` へ投影するときの単一キーであり、表面助詞や語義別の意味役割を完全には表さない。
+確定語義があればその格フレーム、確定していなければ残っているすべての語義候補と格フレームを投影元とする。
+`args` は、各 `legacy_label` について、すべての投影元に同ラベルのスロットがあり、その項が同じ非 null の `referent` を指し、`candidates` に競合候補がない場合だけ、そのラベルと指示対象を1回記録する mapping とする。
+`omitted_args` は、その合意に加えて、対応するすべての項が `realization: zero` と `recoverability: clear` を満たす場合だけ、同じラベルと指示対象を1回記録する sequence とする。
+`probable`、`ambiguous`、`unknown` の項、または投影元の間でラベル、指示対象、実現形式が一致しない項は旧ビューへ含めず、正規の `arguments` と `ambiguities` に残す。
+`args` と `omitted_args` は語義別の意味役割を落とす lossy view であり、意味判断には使用しない。
+正規フィールドと互換ビューが矛盾する場合は正規フィールドを優先して矛盾を `ambiguities` に記録する。
 
 === FR-03 問題を分類する
 
@@ -310,6 +335,7 @@ rewrite_policy: []
 `natural-japanese-rewrite-analyzer` が利用できない場合も、親スキルは同じ述語項グラフ出力契約に沿って分析を行う。
 平坦な述語一覧だけで Phase を完了してはならない。
 縮退実行でも `surface` と `arguments` を正規フィールドとし、`verb`、`args`、`omitted_args` を正規フィールドから導出する。
+語義候補、格フレーム、項スロットの ID 参照と、全投影元に共通する項だけを旧ビューへ1回投影する条件も analyzer 利用時と同じにする。
 正規フィールドと互換ビューの競合解消、コンテナ型、曖昧性の記録規則も analyzer 利用時と同じにする。
 縮退した事実は最終報告へ含める。
 
@@ -350,7 +376,7 @@ rewrite_policy: []
 * `natural-japanese-rewriter` と `natural-japanese-rewrite-analyzer` の名前、配置、暗黙起動方針は維持する。
 * 既存の `polish` 相当の通常出力は維持し、内部分析を既定で表示しない。
 * 既存 analyzer の `protected_ranges`、`rewrite_targets`、`adjuncts`、`ambiguities`、`rewrite_policy` は、拡張後も分析メモで表現できる状態を保つ。
-* 旧 predicate レコードの `verb`、`args`、`omitted_args` は、`schema_version: 2` の正規フィールドから導出する互換ビューとして保持する。`args` は mapping、`omitted_args` は sequence の型を維持する。判断時は正規の `surface` と `arguments` を優先する。
+* 旧 predicate レコードの `verb`、`args`、`omitted_args` は、`schema_version: 2` の正規フィールドから導出する lossy な互換ビューとして保持する。`args` は mapping、`omitted_args` は sequence の型を維持する。複数候補では全投影元が合意する項だけを重複なく投影し、判断時は正規の `surface` と `arguments` を優先する。
 * 実行コード、永続データ、外部依存を追加しないため、データ移行とロールバック作業は不要である。
 * 問題があれば、変更した二つの `SKILL.md` を直前版へ戻すことでロールバックできる。
 
@@ -388,7 +414,7 @@ rewrite_policy: []
 
 * AC-01: 親スキルが、基礎理論を述語項グラフの修復として明記している。
 * AC-02: analyzer が、動詞以外に形容詞述語、サ変名詞、出来事名詞、埋込み述語を抽出対象にする。
-* AC-03: analyzer の出力契約で、述語ノード、指示対象ノード、項の辺、語義候補、復元可能性、根拠を表現できる。
+* AC-03: analyzer の出力契約で、述語ノード、指示対象ノード、項の辺、語義候補、語義ごとの格フレームと項スロット、復元可能性、根拠を ID で関連付けて表現できる。
 * AC-04: 表面の助詞、意味役割、主題、項の明示または省略を別々に扱う。
 * AC-05: ゼロ項を同一節、別述語、直前文、主題、書き手、読み手、一般主体から探索し、競合時に確定しない。
 * AC-06: 並列述語の項共有と主体切り替え、受け身、使役、可能、名詞化、軽動詞を検査する。
@@ -399,7 +425,7 @@ rewrite_policy: []
 * AC-11: 推敲前後で述語項グラフと非グラフの意味不変条件を比較し、文法的に妥当でも見出し、リスト項目、表の行、コードブロックの脱落・並べ替え・階層変更があれば `SEMANTIC_DRIFT` として扱う。
 * AC-12: 3巡で意味回帰を解消できない箇所は、依存する編集を含む原子的修復単位で原文へ戻し、候補文全体を再検証してから、必要なら `要確認` とする。
 * AC-13: 通常出力は本文中心のまま維持し、ユーザーが求めた場合だけ診断を出力する。
-* AC-14: analyzer が利用できない場合も、親スキルが同じグラフ契約で縮退実行し、正規フィールドから旧互換ビューを導出する。
+* AC-14: analyzer と親スキルの縮退実行が同じグラフ契約を使い、正規フィールドから旧互換ビューを決定的に導出する。複数候補では全投影元が合意する項だけを1回記録し、`omitted_args` には一意に復元できるゼロ項だけを含める。
 * AC-15: 二つの `SKILL.md` が skill validator を通過し、frontmatter とスキル名を維持する。
 * AC-16: AsciiDoc 要件書、実装計画、レビューガイドと各 HTML が最新実装に一致する。
 
@@ -470,6 +496,18 @@ rewrite_policy: []
 |T-15
 |文分割または文結合を含む修復の一部だけで意味回帰が解消しない候補文
 |依存する編集を含む原子的修復単位を原文へ戻し、候補文全体の意味と文書構造を再検証する
+
+|T-16
+|同じ表記の述語に、互いに異なる格フレームを持つ語義候補が複数残る文
+|各項を `sense_id`、`frame_id`、`slot_id` で対応する候補へ結び、互換性のない意味役割を統合しない
+
+|T-17
+|`clear`、`ambiguous`、`unknown` のゼロ項が混在する分析メモ
+|正規の `arguments` にはすべて保持し、旧 `omitted_args` には指示対象を一意に復元できる `clear` の項だけを投影する
+
+|T-18
+|複数の語義候補で同じ省略参加者が同じ旧ラベルへ対応し、別の項では候補間の役割または指示対象が競合する分析メモ
+|共通する `(legacy_label, referent)` は旧ビューへ1回だけ投影し、競合する項は投影せず `ambiguities` に残す
 |===
 
 == 品質確認方法

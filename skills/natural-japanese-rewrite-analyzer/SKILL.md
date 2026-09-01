@@ -42,7 +42,8 @@ description: >-
 - 出来事を表す名詞
 - 埋込み節の述語
 
-表記が同じでも語義が複数あり得る場合は、各語義の格フレーム候補を保持する。
+表記が同じでも語義が複数あり得る場合は、各語義候補、格フレーム候補、項スロットへ ID を付けて保持する。
+格フレームの異なる語義候補を、一つの無修飾な項一覧へ統合しない。
 文脈だけで一つに決められなければ確定しない。
 
 ### 3. 指示対象ノードを作る
@@ -54,6 +55,8 @@ description: >-
 ### 4. 項スロットを指示対象へ結ぶ
 
 各述語について、語義が選択する項を列挙し、明示された項または指示対象候補へ結ぶ。
+各項は `sense_id`、`frame_id`、`slot_id` で一つの語義候補、格フレーム、項スロットを参照する。
+同じ表面の句が複数の語義候補に対応する場合も、語義ごとに項を分け、互換性のない意味役割を一つの項へ統合しない。
 各項では次を分離する。
 
 - `kind`: `core`、`selected-oblique`、`adjunct`、`uncertain`
@@ -119,15 +122,29 @@ predicates:
     omitted_args: []
     lemma: 見出し語
     predicate_type: verb | adjective | verbal-noun | event-noun | embedded
-    sense_candidates: []
-    sense: 確定した語義または unknown
+    sense_candidates:
+      - id: sense-1
+        gloss: 語義候補
+        case_frames:
+          - id: frame-1
+            slots:
+              - id: slot-1
+                role: 意味役割
+                domain_role: ドメイン固有役割または null
+                kind: core | selected-oblique | adjunct | uncertain
+                legacy_label: 旧 args で使う単一ラベルまたは null
+                surface_particles: []
+    sense: sense-1 | unknown
     voice: active | passive | causative | causative-passive | potential | not-applicable | unknown
     polarity: positive | negative
     tense: 原文の時制または unknown
     aspect: 原文のアスペクトまたは unknown
     modality: {}
     arguments:
-      - role: 意味役割
+      - sense_id: sense-1
+        frame_id: frame-1
+        slot_id: slot-1
+        role: 意味役割
         domain_role: ドメイン固有役割または null
         kind: core | selected-oblique | adjunct | uncertain
         surface: 原文の項または null
@@ -152,8 +169,14 @@ rewrite_policy: []
 
 `modality` は、可能性、義務、許可、推量、断定の強さなど、原文に存在する属性だけを持つ。
 `rewrite_policy` は修復案であり、確定不能な情報の補完を指示してはならない。
+各 `argument` の `sense_id`、`frame_id`、`slot_id` は、同じ predicate の `sense_candidates` 内に実在する ID を参照し、役割と種別は参照先スロットと一致させる。
 `verb`、`args`、`omitted_args` は旧契約向けの互換ビューであり、正規の `surface` と `arguments` から導出する。
-`args` は表面助詞または旧ラベルをキーにした mapping、`omitted_args` は `realization: zero` の項を並べた sequence として、v1 のコンテナ型を維持する。
+`legacy_label` は v1 へ投影するときの単一キーであり、表面助詞や語義別の意味役割を完全には表さない。
+確定語義があればその格フレーム、確定していなければ残っているすべての語義候補と格フレームを投影元とする。
+`args` は、各 `legacy_label` について、すべての投影元に同ラベルのスロットがあり、その項が同じ非 null の `referent` を指し、`candidates` に競合候補がない場合だけ、そのラベルと指示対象を1回記録する mapping として v1 のコンテナ型を維持する。
+`omitted_args` は、その合意に加えて、対応するすべての項が `realization: zero` と `recoverability: clear` を満たす場合だけ、同じラベルと指示対象を1回記録する sequence とする。
+`probable`、`ambiguous`、`unknown` の項、または投影元の間でラベル、指示対象、実現形式が一致しない項は旧ビューへ投影せず、正規の `arguments` と `ambiguities` に残す。
+`args` と `omitted_args` は lossy view であり、語義別の意味判断には使用しない。
 両者が矛盾する場合は正規フィールドを優先し、矛盾自体を `ambiguities` へ記録する。
 
 ## 完了条件
@@ -162,6 +185,7 @@ rewrite_policy: []
 
 - 対象範囲のすべての述語候補がノードになっている。
 - 各語義候補の重要な項が、指示対象、候補集合、または `unknown` のいずれかになっている。
+- すべての項が実在する語義候補、格フレーム、項スロットを参照している。
 - 複数述語の共有項と主体切り替えを検査している。
 - 保護範囲、問題、曖昧さ、意味不変条件が記録されている。
 - 原文にない情報を確定していない。

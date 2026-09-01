@@ -31,7 +31,7 @@
 * `skills/natural-japanese-rewriter/SKILL.md:21`: 子スキル利用時と不在時の責務
 * `skills/natural-japanese-rewriter/SKILL.md:50`: 最優先の意味保持
 * `skills/natural-japanese-rewriter/SKILL.md:66`: 述語項グラフと縮退スキーマ
-* `skills/natural-japanese-rewriter/SKILL.md:205`: 意味回帰検査
+* `skills/natural-japanese-rewriter/SKILL.md:226`: 意味回帰検査
 
 === 補助 root
 
@@ -61,7 +61,7 @@
 |項、ゼロ項、主題性、不確実性の分析原則を確認する
 
 |4
-|`skills/natural-japanese-rewrite-analyzer/SKILL.md:101`
+|`skills/natural-japanese-rewrite-analyzer/SKILL.md:104`
 |`schema_version: 2` の正規フィールドと旧契約互換ビューを確認する
 
 |5
@@ -69,19 +69,19 @@
 |analyzer 不在時の縮退スキーマが正規契約を再現するか比較する
 
 |6
-|`skills/natural-japanese-rewriter/SKILL.md:137`
+|`skills/natural-japanese-rewriter/SKILL.md:158`
 |談話、情報構造、語用論、敬語、文体の積み上げ順を確認する
 
 |7
-|`skills/natural-japanese-rewriter/SKILL.md:161`
+|`skills/natural-japanese-rewriter/SKILL.md:182`
 |修復トリガー、非トリガー、スタイルだけの修復を確認する
 
 |8
-|`skills/natural-japanese-rewriter/SKILL.md:205`
+|`skills/natural-japanese-rewriter/SKILL.md:226`
 |意味回帰、文書構造、3巡停止条件を確認する
 
 |9
-|`docs/requrements/2026_09_01_natural_japanese/implementation-plan-issueX-2026_09_01_natural-japanese.adoc:292`
+|`docs/requrements/2026_09_01_natural_japanese/implementation-plan-issueX-2026_09_01_natural-japanese.adoc:295`
 |実装結果、検証、3巡レビューの指摘と修正を確認する
 
 |10
@@ -132,7 +132,7 @@ Phase 6: polish または diagnostic で出力
 
 === 実現形式と談話上の役割を分ける
 
-`skills/natural-japanese-rewrite-analyzer/SKILL.md:54` では、`realization` と `discourse_role` を別フィールドにしている。
+`skills/natural-japanese-rewrite-analyzer/SKILL.md:55` では、`realization` と `discourse_role` を別フィールドにしている。
 
 これにより、次を同時に表現できる。
 
@@ -148,18 +148,28 @@ Phase 6: polish または diagnostic で出力
 
 安全な候補すべてに共通する修正だけを行い、それ以外は原文保持または `要確認` とする。
 
+=== 語義候補ごとの格フレームを分ける
+
+複数の語義候補が異なる格フレームを持つとき、単一の項一覧へ統合すると、どの意味役割がどの語義に属するか分からなくなる。
+語義候補、格フレーム、項スロットへそれぞれ ID を付け、各 `argument` が `sense_id`、`frame_id`、`slot_id` で一つの候補を参照する。
+同じ表面の句が複数候補へ対応しても項を候補ごとに分け、互換性のない意味役割を統合しない。
+
 === 正規契約と互換ビューを分ける
 
-`skills/natural-japanese-rewrite-analyzer/SKILL.md:101` の `schema_version: 2` では、`surface` と `arguments` を正規フィールドとする。
+`skills/natural-japanese-rewrite-analyzer/SKILL.md:104` の `schema_version: 2` では、`surface` と `arguments` を正規フィールドとする。
 旧 `verb`、`args`、`omitted_args` は、正規フィールドから導出する互換ビューとして保持する。
 `args` は mapping、`omitted_args` は sequence の v1 コンテナ型を維持する。
+旧契約の `omitted_args` は復元できる省略項を表すため、`realization: zero` だけでなく、`recoverability: clear` で指示対象が一意という条件も満たす項だけを投影する。
+未解決のゼロ項は正規の `arguments` に残し、旧互換ビューへは出さない。
+複数の語義候補が残る場合は、各 `legacy_label` について全候補の格フレームが同じ指示対象と実現形式に合意するときだけ1回投影し、重複や候補依存の値を作らない。
+`args` と `omitted_args` は語義別役割を落とす lossy view であり、意味判断は正規グラフで行う。
 analyzer 不在時の親スキルも同じ導出規則を使うため、縮退実行だけ互換ビューが空のまま残ることはない。
 
 互換ビューを正規フィールドと独立に編集すると不整合が生じるため、矛盾時は正規フィールドを優先し、矛盾自体を `ambiguities` に記録する。
 
 === 意味回帰と文書構造を同時に守る
 
-`skills/natural-japanese-rewriter/SKILL.md:205` では、候補文へ Phase 1 と Phase 2 を再実行する。
+`skills/natural-japanese-rewriter/SKILL.md:226` では、候補文へ Phase 1 と Phase 2 を再実行する。
 意味グラフだけでなく、原文と候補文の見出し、リスト項目、表の行、コードブロックを対応付け、要素数、順序、階層、入れ子、境界を比較する。
 
 構文上は妥当でも構造要素が脱落または並べ替えられた候補は完成品にできないため、文書構造を原文比較型の回帰ゲートへ含めている。
@@ -185,20 +195,20 @@ analyzer 不在時の親スキルも同じ導出規則を使うため、縮退�
 
 |`skills/natural-japanese-rewriter/SKILL.md:66`
 |Phase 1 と縮退スキーマ
-|原文から entity、predicate、argument、issue、invariant を作る
+|原文から entity、predicate、sense、frame、slot、argument、issue、invariant を作る
 |候補を確定できなければ `ambiguous` または `unknown` を保持する
 
-|`skills/natural-japanese-rewriter/SKILL.md:161`
+|`skills/natural-japanese-rewriter/SKILL.md:182`
 |修復判断
 |問題コードとスタイル上の問題を、修復・保持・要確認へ分類する
 |安全に直せない曖昧さは原文へ戻す
 
-|`skills/natural-japanese-rewriter/SKILL.md:205`
+|`skills/natural-japanese-rewriter/SKILL.md:226`
 |意味回帰
 |原文と候補文の意味不変条件と文書構造を比較する
 |最大3巡後に原子的修復単位を原文へ戻し、候補文全体を再検証する
 
-|`skills/natural-japanese-rewriter/SKILL.md:227`
+|`skills/natural-japanese-rewriter/SKILL.md:248`
 |出力
 |内部分析から `polish` または `diagnostic` を生成する
 |不一致が残る場合は完了扱いにしない
@@ -208,17 +218,17 @@ analyzer 不在時の親スキルも同じ導出規則を使うため、縮退�
 |原文から複数の語義・格フレーム候補を作る
 |一意にできなければ候補を保持する
 
-|`skills/natural-japanese-rewrite-analyzer/SKILL.md:54`
+|`skills/natural-japanese-rewrite-analyzer/SKILL.md:55`
 |項スロットと指示対象の接続
 |述語、表面句、指示対象から argument edge を作る
 |先行詞競合は `ambiguous`、根拠なしは `unknown` にする
 
-|`skills/natural-japanese-rewrite-analyzer/SKILL.md:82`
+|`skills/natural-japanese-rewrite-analyzer/SKILL.md:85`
 |問題と不変条件の記録
 |分析済みグラフから問題コードと `graph_invariants` を作る
 |安全に直せない問題を `blocked` として親へ渡す
 
-|`skills/natural-japanese-rewrite-analyzer/SKILL.md:101`
+|`skills/natural-japanese-rewrite-analyzer/SKILL.md:104`
 |YAML 出力契約
 |分析結果を `schema_version: 2` と互換ビューで表す
 |正規・互換フィールドの矛盾を曖昧性として残す
@@ -242,23 +252,23 @@ analyzer 不在時の親スキルも同じ導出規則を使うため、縮退�
 |成功
 
 |`AC-02` から `AC-07`
-|analyzer: 28行目から157行目
-|問題コード9種、YAML 構文、独立分析テスト
+|analyzer: 28行目から194行目
+|問題コード9種、語義別格フレーム参照、YAML 構文、独立分析テスト
 |成功
 
 |`AC-08` から `AC-10`
-|親スキル: 132行目から184行目
+|親スキル: 158行目から210行目
 |複層解析、修復・非修復、安全制約の静的確認
 |成功
 
 |`AC-11` から `AC-13`
-|親スキル: 185行目から234行目
+|親スキル: 211行目から262行目
 |意味回帰、3巡停止条件、`polish` / `diagnostic` の確認
 |成功
 
 |`AC-14`
-|親スキル: 66行目から130行目
-|analyzer 契約との項目比較、issue 形状と列挙値の確認
+|親スキル: 66行目から157行目
+|analyzer 契約との項目比較、issue 形状、語義別 ID 参照、`omitted_args` の投影条件を確認
 |成功
 
 |`AC-15`
@@ -280,14 +290,19 @@ analyzer 不在時の親スキルも同じ導出規則を使うため、縮退�
 `main` 比較レビューは3巡実施した。
 1巡目の4件、2巡目の3件、3巡目の2件をすべて修正し、重大または高重要度の未解決指摘は0件である。
 Phase 10 の基準レビューと再レビューでは P2 が合計4件見つかり、互換型、縮退時の導出、文書構造の原文比較、原文復帰後の再検証を修正した。
+その後の最終レビューでは P1 が1件、P2 が1件見つかり、語義候補ごとの格フレーム参照と `omitted_args` の復元可能性フィルターを追加した。
+独立フォワードテストで複数語義時の旧ビュー投影が一意でないことを検出し、全候補の合意と重複排除による決定的な投影規則を追加した。
 
 == 重点チェック
 
 レビュアーには、特に次を確認してほしい。
 
 . analyzer の正規スキーマと、親の縮退スキーマで、entity、predicate、argument、issue の形と列挙値が一致しているか。
+. 複数の語義候補で、各 argument が対応する格フレームと項スロットを ID で参照し、役割を混同しないか。
 . `realization` と `discourse_role` の分離で、明示・省略と主題・焦点を独立に表せるか。
 . 旧 `verb`、`args`、`omitted_args` を互換ビューとして残す判断が、移行コストと契約の明確さのバランスを取れているか。
+. `omitted_args` が一意に復元できるゼロ項だけを含み、未解決の項を旧利用者へ復元可能として見せないか。
+. 複数の語義候補が同じ省略参加者を持つ場合に、旧ビューへ重複せず1回だけ投影し、候補間で競合する項を除外できるか。
 . analyzer 不在時も、正規フィールドから互換ビューを一貫して導出できるか。
 . 翻訳調や冗長さを直す経路が、意味グラフの修復トリガーだけに閉じていないか。
 . Phase 5 が、モダリティ、発話行為、敬語の方向に加え、原文と候補文の文書構造を要素単位で比較しているか。

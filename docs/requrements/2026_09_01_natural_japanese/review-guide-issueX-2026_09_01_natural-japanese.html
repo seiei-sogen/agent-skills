@@ -592,8 +592,9 @@ body {
 <li><a href="#_表層と意味を分離する">5.1. 表層と意味を分離する</a></li>
 <li><a href="#_実現形式と談話上の役割を分ける">5.2. 実現形式と談話上の役割を分ける</a></li>
 <li><a href="#_不確実性を消さない">5.3. 不確実性を消さない</a></li>
-<li><a href="#_正規契約と互換ビューを分ける">5.4. 正規契約と互換ビューを分ける</a></li>
-<li><a href="#_意味回帰と文書構造を同時に守る">5.5. 意味回帰と文書構造を同時に守る</a></li>
+<li><a href="#_語義候補ごとの格フレームを分ける">5.4. 語義候補ごとの格フレームを分ける</a></li>
+<li><a href="#_正規契約と互換ビューを分ける">5.5. 正規契約と互換ビューを分ける</a></li>
+<li><a href="#_意味回帰と文書構造を同時に守る">5.6. 意味回帰と文書構造を同時に守る</a></li>
 </ul>
 </li>
 <li><a href="#_重要コードの解説">6. 重要コードの解説</a></li>
@@ -660,7 +661,7 @@ body {
 <p><code>skills/natural-japanese-rewriter/SKILL.md:66</code>: 述語項グラフと縮退スキーマ</p>
 </li>
 <li>
-<p><code>skills/natural-japanese-rewriter/SKILL.md:205</code>: 意味回帰検査</p>
+<p><code>skills/natural-japanese-rewriter/SKILL.md:226</code>: 意味回帰検査</p>
 </li>
 </ul>
 </div>
@@ -711,7 +712,7 @@ body {
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:101</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:104</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>schema_version: 2</code> の正規フィールドと旧契約互換ビューを確認する</p></td>
 </tr>
 <tr>
@@ -721,22 +722,22 @@ body {
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">6</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:137</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:158</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">談話、情報構造、語用論、敬語、文体の積み上げ順を確認する</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">7</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:161</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:182</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">修復トリガー、非トリガー、スタイルだけの修復を確認する</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">8</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:205</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:226</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">意味回帰、文書構造、3巡停止条件を確認する</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">9</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>docs/requrements/2026_09_01_natural_japanese/implementation-plan-issueX-2026_09_01_natural-japanese.adoc:292</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>docs/requrements/2026_09_01_natural_japanese/implementation-plan-issueX-2026_09_01_natural-japanese.adoc:295</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">実装結果、検証、3巡レビューの指摘と修正を確認する</p></td>
 </tr>
 <tr>
@@ -800,7 +801,7 @@ Phase 6: polish または diagnostic で出力</code></pre>
 <div class="sect2">
 <h3 id="_実現形式と談話上の役割を分ける">5.2. 実現形式と談話上の役割を分ける</h3>
 <div class="paragraph">
-<p><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:54</code> では、<code>realization</code> と <code>discourse_role</code> を別フィールドにしている。</p>
+<p><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:55</code> では、<code>realization</code> と <code>discourse_role</code> を別フィールドにしている。</p>
 </div>
 <div class="paragraph">
 <p>これにより、次を同時に表現できる。</p>
@@ -830,11 +831,23 @@ Phase 6: polish または diagnostic で出力</code></pre>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_正規契約と互換ビューを分ける">5.4. 正規契約と互換ビューを分ける</h3>
+<h3 id="_語義候補ごとの格フレームを分ける">5.4. 語義候補ごとの格フレームを分ける</h3>
 <div class="paragraph">
-<p><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:101</code> の <code>schema_version: 2</code> では、<code>surface</code> と <code>arguments</code> を正規フィールドとする。
+<p>複数の語義候補が異なる格フレームを持つとき、単一の項一覧へ統合すると、どの意味役割がどの語義に属するか分からなくなる。
+語義候補、格フレーム、項スロットへそれぞれ ID を付け、各 <code>argument</code> が <code>sense_id</code>、<code>frame_id</code>、<code>slot_id</code> で一つの候補を参照する。
+同じ表面の句が複数候補へ対応しても項を候補ごとに分け、互換性のない意味役割を統合しない。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_正規契約と互換ビューを分ける">5.5. 正規契約と互換ビューを分ける</h3>
+<div class="paragraph">
+<p><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:104</code> の <code>schema_version: 2</code> では、<code>surface</code> と <code>arguments</code> を正規フィールドとする。
 旧 <code>verb</code>、<code>args</code>、<code>omitted_args</code> は、正規フィールドから導出する互換ビューとして保持する。
 <code>args</code> は mapping、<code>omitted_args</code> は sequence の v1 コンテナ型を維持する。
+旧契約の <code>omitted_args</code> は復元できる省略項を表すため、<code>realization: zero</code> だけでなく、<code>recoverability: clear</code> で指示対象が一意という条件も満たす項だけを投影する。
+未解決のゼロ項は正規の <code>arguments</code> に残し、旧互換ビューへは出さない。
+複数の語義候補が残る場合は、各 <code>legacy_label</code> について全候補の格フレームが同じ指示対象と実現形式に合意するときだけ1回投影し、重複や候補依存の値を作らない。
+<code>args</code> と <code>omitted_args</code> は語義別役割を落とす lossy view であり、意味判断は正規グラフで行う。
 analyzer 不在時の親スキルも同じ導出規則を使うため、縮退実行だけ互換ビューが空のまま残ることはない。</p>
 </div>
 <div class="paragraph">
@@ -842,9 +855,9 @@ analyzer 不在時の親スキルも同じ導出規則を使うため、縮退�
 </div>
 </div>
 <div class="sect2">
-<h3 id="_意味回帰と文書構造を同時に守る">5.5. 意味回帰と文書構造を同時に守る</h3>
+<h3 id="_意味回帰と文書構造を同時に守る">5.6. 意味回帰と文書構造を同時に守る</h3>
 <div class="paragraph">
-<p><code>skills/natural-japanese-rewriter/SKILL.md:205</code> では、候補文へ Phase 1 と Phase 2 を再実行する。
+<p><code>skills/natural-japanese-rewriter/SKILL.md:226</code> では、候補文へ Phase 1 と Phase 2 を再実行する。
 意味グラフだけでなく、原文と候補文の見出し、リスト項目、表の行、コードブロックを対応付け、要素数、順序、階層、入れ子、境界を比較する。</p>
 </div>
 <div class="paragraph">
@@ -887,23 +900,23 @@ analyzer 不在時の親スキルも同じ導出規則を使うため、縮退�
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:66</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Phase 1 と縮退スキーマ</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">原文から entity、predicate、argument、issue、invariant を作る</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">原文から entity、predicate、sense、frame、slot、argument、issue、invariant を作る</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">候補を確定できなければ <code>ambiguous</code> または <code>unknown</code> を保持する</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:161</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:182</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">修復判断</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">問題コードとスタイル上の問題を、修復・保持・要確認へ分類する</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">安全に直せない曖昧さは原文へ戻す</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:205</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:226</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">意味回帰</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">原文と候補文の意味不変条件と文書構造を比較する</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">最大3巡後に原子的修復単位を原文へ戻し、候補文全体を再検証する</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:227</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:248</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">出力</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">内部分析から <code>polish</code> または <code>diagnostic</code> を生成する</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">不一致が残る場合は完了扱いにしない</p></td>
@@ -915,19 +928,19 @@ analyzer 不在時の親スキルも同じ導出規則を使うため、縮退�
 <td class="tableblock halign-left valign-top"><p class="tableblock">一意にできなければ候補を保持する</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:54</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:55</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">項スロットと指示対象の接続</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">述語、表面句、指示対象から argument edge を作る</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">先行詞競合は <code>ambiguous</code>、根拠なしは <code>unknown</code> にする</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:82</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:85</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">問題と不変条件の記録</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">分析済みグラフから問題コードと <code>graph_invariants</code> を作る</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">安全に直せない問題を <code>blocked</code> として親へ渡す</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:101</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:104</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">YAML 出力契約</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">分析結果を <code>schema_version: 2</code> と互換ビューで表す</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">正規・互換フィールドの矛盾を曖昧性として残す</p></td>
@@ -967,26 +980,26 @@ analyzer 不在時の親スキルも同じ導出規則を使うため、縮退�
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-02</code> から <code>AC-07</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">analyzer: 28行目から157行目</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">問題コード9種、YAML 構文、独立分析テスト</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">analyzer: 28行目から194行目</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">問題コード9種、語義別格フレーム参照、YAML 構文、独立分析テスト</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">成功</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-08</code> から <code>AC-10</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">親スキル: 132行目から184行目</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">親スキル: 158行目から210行目</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">複層解析、修復・非修復、安全制約の静的確認</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">成功</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-11</code> から <code>AC-13</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">親スキル: 185行目から234行目</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">親スキル: 211行目から262行目</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">意味回帰、3巡停止条件、<code>polish</code> / <code>diagnostic</code> の確認</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">成功</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-14</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">親スキル: 66行目から130行目</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">analyzer 契約との項目比較、issue 形状と列挙値の確認</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">親スキル: 66行目から157行目</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">analyzer 契約との項目比較、issue 形状、語義別 ID 参照、<code>omitted_args</code> の投影条件を確認</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">成功</p></td>
 </tr>
 <tr>
@@ -1019,7 +1032,9 @@ analyzer 不在時の親スキルも同じ導出規則を使うため、縮退�
 <div class="paragraph">
 <p><code>main</code> 比較レビューは3巡実施した。
 1巡目の4件、2巡目の3件、3巡目の2件をすべて修正し、重大または高重要度の未解決指摘は0件である。
-Phase 10 の基準レビューと再レビューでは P2 が合計4件見つかり、互換型、縮退時の導出、文書構造の原文比較、原文復帰後の再検証を修正した。</p>
+Phase 10 の基準レビューと再レビューでは P2 が合計4件見つかり、互換型、縮退時の導出、文書構造の原文比較、原文復帰後の再検証を修正した。
+その後の最終レビューでは P1 が1件、P2 が1件見つかり、語義候補ごとの格フレーム参照と <code>omitted_args</code> の復元可能性フィルターを追加した。
+独立フォワードテストで複数語義時の旧ビュー投影が一意でないことを検出し、全候補の合意と重複排除による決定的な投影規則を追加した。</p>
 </div>
 </div>
 </div>
@@ -1035,10 +1050,19 @@ Phase 10 の基準レビューと再レビューでは P2 が合計4件見つか
 <p>analyzer の正規スキーマと、親の縮退スキーマで、entity、predicate、argument、issue の形と列挙値が一致しているか。</p>
 </li>
 <li>
+<p>複数の語義候補で、各 argument が対応する格フレームと項スロットを ID で参照し、役割を混同しないか。</p>
+</li>
+<li>
 <p><code>realization</code> と <code>discourse_role</code> の分離で、明示・省略と主題・焦点を独立に表せるか。</p>
 </li>
 <li>
 <p>旧 <code>verb</code>、<code>args</code>、<code>omitted_args</code> を互換ビューとして残す判断が、移行コストと契約の明確さのバランスを取れているか。</p>
+</li>
+<li>
+<p><code>omitted_args</code> が一意に復元できるゼロ項だけを含み、未解決の項を旧利用者へ復元可能として見せないか。</p>
+</li>
+<li>
+<p>複数の語義候補が同じ省略参加者を持つ場合に、旧ビューへ重複せず1回だけ投影し、候補間で競合する項を除外できるか。</p>
 </li>
 <li>
 <p>analyzer 不在時も、正規フィールドから互換ビューを一貫して導出できるか。</p>

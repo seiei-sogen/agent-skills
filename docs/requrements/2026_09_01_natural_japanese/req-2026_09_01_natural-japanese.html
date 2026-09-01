@@ -837,7 +837,7 @@ body {
 <p>動詞、形容詞述語、サ変名詞、出来事名詞、埋込み節の述語を抽出する。</p>
 </li>
 <li>
-<p>同じ表記でも語義が複数あり得る場合は、語義候補と格フレーム候補を保持する。</p>
+<p>同じ表記でも語義が複数あり得る場合は、語義候補、格フレーム候補、項スロットへそれぞれ ID を付けて保持する。</p>
 </li>
 <li>
 <p>文中の同じ参加者を共有できる指示対象ノードとして登録する。</p>
@@ -870,6 +870,9 @@ body {
 </div>
 <div class="ulist">
 <ul>
+<li>
+<p>対応する語義候補 ID、格フレーム ID、項スロット ID</p>
+</li>
 <li>
 <p>述語の語義が選択する項、選択的斜格、付加部、判定不能の別</p>
 </li>
@@ -921,18 +924,34 @@ predicates:
     omitted_args: []
     lemma: 見出し語
     predicate_type: verb | adjective | verbal-noun | event-noun | embedded
-    sense_candidates: []
+    sense_candidates:
+      - id: sense-1
+        gloss: 語義候補
+        case_frames:
+          - id: frame-1
+            slots:
+              - id: slot-1
+                role: 意味役割
+                domain_role: ドメイン固有役割または null
+                kind: core | selected-oblique | adjunct | uncertain
+                legacy_label: 旧 args で使う単一ラベルまたは null
+                surface_particles: []
+    sense: sense-1 | unknown
     voice: active | passive | causative | causative-passive | potential | not-applicable | unknown
     polarity: positive | negative
     tense: 原文の時制または unknown
     aspect: 原文のアスペクトまたは unknown
     modality: {}
     arguments:
-      - role: 意味役割
+      - sense_id: sense-1
+        frame_id: frame-1
+        slot_id: slot-1
+        role: 意味役割
         domain_role: ドメイン固有役割または null
         kind: core | selected-oblique | adjunct | uncertain
         surface: 原文の項または null
         surface_particle: 表面の助詞または null
+        syntactic_relation: 統語関係または unknown
         realization: overt | zero | relative-gap | nominalized | generic | unresolved
         discourse_role: topic | topic-continuation | focus | contrast | none | unknown
         referent: entity-1 | null
@@ -950,8 +969,16 @@ rewrite_policy: []</code></pre>
 <p><code>modality</code> は、可能性、義務、許可、推量、断定の強さなど、原文に存在する属性だけを持つ。
 <code>graph_invariants</code> は、リライト後にも保つ述語、指示対象、意味役割、極性、モダリティを列挙する。
 <code>surface</code> と <code>arguments</code> を正規フィールドとする。
+各 <code>argument</code> は <code>sense_id</code>、<code>frame_id</code>、<code>slot_id</code> で <code>sense_candidates</code> 内の一つの格フレームと項スロットを参照する。
+複数の語義候補で格フレームが異なる場合は、項を語義候補ごとに分け、互換性のない役割を一つの <code>argument</code> へ統合しない。
 <code>verb</code>、<code>args</code>、<code>omitted_args</code> は、analyzer 利用時と親スキルの縮退実行時のどちらでも正規フィールドから導出する互換ビューとする。
-<code>args</code> は表面助詞または旧ラベルをキーにした mapping、<code>omitted_args</code> は <code>realization: zero</code> の項を並べた sequence とし、正規フィールドと矛盾する場合は正規フィールドを優先して矛盾を <code>ambiguities</code> に記録する。</p>
+<code>legacy_label</code> は v1 の <code>args</code> と <code>omitted_args</code> へ投影するときの単一キーであり、表面助詞や語義別の意味役割を完全には表さない。
+確定語義があればその格フレーム、確定していなければ残っているすべての語義候補と格フレームを投影元とする。
+<code>args</code> は、各 <code>legacy_label</code> について、すべての投影元に同ラベルのスロットがあり、その項が同じ非 null の <code>referent</code> を指し、<code>candidates</code> に競合候補がない場合だけ、そのラベルと指示対象を1回記録する mapping とする。
+<code>omitted_args</code> は、その合意に加えて、対応するすべての項が <code>realization: zero</code> と <code>recoverability: clear</code> を満たす場合だけ、同じラベルと指示対象を1回記録する sequence とする。
+<code>probable</code>、<code>ambiguous</code>、<code>unknown</code> の項、または投影元の間でラベル、指示対象、実現形式が一致しない項は旧ビューへ含めず、正規の <code>arguments</code> と <code>ambiguities</code> に残す。
+<code>args</code> と <code>omitted_args</code> は語義別の意味役割を落とす lossy view であり、意味判断には使用しない。
+正規フィールドと互換ビューが矛盾する場合は正規フィールドを優先して矛盾を <code>ambiguities</code> に記録する。</p>
 </div>
 </div>
 <div class="sect2">
@@ -1206,6 +1233,7 @@ rewrite_policy: []</code></pre>
 <p><code>natural-japanese-rewrite-analyzer</code> が利用できない場合も、親スキルは同じ述語項グラフ出力契約に沿って分析を行う。
 平坦な述語一覧だけで Phase を完了してはならない。
 縮退実行でも <code>surface</code> と <code>arguments</code> を正規フィールドとし、<code>verb</code>、<code>args</code>、<code>omitted_args</code> を正規フィールドから導出する。
+語義候補、格フレーム、項スロットの ID 参照と、全投影元に共通する項だけを旧ビューへ1回投影する条件も analyzer 利用時と同じにする。
 正規フィールドと互換ビューの競合解消、コンテナ型、曖昧性の記録規則も analyzer 利用時と同じにする。
 縮退した事実は最終報告へ含める。</p>
 </div>
@@ -1288,7 +1316,7 @@ rewrite_policy: []</code></pre>
 <p>既存 analyzer の <code>protected_ranges</code>、<code>rewrite_targets</code>、<code>adjuncts</code>、<code>ambiguities</code>、<code>rewrite_policy</code> は、拡張後も分析メモで表現できる状態を保つ。</p>
 </li>
 <li>
-<p>旧 predicate レコードの <code>verb</code>、<code>args</code>、<code>omitted_args</code> は、<code>schema_version: 2</code> の正規フィールドから導出する互換ビューとして保持する。<code>args</code> は mapping、<code>omitted_args</code> は sequence の型を維持する。判断時は正規の <code>surface</code> と <code>arguments</code> を優先する。</p>
+<p>旧 predicate レコードの <code>verb</code>、<code>args</code>、<code>omitted_args</code> は、<code>schema_version: 2</code> の正規フィールドから導出する lossy な互換ビューとして保持する。<code>args</code> は mapping、<code>omitted_args</code> は sequence の型を維持する。複数候補では全投影元が合意する項だけを重複なく投影し、判断時は正規の <code>surface</code> と <code>arguments</code> を優先する。</p>
 </li>
 <li>
 <p>実行コード、永続データ、外部依存を追加しないため、データ移行とロールバック作業は不要である。</p>
@@ -1358,7 +1386,7 @@ rewrite_policy: []</code></pre>
 <p>AC-02: analyzer が、動詞以外に形容詞述語、サ変名詞、出来事名詞、埋込み述語を抽出対象にする。</p>
 </li>
 <li>
-<p>AC-03: analyzer の出力契約で、述語ノード、指示対象ノード、項の辺、語義候補、復元可能性、根拠を表現できる。</p>
+<p>AC-03: analyzer の出力契約で、述語ノード、指示対象ノード、項の辺、語義候補、語義ごとの格フレームと項スロット、復元可能性、根拠を ID で関連付けて表現できる。</p>
 </li>
 <li>
 <p>AC-04: 表面の助詞、意味役割、主題、項の明示または省略を別々に扱う。</p>
@@ -1391,7 +1419,7 @@ rewrite_policy: []</code></pre>
 <p>AC-13: 通常出力は本文中心のまま維持し、ユーザーが求めた場合だけ診断を出力する。</p>
 </li>
 <li>
-<p>AC-14: analyzer が利用できない場合も、親スキルが同じグラフ契約で縮退実行し、正規フィールドから旧互換ビューを導出する。</p>
+<p>AC-14: analyzer と親スキルの縮退実行が同じグラフ契約を使い、正規フィールドから旧互換ビューを決定的に導出する。複数候補では全投影元が合意する項だけを1回記録し、<code>omitted_args</code> には一意に復元できるゼロ項だけを含める。</p>
 </li>
 <li>
 <p>AC-15: 二つの <code>SKILL.md</code> が skill validator を通過し、frontmatter とスキル名を維持する。</p>
@@ -1494,6 +1522,21 @@ rewrite_policy: []</code></pre>
 <td class="tableblock halign-left valign-top"><p class="tableblock">T-15</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">文分割または文結合を含む修復の一部だけで意味回帰が解消しない候補文</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">依存する編集を含む原子的修復単位を原文へ戻し、候補文全体の意味と文書構造を再検証する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-16</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同じ表記の述語に、互いに異なる格フレームを持つ語義候補が複数残る文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">各項を <code>sense_id</code>、<code>frame_id</code>、<code>slot_id</code> で対応する候補へ結び、互換性のない意味役割を統合しない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-17</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>clear</code>、<code>ambiguous</code>、<code>unknown</code> のゼロ項が混在する分析メモ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">正規の <code>arguments</code> にはすべて保持し、旧 <code>omitted_args</code> には指示対象を一意に復元できる <code>clear</code> の項だけを投影する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-18</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">複数の語義候補で同じ省略参加者が同じ旧ラベルへ対応し、別の項では候補間の役割または指示対象が競合する分析メモ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">共通する <code>(legacy_label, referent)</code> は旧ビューへ1回だけ投影し、競合する項は投影せず <code>ambiguities</code> に残す</p></td>
 </tr>
 </tbody>
 </table>
