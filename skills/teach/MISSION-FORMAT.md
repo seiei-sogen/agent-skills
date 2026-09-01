@@ -1,31 +1,31 @@
-# MISSION.md Format
+# MISSION.md の形式
 
-`MISSION.md` lives at the workspace root. It captures the _reason_ the user is learning this topic. Every teaching decision (what to teach next, which resources to surface, which exercises to design) should trace back to this document.
+`MISSION.md` はワークスペースのルートに置き、ユーザーがそのテーマを学ぶ_理由_を記録します。次に何を教えるか、どの資料を提示するか、どのような演習を設計するかといった指導上の判断は、すべてこの文書に結びつけられるようにしてください。
 
-## Template
+## テンプレート
 
 ```md
-# Mission: {Topic}
+# ミッション: {テーマ}
 
-## Why
-{1-3 sentences. The concrete real-world goal the user is chasing. What changes in their life or work when they have this skill? Avoid abstract framings like "to understand X"; push for the underlying outcome.}
+## 学ぶ理由
+{1～3文。ユーザーが目指す、現実世界での具体的な目標を記載する。その技能を身につけると、生活や仕事がどう変わるのか。「Xを理解するため」のような抽象的な表現は避け、その奥にある目的を掘り下げる。}
 
-## Success looks like
-- {A specific, observable thing the user will be able to do}
-- {Another specific thing}
+## 成功の目安
+- {ユーザーができるようになる、具体的で観察可能なこと}
+- {もう1つの具体的なこと}
 - {…}
 
-## Constraints
-- {Time, budget, prior commitments, learning preferences, anything that bounds the approach}
+## 制約
+- {時間、予算、すでにある予定、学習方法の好みなど、取り組み方を制限するもの}
 
-## Out of scope
-- {Adjacent topics the user explicitly does not want to chase right now, protecting the zone of proximal development}
+## 対象外
+- {最近接発達領域を守るため、ユーザーが今は扱いたくないと明示した周辺テーマ}
 ```
 
-## Rules
+## 規則
 
-- **One mission per workspace.** If the user wants to learn two unrelated things, that is two workspaces.
-- **Concrete over abstract.** "Run a half marathon by October" beats "get fitter." "Ship a Rust CLI to my team" beats "learn Rust."
-- **Push back on vagueness.** If the user cannot articulate why, interview them before writing anything. A bad mission is worse than no mission.
-- **Revise when reality shifts.** Missions change. When the user's goal moves, update this file: don't leave a stale mission steering future sessions.
-- **Keep it short.** If `MISSION.md` runs past a screen, it has stopped being a compass and started being a plan.
+- **1つのワークスペースにつき、ミッションは1つとする。** ユーザーが無関係な2つのテーマを学びたい場合は、ワークスペースを2つに分けます。
+- **抽象的な目標より、具体的な目標を優先する。** 「健康になる」より「10月までにハーフマラソンを完走する」、「Rustを学ぶ」より「チーム向けのRust製CLIをリリースする」のほうが適切です。
+- **曖昧なまま進めない。** ユーザーが理由を明確に説明できない場合は、何かを書く前に質問して掘り下げます。適切でないミッションは、ミッションがない状態よりも悪い結果を招きます。
+- **現実が変わったら改訂する。** ミッションは変化します。ユーザーの目標が変わったら、このファイルを更新してください。古くなったミッションを、今後のセッションの指針として残してはいけません。
+- **短く保つ。** `MISSION.md` が1画面に収まらなくなったら、それは指針ではなく計画書になっています。

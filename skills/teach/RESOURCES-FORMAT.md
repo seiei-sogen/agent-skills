@@ -1,32 +1,32 @@
-# RESOURCES.md Format
+# RESOURCES.md の形式
 
-`RESOURCES.md` is the curated set of trusted sources for this topic. Knowledge for explainers should be drawn from here, not from parametric guesses. Wisdom comes from the communities listed here.
+`RESOURCES.md` には、そのテーマについて信頼できる資料を厳選して記録します。知識の解説は、モデルのパラメータに基づく推測ではなく、ここに記載した資料を根拠にしてください。知恵は、ここに記載したコミュニティから得ます。
 
-## Structure
+## 構成
 
 ```md
-# {Topic} Resources
+# {テーマ}の資料
 
-## Knowledge
+## 知識
 
-- [Book: _The Science and Practice of Strength Training_ by Zatsiorsky & Kraemer](https://example.com)
-  Foundational text on programming and adaptation. Use for: anything to do with periodisation, recovery, intensity zones.
-- [Article: "How Much Should I Train?" by Greg Nuckols (Stronger By Science)](https://example.com)
-  Evidence-based review of volume landmarks. Use for: weekly set targets per muscle group.
+- [書籍: Zatsiorsky、Kraemer著『筋力トレーニングの科学と実践』](https://example.com)
+トレーニング計画と適応を扱う基礎文献。用途: ピリオダイゼーション、回復、強度区分に関する内容。
+- [記事: Greg Nuckols著「トレーニング量はどのくらいにすべきか？」（Stronger By Science）](https://example.com)
+トレーニング量の目安を検討した、エビデンスに基づくレビュー。用途: 筋群ごとの週間セット数の目標。
 
-## Wisdom (Communities)
+## 知恵（コミュニティ）
 
 - [r/weightroom](https://reddit.com/r/weightroom)
-  High-signal subreddit, moderated against bro-science. Use for: programme critique, plateau troubleshooting.
-- Local: Tuesday strength class at {gym name}
-  Use for: real-time coaching feedback on lifts.
+有益な情報が多く、根拠に乏しい筋トレ論を排除するよう管理されているサブレディット。用途: プログラムの講評、停滞の解決。
+- 地域: {ジム名}で毎週火曜日に開かれる筋力トレーニング教室
+用途: リフトについて、その場でコーチからフィードバックを得る。
 ```
 
-## Rules
+## 規則
 
-- **High-trust only.** Prefer primary sources, recognised experts, peer-reviewed work, and communities with strong moderation. If a resource is marketing dressed as education, leave it out.
-- **Annotate every entry.** A bare link is useless in three months. Add one line: what it covers and when to reach for it.
-- **Group by Knowledge / Wisdom.** Mirrors the philosophy in [SKILL.md](./SKILL.md). It is fine for a resource to appear in only one group.
-- **Surface gaps explicitly.** If no good resource exists for an area the mission needs, write a `## Gaps` section listing what is missing. This drives future search.
-- **Prune ruthlessly.** A resource that turned out to be wrong, shallow, or off-mission should be removed, not buried. Better five sharp sources than thirty mediocre ones.
-- **Record community preferences.** If the user has opted out of joining communities, note it here so future sessions don't keep proposing them.
+- **信頼性の高い資料だけを採用する。** 一次資料、評価の定まった専門家、査読済みの研究、運営管理の行き届いたコミュニティを優先してください。教育を装ったマーケティング資料は除外します。
+- **すべての項目に注釈を付ける。** リンクだけでは、3か月後には役に立ちません。何を扱っているのか、いつ参照すべきかを1行で追記します。
+- **知識と知恵に分類する。** [SKILL.md](./SKILL.md) の基本方針に対応しています。各資料は、どちらか一方にだけ掲載して構いません。
+- **不足を明示する。** ミッションに必要な分野で良い資料が見つからない場合は、`## 不足している資料` セクションを作成し、足りないものを列挙します。これが今後の検索方針になります。
+- **不要な資料は迷わず取り除く。** 誤っていた、内容が浅かった、ミッションから外れていたと分かった資料は、埋もれさせずに削除します。凡庸な30件より、的確な5件を残すほうが有用です。
+- **コミュニティに関する希望を記録する。** ユーザーがコミュニティへの参加を望まない場合は、今後のセッションで繰り返し提案しないよう、ここに記録します。

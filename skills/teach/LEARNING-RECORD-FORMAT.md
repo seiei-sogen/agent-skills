@@ -1,46 +1,46 @@
-# Learning Record Format
+# 学習記録の形式
 
-Learning records live in `./learning-records/` and use sequential numbering: `0001-slug.md`, `0002-slug.md`, etc. Create the directory lazily: only when the first record is written.
+学習記録は `./learning-records/` に保存し、`0001-slug.md`、`0002-slug.md` のように連番を付けます。ディレクトリは、最初の記録を書くときに初めて作成してください。
 
-They are the teaching equivalent of ADRs: they capture non-obvious lessons, key insights, and stated prior knowledge that will steer future sessions. They are used to calculate the zone of proximal development.
+学習記録は、ソフトウェア開発でいうADRに相当します。自明ではない学び、重要な気づき、ユーザーから示された既有知識など、今後のセッションの方向を左右する情報を記録します。この記録は、最近接発達領域を見極めるために使います。
 
-## Template
+## テンプレート
 
 ```md
-# {Short title of what was learned or established}
+# {学んだこと、または確認できたことを表す短いタイトル}
 
-{1-3 sentences: what was learned (or what prior knowledge was established), and why it matters for future sessions.}
+{1～3文: 何を学んだか（または、どのような既有知識を確認したか）と、それが今後のセッションに重要な理由。}
 ```
 
-That is the whole format. A learning record can be a single paragraph. The value is recording _that_ this is now known and _why_ it changes what to teach next, not in filling out sections.
+形式はこれだけです。学習記録は1段落だけでも構いません。大切なのは項目を埋めることではなく、何が分かったのか、そして、それによって次に教える内容がなぜ変わるのかを記録することです。
 
-## Optional sections
+## 任意の項目
 
-Only include these when they add genuine value. Most records won't need them.
+本当に役立つ場合だけ追加してください。ほとんどの記録には必要ありません。
 
-- **Status** frontmatter (`active | superseded by LR-NNNN`): useful when an earlier understanding turns out to be wrong and is replaced.
-- **Evidence**: how the user demonstrated the understanding (a question answered, an exercise completed, prior experience cited). Useful when the claim might be revisited.
-- **Implications**: what this unlocks or rules out for future sessions. Worth recording when non-obvious.
+- **状態**のフロントマター（`active | superseded by LR-NNNN`）: 以前の理解が誤りだと分かり、新しい理解に置き換わった場合に役立ちます。
+- **根拠**: 質問への回答、演習の完了、過去の経験への言及など、ユーザーが理解を示した方法を記録します。その理解を後から再確認する可能性がある場合に役立ちます。
+- **影響**: 今後のセッションで何が可能になり、何が候補から外れるのかを記録します。自明ではない場合に記録する価値があります。
 
-## Numbering
+## 採番
 
-Scan `./learning-records/` for the highest existing number and increment by one.
+`./learning-records/` にある既存ファイルの最大番号を確認し、1を加えます。
 
-## When to write a learning record
+## 学習記録を書くタイミング
 
-Write one when any of these is true:
+次のいずれかに該当する場合に記録します。
 
-1. **The user demonstrated genuine understanding of something non-trivial**: not just exposure, but evidence they can use the concept correctly. This sets a new floor for what to teach next.
-2. **The user disclosed prior knowledge**: "I already know X." Record it so future sessions don't re-teach it. Also record the _depth_ claimed.
-3. **A misconception was corrected**: the user previously believed something wrong and now sees why. These are high-value: they predict future stumbling blocks for related topics.
-4. **The mission shifted in response to learning**: the user discovered they cared about something different than they thought. Cross-link to [[MISSION.md]] and update it.
+1. **ユーザーが、自明ではない内容を本当に理解したことを示した**: 単に触れただけではなく、その概念を正しく使えるという根拠がある場合です。これにより、次に教える内容の出発点が一段上がります。
+2. **ユーザーが既有知識を示した**: 「Xはすでに知っている」と伝えられたら、今後のセッションで教え直さないように記録します。申告された理解の_深さ_も残してください。
+3. **誤解が訂正された**: ユーザーが以前は誤った考えを持っていたものの、今はなぜ誤りなのかを理解した場合です。この情報には高い価値があります。関連テーマで今後つまずきそうな箇所を予測できるためです。
+4. **学習を通じてミッションが変わった**: ユーザーが、当初考えていたものとは異なることを重視していると気づいた場合です。[[MISSION.md]] へのリンクを追加し、その内容を更新します。
 
-### What does _not_ qualify
+### 記録の対象にならないもの
 
-- Material that was merely covered. Coverage is not learning. Wait for evidence.
-- Anything already captured tersely in [[GLOSSARY.md]] as a term definition. Don't duplicate.
-- Session-by-session activity logs. Learning records are not a journal: they are decision-grade insights.
+- 単に取り上げた教材。扱っただけでは、学んだことになりません。理解を示す根拠が得られるまで待ちます。
+- [[GLOSSARY.md]] の用語定義に簡潔に記録済みの内容。重複させないでください。
+- セッションごとの活動履歴。学習記録は日誌ではなく、今後の判断に使える重要な気づきを残すものです。
 
-## Supersession
+## 置き換え
 
-When a later record contradicts an earlier one (the user's understanding deepened or corrected), mark the old record `Status: superseded by LR-NNNN` rather than deleting it. The history of how understanding evolved is itself useful signal.
+後の記録が以前の記録と矛盾する場合、つまりユーザーの理解が深まったり訂正されたりした場合は、古い記録を削除せず、`Status: superseded by LR-NNNN` と記載します。理解がどのように変化したかという履歴自体が、今後の指導に役立つ手がかりになります。

@@ -1,35 +1,35 @@
-# GLOSSARY.md Format
+# GLOSSARY.md の形式
 
-`GLOSSARY.md` is the canonical language for this teaching workspace. All explainers, exercises, and learning records should adhere to its terminology. Building it is itself part of learning: compressing a concept into a tight definition is evidence the user understands it.
+`GLOSSARY.md` は、学習ワークスペースで使う標準用語を定める文書です。すべての解説、演習、学習記録で、この用語に従ってください。用語集を作ること自体も学習の一部です。概念を簡潔な定義に凝縮できることは、ユーザーがその概念を理解している証拠になります。
 
-## Structure
+## 構成
 
 ```md
-# {Topic} Glossary
+# {テーマ}用語集
 
-{One or two sentence description of the topic this glossary covers.}
+{この用語集で扱うテーマを1～2文で説明する。}
 
-## Terms
+## 用語
 
-**Hypertrophy**:
-Muscle growth driven by mechanical tension and metabolic stress over repeated training sessions.
-_Avoid_: Bulking, getting big
+**筋肥大**:
+トレーニングを繰り返すなかで、機械的張力と代謝ストレスによって筋肉が成長すること。
+_避ける表現_: バルクアップ、大きくなること
 
-**Progressive overload**:
-Systematically increasing the demand on a muscle over time, via load, volume, or intensity.
-_Avoid_: Pushing harder, levelling up
+**漸進性過負荷**:
+負荷、量、強度を調整し、筋肉にかける要求を時間とともに計画的に高めること。
+_避ける表現_: もっと頑張る、レベルアップ
 
-**RPE (Rate of Perceived Exertion)**:
-A 1–10 self-rating of how hard a set felt, where 10 is failure and 8 means two reps left in the tank.
-_Avoid_: Effort score, intensity rating
+**RPE（自覚的運動強度）**:
+セットのきつさを1～10で自己評価する尺度。10は限界、8はあと2回反復できる状態を表す。
+_避ける表現_: 努力度、強度評価
 ```
 
-## Rules
+## 規則
 
-- **Add a term only when the user understands it.** The glossary is a record of compressed knowledge, not a dictionary the user reads to learn. If the user has just been introduced to a concept, wait until they can use it correctly before promoting it here.
-- **Be opinionated.** When several words exist for the same concept, pick the best one and list the rest as aliases to avoid. This is how language compresses.
-- **Keep definitions tight.** One or two sentences. Define what the term IS, not what it does or how to do it.
-- **Use the glossary's own terms inside definitions.** Once a term is in the glossary, prefer it everywhere, including inside other definitions. This is what makes complex terms easier to grasp later.
-- **Group under subheadings** when natural clusters emerge (e.g. `## Anatomy`, `## Programming`). A flat list is fine when terms cohere.
-- **Flag ambiguities explicitly.** If a term is used loosely in the wider field, note the resolution: "In this workspace, 'set' always means a working set; warm-ups are tracked separately."
-- **Revise as understanding deepens.** A definition the user wrote in week one may be wrong by week six. Update in place; do not leave stale entries.
+- **ユーザーが理解した用語だけを追加する。** 用語集は、理解した知識を凝縮して記録するものであり、ユーザーが読んで学ぶための辞書ではありません。概念を紹介したばかりなら、ユーザーが正しく使えるようになるまで追加を待ってください。
+- **用語を明確に選ぶ。** 同じ概念を表す言葉が複数ある場合は、最適なものを1つ選び、残りは避けるべき別名として記載します。こうして言葉を統一することで、情報を簡潔に表現できます。
+- **定義を簡潔にする。** 1～2文に収めます。その用語が「何をするか」や「どう使うか」ではなく、「何であるか」を定義してください。
+- **定義の中でも用語集の用語を使う。** 用語集に追加した用語は、他の用語の定義を含め、あらゆる場所で優先して使用します。これにより、後から複雑な用語を理解しやすくなります。
+- **自然なまとまりができたら小見出しで分類する。** たとえば、`## 解剖学`、`## プログラミング` のように分類します。全体にまとまりがあるうちは、単純な一覧のままで構いません。
+- **曖昧さを明記する。** その分野で広い意味に使われている用語は、このワークスペースでの定義を記載します。例: 「このワークスペースで『セット』は常にワーキングセットを指す。ウォームアップは別に記録する」
+- **理解が深まったら改訂する。** 1週目にユーザーが書いた定義は、6週目には誤りだと分かるかもしれません。その場で更新し、古い記述を残さないでください。
