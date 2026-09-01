@@ -1,0 +1,243 @@
+{
+  "meta": {
+    "subject": "述語項グラフを基礎にした natural-japanese-rewriter の強化",
+    "generated_at": "2026-09-01T11:19:43+09:00",
+    "repo_root": "/home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/agent-skills",
+    "git_ref": "main@86132110bfe4cd83e03ba0c5ecff9b26066ccd24",
+    "omitted": "汎用的な文章整形スキルと本件に関係しないスキル群は省略した"
+  },
+  "problem": {
+    "summary": "natural-japanese-rewriter を表層的な言い換え中心のパイプラインから、原文の述語項グラフを構築・修復し、推敲後の意味グラフとの同型性を検査するパイプラインへ強化する。項構造を土台に、談話、情報構造、語用論、敬語、文体を順序づけて扱う。",
+    "scope": "指定要件書、natural-japanese-rewriter、前段の natural-japanese-rewrite-analyzer、配布用 manifest、既存の詳細ルールを調査対象とした。実行コードを持たない指示文ベースのスキルであり、外部 NLP 実装や辞書導入は対象外とした。"
+  },
+  "related_files": [
+    {
+      "path": "docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc",
+      "relevance": "high",
+      "role": "述語項構造、修復トリガー、意味保存検査、複層解析の要求を示す入力要件",
+      "key_symbols": [
+        {
+          "name": "強力な推敲 agent の中心原理",
+          "kind": "requirement concept",
+          "location": "docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc:163",
+          "note": "項の選択性、実現形式、復元可能性を分離する"
+        },
+        {
+          "name": "推敲前後の項グラフ比較",
+          "kind": "acceptance concept",
+          "location": "docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc:526",
+          "note": "主体、対象、到達点などの意味役割が推敲前後で変わらないことを検査する"
+        },
+        {
+          "name": "中心思想",
+          "kind": "design principle",
+          "location": "docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc:763",
+          "note": "日本語推敲を文字列整形ではなく述語項グラフの修復として扱う"
+        }
+      ]
+    },
+    {
+      "path": "skills/natural-japanese-rewriter/SKILL.md",
+      "relevance": "high",
+      "role": "分析、リライト、意味保持検証、出力を統括する現在の親スキル",
+      "key_symbols": [
+        {
+          "name": "Phase 1: 分析",
+          "kind": "workflow phase",
+          "location": "skills/natural-japanese-rewriter/SKILL.md:64",
+          "note": "現状は述語と項を列挙する YAML メモまでで、文全体のグラフや層間の不変条件を持たない"
+        },
+        {
+          "name": "Phase 3: 意味保持の検証",
+          "kind": "workflow phase",
+          "location": "skills/natural-japanese-rewriter/SKILL.md:120",
+          "note": "意味保持項目はあるが、推敲前後の述語項グラフ比較として定義されていない"
+        }
+      ]
+    },
+    {
+      "path": "skills/natural-japanese-rewrite-analyzer/SKILL.md",
+      "relevance": "high",
+      "role": "親スキルの前段で保護範囲、述語、項、付加部、曖昧さを分析する子スキル",
+      "key_symbols": [
+        {
+          "name": "分析手順",
+          "kind": "workflow",
+          "location": "skills/natural-japanese-rewrite-analyzer/SKILL.md:27",
+          "note": "述語ごとの項確認はあるが、語義候補、ゼロ項、共有項、名詞化、態の正規化、問題コードが未定義"
+        },
+        {
+          "name": "出力契約",
+          "kind": "data contract",
+          "location": "skills/natural-japanese-rewrite-analyzer/SKILL.md:54",
+          "note": "現在の YAML は平坦な predicates 配列で、エンティティ参照と項共有を表現できない"
+        }
+      ]
+    },
+    {
+      "path": "skills/natural-japanese-rewriter/references/detailed-rules.md",
+      "relevance": "medium",
+      "role": "項、付加部、骨格、省略、語順、意味保持に関する既存の詳細規則と例",
+      "key_symbols": [
+        {
+          "name": "述語を中心に、項と付加部を分ける",
+          "kind": "reference rule set",
+          "location": "skills/natural-japanese-rewriter/references/detailed-rules.md:83",
+          "note": "新しいグラフ分析が引き続き利用できる既存知識"
+        },
+        {
+          "name": "可能性を断定に変えない",
+          "kind": "semantic invariant",
+          "location": "skills/natural-japanese-rewriter/references/detailed-rules.md:57",
+          "note": "モダリティ保存の既存規則"
+        }
+      ]
+    },
+    {
+      "path": "skills/natural-japanese-rewriter/manifest.json",
+      "relevance": "medium",
+      "role": "配布対象ファイルを列挙する manifest",
+      "key_symbols": [
+        {
+          "name": "files",
+          "kind": "config",
+          "location": "skills/natural-japanese-rewriter/manifest.json:2",
+          "note": "親スキル配下へ参照資料を追加する場合は列挙更新が必要"
+        }
+      ]
+    },
+    {
+      "path": "docs/plan-2026_06_25.md",
+      "relevance": "low",
+      "role": "巨大な旧 SKILL.md を親スキル、分析子スキル、詳細参照へ分割した過去の設計判断",
+      "key_symbols": [
+        {
+          "name": "natural-japanese-rewriter 改修実行計画",
+          "kind": "historical plan",
+          "location": "docs/plan-2026_06_25.md:1",
+          "note": "親を薄く保ち、詳細を子スキルや参照へ分ける既存方針の根拠"
+        }
+      ]
+    }
+  ],
+  "responsibilities": [
+    {
+      "component": "natural-japanese-rewriter",
+      "path": "skills/natural-japanese-rewriter/SKILL.md",
+      "responsibility": "入力と出力を確定し、意味保持を最優先に、分析、リライト、検証、出力を順に統括する",
+      "collaborators": [
+        "skills/natural-japanese-rewrite-analyzer/SKILL.md",
+        "skills/natural-japanese-rewriter/references/detailed-rules.md"
+      ]
+    },
+    {
+      "component": "natural-japanese-rewrite-analyzer",
+      "path": "skills/natural-japanese-rewrite-analyzer/SKILL.md",
+      "responsibility": "リライト前に保護範囲と文の意味構造を分析し、親スキルへ内部メモを渡す",
+      "collaborators": [
+        "skills/natural-japanese-rewriter/SKILL.md"
+      ]
+    },
+    {
+      "component": "detailed-rules",
+      "path": "skills/natural-japanese-rewriter/references/detailed-rules.md",
+      "responsibility": "長文や判断困難な文で参照する既存の詳細規則と具体例を提供する",
+      "collaborators": [
+        "skills/natural-japanese-rewriter/SKILL.md"
+      ]
+    }
+  ],
+  "constraints": [
+    {
+      "type": "business",
+      "description": "中心原理は『日本語推敲を文字列の整形ではなく、述語項グラフの修復として実装する』でなければならない",
+      "evidence": "docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc:763"
+    },
+    {
+      "type": "business",
+      "description": "原文にない主体、原因、目的、時刻を作らず、不明な指示対象を推測で確定しない",
+      "evidence": "docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc:705"
+    },
+    {
+      "type": "technical",
+      "description": "表面の助詞、統語関係、意味役割、談話上の役割、明示または省略、指示対象、復元確信度を混同せず記録する",
+      "evidence": "docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc:654"
+    },
+    {
+      "type": "technical",
+      "description": "語義と項を土台に、談話、情報構造、語用論、敬語、文体を積み上げ、生成後に意味保存を検査する",
+      "evidence": "docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc:774"
+    },
+    {
+      "type": "convention",
+      "description": "親スキルは子スキルを Phase 1 で読み、利用できない場合は同じ出力契約でフォールバックする",
+      "evidence": "skills/natural-japanese-rewriter/SKILL.md:18"
+    },
+    {
+      "type": "convention",
+      "description": "詳細規則は必要時だけ参照する progressive disclosure を維持する",
+      "evidence": "skills/natural-japanese-rewriter/SKILL.md:86"
+    },
+    {
+      "type": "dependency",
+      "description": "親スキル配下にファイルを追加する場合、配布用 manifest.json の files に含める",
+      "evidence": "skills/natural-japanese-rewriter/manifest.json:2"
+    }
+  ],
+  "existing_patterns": [
+    {
+      "name": "親子 Phase パイプライン",
+      "description": "親 SKILL.md が Phase と完了条件を定義し、専門分析を独立した子スキルへ委譲する",
+      "examples": [
+        "skills/natural-japanese-rewriter/SKILL.md:18",
+        "skills/natural-japanese-rewrite-analyzer/SKILL.md:24"
+      ],
+      "applies_to": "述語項グラフの構築を既存 analyzer の責務として強化し、親は層の順序とゲートを統括する"
+    },
+    {
+      "name": "内部 YAML 契約",
+      "description": "分析結果をユーザーへ原則表示せず、構造化 YAML を親スキルの判断材料として渡す",
+      "examples": [
+        "skills/natural-japanese-rewrite-analyzer/SKILL.md:54",
+        "skills/natural-japanese-rewriter/SKILL.md:66"
+      ],
+      "applies_to": "述語ノード、項スロット、エンティティ参照、曖昧性、意味不変条件を表現できる契約へ拡張する"
+    },
+    {
+      "name": "必要時だけ詳細参照",
+      "description": "通常フローを親スキル内で完結させ、長文や判断困難な入力だけ詳細規則を読む",
+      "examples": [
+        "skills/natural-japanese-rewriter/SKILL.md:86",
+        "skills/natural-japanese-rewriter/references/detailed-rules.md:1"
+      ],
+      "applies_to": "親スキルを過度に肥大化させず、グラフの最低契約と必須検査だけを常時実行する"
+    },
+    {
+      "name": "意味保持優先",
+      "description": "自然さより原意、事実、仕様、技術的意味と保護範囲を優先し、解消不能な曖昧さは要確認へ退避する",
+      "examples": [
+        "skills/natural-japanese-rewriter/SKILL.md:45",
+        "skills/natural-japanese-rewriter/SKILL.md:120"
+      ],
+      "applies_to": "推敲前後の意味グラフ比較を最終品質ゲートにする"
+    }
+  ],
+  "open_questions": [
+    "述語項グラフ分析を新規スキルとして増設するか、既存 natural-japanese-rewrite-analyzer を後方互換に拡張するかは設計判断が必要である。既存の責務と重複を避ける観点では既存 analyzer の拡張が安全側である。",
+    "語義辞書や外部解析器はリポジトリに存在しないため、語義候補と格フレームは LLM が文脈から複数候補を保持し、確定不能時は unknown とする指示レベルの実装になる。"
+  ],
+  "suggested_entry_points": [
+    {
+      "path": "skills/natural-japanese-rewriter/SKILL.md:64",
+      "reason": "親パイプラインの分析契約と後続 Phase の順序をグラフ修復中心へ変更する起点"
+    },
+    {
+      "path": "skills/natural-japanese-rewrite-analyzer/SKILL.md:27",
+      "reason": "述語項グラフを実際に構築する分析手順と出力契約を定義する起点"
+    },
+    {
+      "path": "docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc:631",
+      "reason": "必須分析、修復トリガー、非トリガー、安全制約の原案がまとまっている"
+    }
+  ]
+}

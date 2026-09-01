@@ -1,0 +1,1598 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data: https: http:; style-src 'unsafe-inline'; font-src 'self' data:;">
+  <meta name="generator" content="asciidoc-to-colorful-html">
+  <title>述語項グラフに基づく natural-japanese-rewriter 強化 要件定義書</title>
+  <style>
+/*
+ * Standalone Asciidoctor theme.
+ * The palette and document treatments are adapted from
+ * document-base/supplemental-ui/css/custom.css.
+ */
+
+:root {
+  color-scheme: light;
+  --color-ink: #23354a;
+  --color-muted: #607286;
+  --color-primary: #176b87;
+  --color-primary-dark: #123f5d;
+  --color-primary-soft: #e9f5f7;
+  --color-secondary: #6d52a3;
+  --color-secondary-soft: #f1edfa;
+  --color-accent: #d98716;
+  --color-positive: #2f805d;
+  --color-danger: #b64c55;
+  --color-border: #c9d9e3;
+  --color-code-bg: #f3f6f8;
+  --color-surface: #ffffff;
+  --shadow-page: 0 1.4rem 4rem rgb(25 64 88 / 15%);
+  --shadow-soft: 0 0.25rem 1rem rgb(31 75 98 / 9%);
+  --radius-large: 1rem;
+  --radius-medium: 0.55rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 20rem;
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--color-ink);
+  background:
+    radial-gradient(circle at 12% 8%, rgb(64 176 174 / 18%), transparent 28rem),
+    radial-gradient(circle at 88% 12%, rgb(126 93 184 / 13%), transparent 25rem),
+    linear-gradient(145deg, #eef7f8 0%, #f8f7fc 52%, #fff8ed 100%);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP",
+    "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+::selection {
+  color: #142b3c;
+  background: #bde8ed;
+}
+
+.page-frame {
+  width: min(74rem, calc(100% - 2rem));
+  margin: 2.5rem auto;
+}
+
+.doc {
+  position: relative;
+  min-width: 0;
+  padding: clamp(1.4rem, 4vw, 4rem);
+  overflow-wrap: anywhere;
+  border: 1px solid rgb(195 216 226 / 85%);
+  border-radius: var(--radius-large);
+  background: #fff;
+  box-shadow: var(--shadow-page);
+}
+
+.doc::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 0.38rem;
+  border-radius: var(--radius-large) var(--radius-large) 0 0;
+  background: linear-gradient(90deg, var(--color-primary), #43a6a1 48%, var(--color-secondary));
+  content: "";
+}
+
+.doc h1,
+.doc h2,
+.doc h3,
+.doc h4,
+.doc h5,
+.doc h6 {
+  color: var(--color-primary-dark);
+  font-weight: 750;
+  line-height: 1.4;
+  letter-spacing: 0.015em;
+  scroll-margin-top: 1.5rem;
+}
+
+.doc h1,
+.doc #header > h1 {
+  margin: 0 0 2.3rem;
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: 0.025em;
+}
+
+.doc h1::after,
+.doc #header > h1::after {
+  display: block;
+  width: 5.4rem;
+  height: 0.32rem;
+  margin-top: 0.8rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-primary), #43a6a1, var(--color-secondary));
+  content: "";
+}
+
+.doc h2 {
+  margin: 2.8rem 0 1.2rem;
+  padding: 0.68rem 1rem 0.68rem 1.1rem;
+  border-left: 0.34rem solid var(--color-primary);
+  border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
+  background: linear-gradient(90deg, var(--color-primary-soft), #f8fbfc 72%, transparent);
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+}
+
+.doc h3 {
+  margin: 2.25rem 0 0.9rem;
+  padding-bottom: 0.38rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: clamp(1.22rem, 2.3vw, 1.5rem);
+}
+
+.doc h4 {
+  margin: 1.8rem 0 0.7rem;
+  color: #285d72;
+  font-size: 1.14rem;
+}
+
+.doc h5,
+.doc h6 {
+  margin: 1.5rem 0 0.55rem;
+  font-size: 1rem;
+}
+
+.doc p,
+.doc li,
+.doc dd {
+  line-height: 1.82;
+}
+
+.doc p {
+  margin: 0.8rem 0 1rem;
+}
+
+.doc a {
+  color: #086f91;
+  text-decoration-color: #76adbd;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+.doc a:hover {
+  color: #084f70;
+  text-decoration-color: currentcolor;
+}
+
+.doc ul,
+.doc ol {
+  padding-left: 1.55rem;
+}
+
+.doc li + li {
+  margin-top: 0.28rem;
+}
+
+.doc li::marker {
+  color: var(--color-primary);
+  font-weight: 750;
+}
+
+.doc dl dt {
+  margin-top: 1rem;
+  color: var(--color-primary-dark);
+  font-weight: 750;
+}
+
+.doc hr {
+  height: 1px;
+  margin: 2.4rem 0;
+  border: 0;
+  background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+}
+
+.doc #toc,
+.doc .toc {
+  margin: 1.6rem 0 2.2rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid #cddde5;
+  border-radius: var(--radius-medium);
+  background: linear-gradient(135deg, #f1f9fa, #f7f4fc);
+  box-shadow: var(--shadow-soft);
+}
+
+.doc #toctitle {
+  margin-bottom: 0.45rem;
+  color: var(--color-primary-dark);
+  font-weight: 800;
+}
+
+.doc #toc ul {
+  margin: 0.3rem 0;
+}
+
+.doc table.tableblock {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 1.6rem 0 1.9rem;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  border-collapse: collapse;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.doc table.tableblock thead {
+  color: #fff;
+  background: linear-gradient(90deg, var(--color-primary-dark), var(--color-primary));
+}
+
+.doc table.tableblock th,
+.doc table.tableblock td {
+  padding: 0.72rem 0.85rem;
+  border: 1px solid #d7e2e8;
+  text-align: left;
+  vertical-align: top;
+}
+
+.doc table.tableblock th {
+  font-weight: 750;
+}
+
+.doc table.tableblock tbody tr:nth-child(even) {
+  background: #f5f9fa;
+}
+
+.doc table.tableblock tbody tr:hover {
+  background: #edf6f7;
+}
+
+.doc :not(pre) > code,
+.doc kbd {
+  padding: 0.12em 0.4em;
+  border: 1px solid #d6e0e6;
+  border-radius: 0.3rem;
+  color: #87421f;
+  background: var(--color-code-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+.doc kbd {
+  color: #36495a;
+  background: linear-gradient(#fff, #edf1f4);
+  box-shadow: 0 0.12rem 0 #c3ced5;
+}
+
+.doc pre {
+  max-width: 100%;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid #cbd8df;
+  border-left: 0.26rem solid var(--color-primary);
+  border-radius: var(--radius-medium);
+  color: #213446;
+  background: #f4f7f9;
+  box-shadow: var(--shadow-soft);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+  line-height: 1.62;
+  tab-size: 4;
+}
+
+.doc pre code {
+  display: block;
+  padding: 1rem 1.1rem;
+  color: inherit;
+  background: transparent;
+}
+
+.doc .listingblock,
+.doc .literalblock {
+  margin: 1.35rem 0 1.65rem;
+}
+
+.doc .quoteblock blockquote {
+  margin: 1.4rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 0.32rem solid #5b9da5;
+  border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
+  color: #40566a;
+  background: #f2f8f8;
+}
+
+.doc .quoteblock .attribution {
+  margin-top: -0.9rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.doc .sidebarblock,
+.doc .exampleblock > .content {
+  margin: 1.5rem 0;
+  padding: 1rem 1.2rem;
+  border: 1px solid #d8d0e8;
+  border-radius: var(--radius-medium);
+  background: linear-gradient(135deg, #faf8ff, var(--color-secondary-soft));
+  box-shadow: var(--shadow-soft);
+}
+
+.doc .admonitionblock {
+  margin: 1.5rem 0;
+  overflow: hidden;
+  border: 1px solid #c8dce2;
+  border-left: 0.32rem solid var(--color-primary);
+  border-radius: var(--radius-medium);
+  background: #f5fafb;
+  box-shadow: var(--shadow-soft);
+}
+
+.doc .admonitionblock > table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+}
+
+.doc .admonitionblock td.icon {
+  width: 7.5rem;
+  padding: 0.95rem 0.75rem;
+  color: var(--color-primary-dark);
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.doc .admonitionblock td.content {
+  padding: 0.95rem 1rem;
+  border-left: 1px solid rgb(188 211 221 / 85%);
+  background: transparent;
+}
+
+.doc .admonitionblock.tip {
+  border-left-color: var(--color-positive);
+  background: #f0faf5;
+}
+
+.doc .admonitionblock.warning,
+.doc .admonitionblock.caution {
+  border-left-color: var(--color-accent);
+  background: #fff9ed;
+}
+
+.doc .admonitionblock.important {
+  border-left-color: var(--color-danger);
+  background: #fff5f5;
+}
+
+.doc .imageblock {
+  margin: 1.75rem 0 2rem;
+  text-align: center;
+}
+
+.doc img,
+.doc svg,
+.doc video {
+  max-width: 100%;
+  height: auto;
+}
+
+.doc .imageblock img {
+  border: 1px solid #d5e0e5;
+  border-radius: var(--radius-medium);
+  background: #fff;
+  box-shadow: 0 0.4rem 1.2rem rgb(31 75 98 / 12%);
+}
+
+.doc .title,
+.doc .imageblock > .title,
+.doc .listingblock > .title,
+.doc .tableblock > .title {
+  margin: 0.45rem 0;
+  color: var(--color-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.doc mark {
+  padding: 0.08em 0.2em;
+  border-radius: 0.2rem;
+  color: inherit;
+  background: #ffeca8;
+}
+
+.doc details {
+  margin: 1rem 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: #fbfdfd;
+}
+
+.doc summary {
+  color: var(--color-primary-dark);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.doc #footnotes {
+  margin-top: 3rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 0.92rem;
+}
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 0.18rem solid #fff;
+  outline-offset: 0.12rem;
+  box-shadow: 0 0 0 0.34rem #0b5e7a;
+}
+
+@media screen and (max-width: 768px) {
+  .page-frame {
+    width: min(100% - 1rem, 74rem);
+    margin: 0.5rem auto;
+  }
+
+  .doc {
+    padding: 1.35rem 1rem 2rem;
+    border-radius: 0.75rem;
+    font-size: 0.98rem;
+  }
+
+  .doc h1,
+  .doc #header > h1 {
+    margin-bottom: 1.8rem;
+    font-size: 1.85rem;
+  }
+
+  .doc h2 {
+    margin-top: 2.2rem;
+    padding: 0.58rem 0.72rem;
+    font-size: 1.38rem;
+  }
+
+  .doc h3 {
+    font-size: 1.2rem;
+  }
+
+  .doc table.tableblock th,
+  .doc table.tableblock td {
+    min-width: 7rem;
+    padding: 0.58rem 0.65rem;
+  }
+
+  .doc .admonitionblock > table,
+  .doc .admonitionblock > table > tbody,
+  .doc .admonitionblock > table > tbody > tr,
+  .doc .admonitionblock td {
+    display: block;
+    width: 100%;
+  }
+
+  .doc .admonitionblock td.icon {
+    padding-bottom: 0.25rem;
+    text-align: left;
+  }
+
+  .doc .admonitionblock td.content {
+    border-top: 1px solid rgb(188 211 221 / 85%);
+    border-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+@media print {
+  @page {
+    margin: 15mm;
+  }
+
+  body {
+    color: #111;
+    background: #fff;
+    font-size: 10.5pt;
+  }
+
+  .page-frame {
+    width: auto;
+    margin: 0;
+  }
+
+  .doc {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .doc::before {
+    display: none;
+  }
+
+  .doc h1,
+  .doc h2,
+  .doc h3,
+  .doc h4,
+  .doc h5,
+  .doc h6 {
+    color: #111;
+    break-after: avoid;
+  }
+
+  .doc h2 {
+    border-left-color: #555;
+    background: none;
+  }
+
+  .doc table.tableblock,
+  .doc pre,
+  .doc .admonitionblock,
+  .doc .imageblock img,
+  .doc #toc,
+  .doc .sidebarblock,
+  .doc .exampleblock > .content {
+    box-shadow: none;
+  }
+
+  .doc table.tableblock thead {
+    color: #111;
+    background: #eee;
+  }
+
+  .doc pre,
+  .doc table,
+  .doc .admonitionblock,
+  .doc .imageblock {
+    break-inside: avoid;
+  }
+
+  .doc a {
+    color: inherit;
+    text-decoration: underline;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div class="page-frame">
+    <article class="doc">
+<h1>述語項グラフに基づく natural-japanese-rewriter 強化 要件定義書</h1>
+<div id="toc" class="toc">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_背景">1. 背景</a></li>
+<li><a href="#_目的">2. 目的</a></li>
+<li><a href="#_利用者と利用シナリオ">3. 利用者と利用シナリオ</a></li>
+<li><a href="#_用語">4. 用語</a></li>
+<li><a href="#_対象範囲">5. 対象範囲</a>
+<ul class="sectlevel2">
+<li><a href="#_対象">5.1. 対象</a></li>
+<li><a href="#_対象外">5.2. 対象外</a></li>
+</ul>
+</li>
+<li><a href="#_機能要件">6. 機能要件</a>
+<ul class="sectlevel2">
+<li><a href="#_fr_01_入力保護範囲出力モードを確定する">6.1. FR-01 入力、保護範囲、出力モードを確定する</a></li>
+<li><a href="#_fr_02_述語項グラフを構築する">6.2. FR-02 述語項グラフを構築する</a></li>
+<li><a href="#_fr_03_問題を分類する">6.3. FR-03 問題を分類する</a></li>
+<li><a href="#_fr_04_意味構造へ上位レイヤーを重ねる">6.4. FR-04 意味構造へ上位レイヤーを重ねる</a></li>
+<li><a href="#_fr_05_修復が必要な箇所だけを変更する">6.5. FR-05 修復が必要な箇所だけを変更する</a></li>
+<li><a href="#_fr_06_リライトする">6.6. FR-06 リライトする</a></li>
+<li><a href="#_fr_07_意味回帰を検査する">6.7. FR-07 意味回帰を検査する</a></li>
+<li><a href="#_fr_08_子スキルが利用できない場合に縮退する">6.8. FR-08 子スキルが利用できない場合に縮退する</a></li>
+</ul>
+</li>
+<li><a href="#_例外と失敗時の挙動">7. 例外と失敗時の挙動</a></li>
+<li><a href="#_非機能要件">8. 非機能要件</a>
+<ul class="sectlevel2">
+<li><a href="#_意味安全性">8.1. 意味安全性</a></li>
+<li><a href="#_日本語としての自然さ">8.2. 日本語としての自然さ</a></li>
+<li><a href="#_コンテキスト効率">8.3. コンテキスト効率</a></li>
+<li><a href="#_保守性">8.4. 保守性</a></li>
+</ul>
+</li>
+<li><a href="#_互換性移行運用">9. 互換性、移行、運用</a></li>
+<li><a href="#_採用した意思決定">10. 採用した意思決定</a>
+<ul class="sectlevel2">
+<li><a href="#_d_01_既存_analyzer_を拡張する">10.1. D-01 既存 analyzer を拡張する</a></li>
+<li><a href="#_d_02_グラフ同型性は意味上の等価性で判定する">10.2. D-02 グラフ同型性は意味上の等価性で判定する</a></li>
+<li><a href="#_d_03_擬似的な数値確信度を必須にしない">10.3. D-03 擬似的な数値確信度を必須にしない</a></li>
+<li><a href="#_d_04_すべての層を分離し必要な粒度で実行する">10.4. D-04 すべての層を分離し、必要な粒度で実行する</a></li>
+</ul>
+</li>
+<li><a href="#_セキュリティとプライバシー">11. セキュリティとプライバシー</a></li>
+<li><a href="#_受け入れ条件">12. 受け入れ条件</a></li>
+<li><a href="#_検証シナリオ">13. 検証シナリオ</a></li>
+<li><a href="#_品質確認方法">14. 品質確認方法</a></li>
+<li><a href="#_未確定事項">15. 未確定事項</a></li>
+<li><a href="#_参考資料">16. 参考資料</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="_背景">1. 背景</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>現行の <code>natural-japanese-rewriter</code> は、原意・事実・仕様・技術的意味を保護しながら、述語、項、付加部、骨格を分析して日本語を整える。
+ただし、述語ごとの項を平坦に列挙する現在の分析メモでは、複数述語が共有する項、主題化された項、ゼロ項、名詞化、態の交替、文をまたぐ指示対象を一貫して追跡しにくい。
+そのため、表面的には自然でも、主体、対象、因果、可能性、発話意図などが原文からずれる余地がある。</p>
+</div>
+<div class="paragraph">
+<p>本変更は、次の命題を基礎理論とする。</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p><strong>日本語推敲を文字列の整形ではなく、述語項グラフの修復として実装する。</strong></p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>ここでいう項は、述語の語義が意味を成立させるために用意する参加者スロットである。
+日本語では項を自然に省略できるため、表面にないことと意味構造に存在しないことを区別する。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_目的">2. 目的</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><code>skills/natural-japanese-rewriter/SKILL.md</code> を、次の処理を統括する親スキルへ強化する。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>原文から語義、述語、項、指示対象のグラフを構築する。</p>
+</li>
+<li>
+<p>グラフ上の曖昧さや不整合を、原文にない情報を作らない範囲で修復する。</p>
+</li>
+<li>
+<p>談話、情報構造、語用論、敬語、文体を意味構造の上に重ねてリライトする。</p>
+</li>
+<li>
+<p>推敲前後の意味グラフを比較し、意味の回帰を検出する。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>前段分析は、既存の <code>skills/natural-japanese-rewrite-analyzer/SKILL.md</code> を拡張して担わせる。
+同じ責務を持つ新規スキルは作らない。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_利用者と利用シナリオ">3. 利用者と利用シナリオ</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>主な利用者は、README、仕様書、技術記事、コードコメント、UI 文言、issue、PR 説明、業務連絡、職務経歴書などの日本語を推敲する Codex 利用者である。</p>
+</div>
+<div class="paragraph">
+<p>代表的な利用シナリオは次のとおりである。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>省略された主語や目的語を、文脈から復元できる場合だけ明示する。</p>
+</li>
+<li>
+<p><code>は</code> や <code>も</code> で主題化された対象を、機械的に主語と誤認せずに整える。</p>
+</li>
+<li>
+<p>並列された述語が共有する主体や対象と、途中で切り替わる主体を区別する。</p>
+</li>
+<li>
+<p><code>顧客の確認</code> のような名詞化内部の動作主と対象の曖昧さを検出する。</p>
+</li>
+<li>
+<p>技術文書で、ブランチ、環境、入力、出力などの方向を保ったまま読みやすくする。</p>
+</li>
+<li>
+<p>可能性を断定へ、完了報告を許可要求へ変えるなどの意味回帰を防ぐ。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_用語">4. 用語</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 33.3333%;">
+<col style="width: 50.0001%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">用語</th>
+<th class="tableblock halign-left valign-top">定義</th>
+<th class="tableblock halign-left valign-top">例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">項構造</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">述語の語義が持つ意味的な参加者スロット</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>渡す〈渡し手, 物, 受取手〉</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">格フレーム</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">項スロットが助詞や構文として現れる候補</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Xが Yを Zに 渡す</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">述語項構造</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">実際の文で、各スロットをどの指示対象が満たすか</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>田中さんが資料を顧客に渡した</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">述語項グラフ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">述語ノード、指示対象ノード、項スロットを結ぶ辺、および極性・モダリティなどの意味属性からなる内部表現</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">二つの述語が同じ <code>担当者</code> ノードを共有する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ゼロ項</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">表面には現れないが、述語のスロットとして保持する項</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">文脈から復元できる <code>確認しました</code> の確認者と確認対象</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">付加部</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">時、理由、条件、手段など、述語の語義が選択する項とは別に出来事を修飾する要素</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>昨日、本を読んだ</code> の <code>昨日</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>項と付加部は、助詞や省略可能性だけで機械的に分類しない。
+同じ表現でも、述語の語義によって項か付加部かが変わり得る。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_対象範囲">5. 対象範囲</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_対象">5.1. 対象</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><code>skills/natural-japanese-rewriter/SKILL.md</code> の分析、修復、生成、意味回帰検査のパイプライン</p>
+</li>
+<li>
+<p><code>skills/natural-japanese-rewrite-analyzer/SKILL.md</code> の述語項グラフ分析手順と内部出力契約</p>
+</li>
+<li>
+<p>既存の <code>references/detailed-rules.md</code> へ到達する progressive disclosure</p>
+</li>
+<li>
+<p>通常のリライト出力と、ユーザーが分析を求めた場合の診断出力</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_対象外">5.2. 対象外</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>外部の形態素解析器、係り受け解析器、語義辞書、格フレーム辞書の導入</p>
+</li>
+<li>
+<p>TypeScript などによる実行時データ構造や NLP エンジンの実装</p>
+</li>
+<li>
+<p><code>references/detailed-rules.md</code> 全体の再編</p>
+</li>
+<li>
+<p>UI メタデータ、インストール手順、スキルの起動条件の変更</p>
+</li>
+<li>
+<p>原文の事実確認や、原文に欠ける業務知識の推測</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_機能要件">6. 機能要件</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_fr_01_入力保護範囲出力モードを確定する">6.1. FR-01 入力、保護範囲、出力モードを確定する</h3>
+<div class="paragraph">
+<p>親スキルは、処理開始時に対象範囲、出力先、文体、媒体を確定する。
+コード、コマンド、ファイルパス、API 名、設定値、数値、固有名詞、引用、リンク、構造化データは、明確な誤りがない限り保護範囲として保持する。</p>
+</div>
+<div class="paragraph">
+<p>既定の <code>polish</code> モードでは、修正後の本文を中心に出力する。
+ユーザーが分析、理由、問題箇所を求めた場合だけ <code>diagnostic</code> モードとし、問題のある述語、不明または競合する項、修復した関係を簡潔に示す。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fr_02_述語項グラフを構築する">6.2. FR-02 述語項グラフを構築する</h3>
+<div class="paragraph">
+<p><code>natural-japanese-rewrite-analyzer</code> は、リライト前に次を行う。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>動詞、形容詞述語、サ変名詞、出来事名詞、埋込み節の述語を抽出する。</p>
+</li>
+<li>
+<p>同じ表記でも語義が複数あり得る場合は、語義候補、格フレーム候補、項スロットへそれぞれ ID を付けて保持する。</p>
+</li>
+<li>
+<p>文中の同じ参加者を共有できる指示対象ノードとして登録する。</p>
+</li>
+<li>
+<p>各述語の項スロットを指示対象ノードへ結び、表面にない項もゼロ項として保持する。</p>
+</li>
+<li>
+<p>ゼロ項の候補を、同一節、同一文の別述語、直前文、現在の主題、書き手、読み手、一般主体の順に探索する。</p>
+</li>
+<li>
+<p>一意に決められない候補は確定せず、候補集合または <code>unknown</code> として保持する。</p>
+</li>
+<li>
+<p>受け身、使役、可能、授受、敬語表現は、表面の助詞と意味役割を分けて扱う。</p>
+</li>
+<li>
+<p><code>は</code> と <code>も</code> を自動的に主語とみなさず、主題化された項として判定する。</p>
+</li>
+<li>
+<p>並列された述語について、項の共有と主体の切り替えを検査する。</p>
+</li>
+<li>
+<p><code>NのN</code>、サ変名詞、出来事名詞、軽動詞について、動作主、対象、内容、結果の役割を検査する。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>各項スロットでは、少なくとも次を別々に記録する。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>対応する語義候補 ID、格フレーム ID、項スロット ID</p>
+</li>
+<li>
+<p>述語の語義が選択する項、選択的斜格、付加部、判定不能の別</p>
+</li>
+<li>
+<p>表面の助詞または構文</p>
+</li>
+<li>
+<p>意味役割と、必要な場合のドメイン役割</p>
+</li>
+<li>
+<p>明示、ゼロ、関係節の空所、名詞化、一般主体、未解決の別</p>
+</li>
+<li>
+<p>主題、主題継続、焦点、対比などの談話上の役割</p>
+</li>
+<li>
+<p>指示対象または候補集合</p>
+</li>
+<li>
+<p>復元可能性 <code>clear</code>、<code>probable</code>、<code>ambiguous</code>、<code>unknown</code></p>
+</li>
+<li>
+<p>判断根拠</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>数値の確信度を擬似的に精密化する必要はない。
+復元可能性と根拠で、安全な補完可否を判断できることを優先する。</p>
+</div>
+<div class="paragraph">
+<p>親子スキル間の最小出力契約は次の形とする。
+配列が空の場合もキーを維持し、単独分析と親スキルの縮退実行で同じ用語を使う。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">schema_version: 2
+protected_ranges: []
+rewrite_targets: []
+entities:
+  - id: entity-1
+    text: 表面に現れた表現または null
+    candidates: []
+predicates:
+  - id: predicate-1
+    surface: 原文の述語
+    verb: 原文の述語
+    args: {}
+    omitted_args: []
+    lemma: 見出し語
+    predicate_type: verb | adjective | verbal-noun | event-noun | embedded
+    sense_candidates:
+      - id: sense-1
+        gloss: 語義候補
+        case_frames:
+          - id: frame-1
+            slots:
+              - id: slot-1
+                role: 意味役割
+                domain_role: ドメイン固有役割または null
+                kind: core | selected-oblique | adjunct | uncertain
+                legacy_label: 旧 args で使う単一ラベルまたは null
+                surface_particles: []
+    sense: sense-1 | unknown
+    voice: active | passive | causative | causative-passive | potential | not-applicable | unknown
+    polarity: positive | negative
+    tense: 原文の時制または unknown
+    aspect: 原文のアスペクトまたは unknown
+    modality: {}
+    arguments:
+      - sense_id: sense-1
+        frame_id: frame-1
+        slot_id: slot-1
+        role: 意味役割
+        domain_role: ドメイン固有役割または null
+        kind: core | selected-oblique | adjunct | uncertain
+        surface: 原文の項または null
+        surface_particle: 表面の助詞または null
+        syntactic_relation: 統語関係または unknown
+        realization: overt | zero | relative-gap | nominalized | generic | unresolved
+        discourse_role: topic | topic-continuation | focus | contrast | none | unknown
+        referent: entity-1 | null
+        candidates: []
+        recoverability: clear | probable | ambiguous | unknown
+        evidence: 判断根拠
+adjuncts: []
+issues: []
+ambiguities: []
+graph_invariants: []
+rewrite_policy: []</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>modality</code> は、可能性、義務、許可、推量、断定の強さなど、原文に存在する属性だけを持つ。
+<code>graph_invariants</code> は、リライト後にも保つ述語、指示対象、意味役割、極性、モダリティを列挙する。
+<code>surface</code> と <code>arguments</code> を正規フィールドとする。
+各 <code>argument</code> は <code>sense_id</code>、<code>frame_id</code>、<code>slot_id</code> で <code>sense_candidates</code> 内の一つの格フレームと項スロットを参照する。
+複数の語義候補で格フレームが異なる場合は、項を語義候補ごとに分け、互換性のない役割を一つの <code>argument</code> へ統合しない。
+<code>verb</code>、<code>args</code>、<code>omitted_args</code> は、analyzer 利用時と親スキルの縮退実行時のどちらでも正規フィールドから導出する互換ビューとする。
+<code>legacy_label</code> は v1 の <code>args</code> と <code>omitted_args</code> へ投影するときの単一キーであり、表面助詞や語義別の意味役割を完全には表さない。
+確定語義があればその格フレーム、確定していなければ残っているすべての語義候補と格フレームを投影元とする。
+<code>args</code> は、各 <code>legacy_label</code> について、すべての投影元に同ラベルのスロットがあり、その項が同じ非 null の <code>referent</code> を指し、<code>candidates</code> に競合候補がない場合だけ、そのラベルと指示対象を1回記録する mapping とする。
+<code>omitted_args</code> は、その合意に加えて、対応するすべての項が <code>realization: zero</code> と <code>recoverability: clear</code> を満たす場合だけ、同じラベルと指示対象を1回記録する sequence とする。
+<code>probable</code>、<code>ambiguous</code>、<code>unknown</code> の項、または投影元の間でラベル、指示対象、実現形式が一致しない項は旧ビューへ含めず、正規の <code>arguments</code> と <code>ambiguities</code> に残す。
+<code>args</code> と <code>omitted_args</code> は語義別の意味役割を落とす lossy view であり、意味判断には使用しない。
+正規フィールドと互換ビューが矛盾する場合は正規フィールドを優先して矛盾を <code>ambiguities</code> に記録する。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fr_03_問題を分類する">6.3. FR-03 問題を分類する</h3>
+<div class="paragraph">
+<p>分析時に、該当する問題を次のコードで記録する。</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 75%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">コード</th>
+<th class="tableblock halign-left valign-top">意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>UNRESOLVED_CORE_ARGUMENT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">重要な項の指示対象が不明</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AMBIGUOUS_ANTECEDENT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ゼロ項や指示表現の候補が複数ある</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CASE_FRAME_MISMATCH</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">表面の助詞や構文と述語の語義が整合しない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SUBJECT_DRIFT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">並列述語または文間で主体が不明瞭に切り替わる</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ATTACHMENT_AMBIGUITY</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">句が複数の述語へ係り得る</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>NOMINAL_ROLE_AMBIGUITY</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">名詞化内部の動作主、対象、内容、結果を区別できない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>VAGUE_PREDICATE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>する</code>、<code>なる</code>、<code>対応する</code>、<code>もの</code>、<code>こと</code> などが意味関係を隠す</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>OVEREXPLICIT_ARGUMENT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">復元可能な項が過剰に明示され、日本語として不自然または冗長</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SEMANTIC_DRIFT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">推敲後に述語、意味役割、指示対象、極性、モダリティなどが変化</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_fr_04_意味構造へ上位レイヤーを重ねる">6.4. FR-04 意味構造へ上位レイヤーを重ねる</h3>
+<div class="paragraph">
+<p>親スキルは、下位から上位へ次の順で原文を分析する。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>語彙意味論: 述語の語義候補</p>
+</li>
+<li>
+<p>述語項構造: 誰が、何を、誰に、どこへ、どうしたか</p>
+</li>
+<li>
+<p>談話構造: 指示表現、ゼロ項、現在の主題が何を指すか</p>
+</li>
+<li>
+<p>情報構造: 原文の topic、focus、対比</p>
+</li>
+<li>
+<p>語用論: 報告、依頼、質問、提案、謝罪、予定通知などの発話行為と requested action</p>
+</li>
+<li>
+<p>対人関係: 書き手、読み手、第三者、敬語の方向、丁寧さ</p>
+</li>
+<li>
+<p>文体: Slack、メール、技術文書などの媒体、簡潔さ、文末</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>不明な属性は推測で確定せず <code>unknown</code> とする。
+項構造だけでは決められない情報構造、敬語、文体を独立したレイヤーとして扱う。</p>
+</div>
+<div class="paragraph">
+<p>リライト候補は上位から下位へ制約を適用して生成する。
+文体上の都合は、語義、項、指示関係、発話行為を変更してはならない。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fr_05_修復が必要な箇所だけを変更する">6.5. FR-05 修復が必要な箇所だけを変更する</h3>
+<div class="paragraph">
+<p>次のいずれかに該当し、かつ原文の情報だけで安全に改善できる場合に、項の明示、語順変更、助詞調整、具体化、文分割を行う。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>主体または対象に複数候補がある</p>
+</li>
+<li>
+<p>重要な項の指示対象が不明である</p>
+</li>
+<li>
+<p>助詞や構文が誤った意味役割を示す</p>
+</li>
+<li>
+<p>一つの句が複数の述語へ係り得る</p>
+</li>
+<li>
+<p>並列中の主体切り替えが不明瞭である</p>
+</li>
+<li>
+<p>名詞化によって動作主と対象を区別できない</p>
+</li>
+<li>
+<p>曖昧な述語や形式名詞が関係を隠す</p>
+</li>
+<li>
+<p>重要な項と述語が離れ、誤読が起こり得る</p>
+</li>
+<li>
+<p>意味関係は明確だが、翻訳調、冗長、過度に硬い表現、周囲と不整合な文体が読みやすさを損なう</p>
+</li>
+<li>
+<p>意味役割を変えずに直せる、不自然な語順、助詞、重複がある</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>次の場合は修復トリガーとせず、項を無理に補わない。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>書き手、読み手、直前の主題などから指示対象を一意に復元できる</p>
+</li>
+<li>
+<p>項が複数述語間で自然に共有されている</p>
+</li>
+<li>
+<p>省略しても誤読の可能性が低い</p>
+</li>
+<li>
+<p>明示すると不自然または冗長になる</p>
+</li>
+<li>
+<p>文体上自然な主題化や対比である</p>
+</li>
+<li>
+<p>問題のない原文である</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>安全に解消できない曖昧さは原文の表現を保持し、必要な場合だけ <code>要確認</code> へ記録する。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fr_06_リライトする">6.6. FR-06 リライトする</h3>
+<div class="paragraph">
+<p>リライトは、述語項グラフと上位レイヤーを変更禁止の制約として行う。
+語順、助詞、文分割、冗長表現、表現の硬さを整える場合も、保護範囲、原意、事実、仕様、技術的意味を保持する。</p>
+</div>
+<div class="paragraph">
+<p>生成時の優先順位は次のとおりとする。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>語義、指示対象、意味役割、極性、条件、因果、時系列、範囲、モダリティ</p>
+</li>
+<li>
+<p>発話行為、requested action、情報構造</p>
+</li>
+<li>
+<p>敬語の方向と対人関係</p>
+</li>
+<li>
+<p>媒体に合う文体と自然さ</p>
+</li>
+<li>
+<p>編集距離の小ささ</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fr_07_意味回帰を検査する">6.7. FR-07 意味回帰を検査する</h3>
+<div class="paragraph">
+<p>推敲前後で述語項グラフを再構築し、意味的に比較する。
+文字列、助詞、語順、項の明示または省略が一致する必要はないが、次の意味不変条件は一致しなければならない。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>述語の語義と出来事</p>
+</li>
+<li>
+<p>指示対象ノード</p>
+</li>
+<li>
+<p>項の意味役割とドメイン役割</p>
+</li>
+<li>
+<p>否定と肯定</p>
+</li>
+<li>
+<p>条件、例外、因果、時系列、範囲</p>
+</li>
+<li>
+<p>時制とアスペクト</p>
+</li>
+<li>
+<p>可能性、義務、許可、推量、断定の強さ</p>
+</li>
+<li>
+<p>topic、focus、対比</p>
+</li>
+<li>
+<p>発話行為と requested action</p>
+</li>
+<li>
+<p>敬語の主体、方向、対人関係</p>
+</li>
+<li>
+<p>保護範囲</p>
+</li>
+<li>
+<p>Markdown / AsciiDoc などの見出し、リスト項目、表の行、コードブロックについて、原文と候補文の要素数、順序、階層、入れ子、境界、対応関係が一致すること</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>不一致があれば <code>SEMANTIC_DRIFT</code> として候補を棄却し、修正して同じ検査を再実行する。
+最大3巡で解消しない場合は、該当箇所だけでなく、文の分割・結合や共有指示対象で結び付く編集を含む最小の原子的修復単位を原文へ戻す。
+原文へ戻した後の候補文全体へ Phase 1 と上位レイヤー分析を再実行し、意味不変条件と文書構造を原文ともう一度比較する。
+不一致が残る場合は復元単位を段落または構造ブロックへ広げ、最終候補の不一致が0件になるまで出力へ進まない。
+必要なら復元理由を <code>要確認</code> に加える。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fr_08_子スキルが利用できない場合に縮退する">6.8. FR-08 子スキルが利用できない場合に縮退する</h3>
+<div class="paragraph">
+<p><code>natural-japanese-rewrite-analyzer</code> が利用できない場合も、親スキルは同じ述語項グラフ出力契約に沿って分析を行う。
+平坦な述語一覧だけで Phase を完了してはならない。
+縮退実行でも <code>surface</code> と <code>arguments</code> を正規フィールドとし、<code>verb</code>、<code>args</code>、<code>omitted_args</code> を正規フィールドから導出する。
+語義候補、格フレーム、項スロットの ID 参照と、全投影元に共通する項だけを旧ビューへ1回投影する条件も analyzer 利用時と同じにする。
+正規フィールドと互換ビューの競合解消、コンテナ型、曖昧性の記録規則も analyzer 利用時と同じにする。
+縮退した事実は最終報告へ含める。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_例外と失敗時の挙動">7. 例外と失敗時の挙動</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>入力または対象範囲を特定できない場合は、分析を開始せず対象を1件だけ確認する。</p>
+</li>
+<li>
+<p>語義候補を一つに確定できない場合は、複数候補を保持したまま、安全な候補に共通する修正だけを行う。</p>
+</li>
+<li>
+<p>ゼロ項や指示表現の先行詞が競合する場合は、原文にない指示対象を作らない。</p>
+</li>
+<li>
+<p>発話行為や敬語の方向を確定できない場合は、原文の強さと敬語レベルを保持する。</p>
+</li>
+<li>
+<p>文書構造と意味保持が両立しない候補は採用せず、原文へ戻す。</p>
+</li>
+<li>
+<p>診断情報が長くなる場合も、既定の <code>polish</code> 出力へ内部分析全体を漏らさない。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_非機能要件">8. 非機能要件</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_意味安全性">8.1. 意味安全性</h3>
+<div class="paragraph">
+<p>原文にない主体、対象、原因、目的、時刻、確実性を追加しない。
+技術用語を一般語へ薄めず、URL、コード、識別子、ブランチ名、PR 番号、メンションを変更しない。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_日本語としての自然さ">8.2. 日本語としての自然さ</h3>
+<div class="paragraph">
+<p>明示すると不自然な項は省略したままにする。
+述語項グラフの構築を、すべての項を表面化する処理と誤解してはならない。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_コンテキスト効率">8.3. コンテキスト効率</h3>
+<div class="paragraph">
+<p>1〜2文や UI 文言でも全 Phase の意味と最小出力契約のトップレベルキーは保つが、内部表現は必要なノードと辺だけに簡略化できる。
+長文、複数述語、名詞化、技術的曖昧さを含む場合はグラフと上位レイヤーを省略しない。
+既存の <code>references/detailed-rules.md</code> は、判断が難しい場合だけ読む。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_保守性">8.4. 保守性</h3>
+<div class="paragraph">
+<p>親スキルは層の順序、ゲート、失敗時挙動を統括し、子スキルは意味グラフ構築に集中する。
+同じ指示を親子へ重複して長く記載せず、両者の入出力契約を一致させる。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_互換性移行運用">9. 互換性、移行、運用</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><code>natural-japanese-rewriter</code> と <code>natural-japanese-rewrite-analyzer</code> の名前、配置、暗黙起動方針は維持する。</p>
+</li>
+<li>
+<p>既存の <code>polish</code> 相当の通常出力は維持し、内部分析を既定で表示しない。</p>
+</li>
+<li>
+<p>既存 analyzer の <code>protected_ranges</code>、<code>rewrite_targets</code>、<code>adjuncts</code>、<code>ambiguities</code>、<code>rewrite_policy</code> は、拡張後も分析メモで表現できる状態を保つ。</p>
+</li>
+<li>
+<p>旧 predicate レコードの <code>verb</code>、<code>args</code>、<code>omitted_args</code> は、<code>schema_version: 2</code> の正規フィールドから導出する lossy な互換ビューとして保持する。<code>args</code> は mapping、<code>omitted_args</code> は sequence の型を維持する。複数候補では全投影元が合意する項だけを重複なく投影し、判断時は正規の <code>surface</code> と <code>arguments</code> を優先する。</p>
+</li>
+<li>
+<p>実行コード、永続データ、外部依存を追加しないため、データ移行とロールバック作業は不要である。</p>
+</li>
+<li>
+<p>問題があれば、変更した二つの <code>SKILL.md</code> を直前版へ戻すことでロールバックできる。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_採用した意思決定">10. 採用した意思決定</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_d_01_既存_analyzer_を拡張する">10.1. D-01 既存 analyzer を拡張する</h3>
+<div class="paragraph">
+<p>自動壁打ちの推奨案として、述語項グラフ専用の新規スキルは作らず、既存 <code>natural-japanese-rewrite-analyzer</code> を拡張する。
+前段分析という既存責務と一致し、子スキルの重複、起動競合、契約の二重管理を避けられるためである。</p>
+</div>
+<div class="paragraph">
+<p>不確実性は、analyzer を単独利用している外部利用者の存在をリポジトリだけでは確認できない点である。
+このため、既存の分析項目を包含する拡張契約とし、用途を狭めない。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_d_02_グラフ同型性は意味上の等価性で判定する">10.2. D-02 グラフ同型性は意味上の等価性で判定する</h3>
+<div class="paragraph">
+<p>推敲によって語順、助詞、態、明示と省略が変わること自体は許容する。
+完全な表面一致では修復を妨げるため、述語、指示対象、意味役割、極性、モダリティ、発話行為などの意味不変条件で比較する。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_d_03_擬似的な数値確信度を必須にしない">10.3. D-03 擬似的な数値確信度を必須にしない</h3>
+<div class="paragraph">
+<p>要件の根拠を説明できない数値は、安全な補完可否を明確にしない。
+復元可能性の列挙値と判断根拠を必須とし、候補を一意にできない場合は <code>ambiguous</code> または <code>unknown</code> を保持する。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_d_04_すべての層を分離し必要な粒度で実行する">10.4. D-04 すべての層を分離し、必要な粒度で実行する</h3>
+<div class="paragraph">
+<p>短文でも意味、発話行為、敬語、文体の順序は変えない。
+ただし、該当情報がない層に空の詳細を量産せず、長文や曖昧な文では省略しない。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_セキュリティとプライバシー">11. セキュリティとプライバシー</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>本変更は外部サービスへ文章を送信する処理や、認証情報を扱う処理を追加しない。
+分析メモは原則として内部成果物とし、既定出力へ全文を露出しない。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_受け入れ条件">12. 受け入れ条件</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>AC-01: 親スキルが、基礎理論を述語項グラフの修復として明記している。</p>
+</li>
+<li>
+<p>AC-02: analyzer が、動詞以外に形容詞述語、サ変名詞、出来事名詞、埋込み述語を抽出対象にする。</p>
+</li>
+<li>
+<p>AC-03: analyzer の出力契約で、述語ノード、指示対象ノード、項の辺、語義候補、語義ごとの格フレームと項スロット、復元可能性、根拠を ID で関連付けて表現できる。</p>
+</li>
+<li>
+<p>AC-04: 表面の助詞、意味役割、主題、項の明示または省略を別々に扱う。</p>
+</li>
+<li>
+<p>AC-05: ゼロ項を同一節、別述語、直前文、主題、書き手、読み手、一般主体から探索し、競合時に確定しない。</p>
+</li>
+<li>
+<p>AC-06: 並列述語の項共有と主体切り替え、受け身、使役、可能、名詞化、軽動詞を検査する。</p>
+</li>
+<li>
+<p>AC-07: 問題コード9種が定義され、修復判断または意味回帰検査に使われる。</p>
+</li>
+<li>
+<p>AC-08: 談話、情報構造、語用論、敬語、文体が項構造とは別のレイヤーとして定義される。</p>
+</li>
+<li>
+<p>AC-09: 修復トリガーと非トリガーが定義され、復元可能な自然な省略を維持する。</p>
+</li>
+<li>
+<p>AC-10: 原文にない主体、原因、目的、時刻、確実性を作らない安全制約がある。</p>
+</li>
+<li>
+<p>AC-11: 推敲前後で述語項グラフと非グラフの意味不変条件を比較し、文法的に妥当でも見出し、リスト項目、表の行、コードブロックの脱落・並べ替え・階層変更があれば <code>SEMANTIC_DRIFT</code> として扱う。</p>
+</li>
+<li>
+<p>AC-12: 3巡で意味回帰を解消できない箇所は、依存する編集を含む原子的修復単位で原文へ戻し、候補文全体を再検証してから、必要なら <code>要確認</code> とする。</p>
+</li>
+<li>
+<p>AC-13: 通常出力は本文中心のまま維持し、ユーザーが求めた場合だけ診断を出力する。</p>
+</li>
+<li>
+<p>AC-14: analyzer と親スキルの縮退実行が同じグラフ契約を使い、正規フィールドから旧互換ビューを決定的に導出する。複数候補では全投影元が合意する項だけを1回記録し、<code>omitted_args</code> には一意に復元できるゼロ項だけを含める。</p>
+</li>
+<li>
+<p>AC-15: 二つの <code>SKILL.md</code> が skill validator を通過し、frontmatter とスキル名を維持する。</p>
+</li>
+<li>
+<p>AC-16: AsciiDoc 要件書、実装計画、レビューガイドと各 HTML が最新実装に一致する。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_検証シナリオ">13. 検証シナリオ</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 14.2857%;">
+<col style="width: 42.8571%;">
+<col style="width: 42.8572%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">ID</th>
+<th class="tableblock halign-left valign-top">入力上の論点</th>
+<th class="tableblock halign-left valign-top">期待する判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-01</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>このPRは確認しました。</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>このPR</code> を確認対象の主題とし、主語へ誤分類しない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-02</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PRだけが直前の主題である文脈の <code>確認しました。</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">確認者と確認対象を <code>zero / clear</code> とし、不要に明示しない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-03</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>担当者が内容を確認し、修正した。</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">二つの述語が担当者と内容を共有する候補を保持する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-04</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">並列中に依頼先が現れ、修正主体が切り替わり得る文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SUBJECT_DRIFT</code> または複数候補として扱い、主体を捏造しない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-05</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>顧客の確認</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">確認者と確認対象の候補を分け、文脈で決まらなければ <code>NOMINAL_ROLE_AMBIGUITY</code> とする</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-06</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>dev環境のデータをCSVに取り込む</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CSV が形式か到達点かを検査し、source、destination、format を混同しない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-07</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>今後エラーが多発する可能性がある</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">推敲後も可能性を保持し、断定へ変えない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-08</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">予定通知と異議連絡依頼を含む業務連絡</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">許可要求へ発話行為を変えない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-09</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">自分と相手側人物の確認行為</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">確認主体を確定してから尊敬語または謙譲語の方向を判定する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-10</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">URL、コード、ブランチ名、数値を含む技術文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">保護範囲を変更せず、source と target の方向を保存する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-11</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">語義またはゼロ項の候補が複数残る文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">候補を一つに決めず、共通して安全な修正だけを行うか原文を保持する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-12</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">analyzer を利用できない環境</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">親スキルが同じ最小出力契約で分析し、縮退した事実を報告する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-13</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">縮退実行で <code>arguments</code> が設定され、空の <code>args</code> と <code>omitted_args</code> が併存する分析メモ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">正規の <code>surface</code> と <code>arguments</code> を優先し、<code>verb</code>、<code>args</code>、<code>omitted_args</code> を導出して、競合を <code>ambiguities</code> に記録する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-14</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">見出し、リスト項目、表の行を脱落または並べ替えた、構文上は妥当な候補文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">原文との要素数、順序、階層、対応関係の不一致を <code>SEMANTIC_DRIFT</code> として検出する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-15</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">文分割または文結合を含む修復の一部だけで意味回帰が解消しない候補文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">依存する編集を含む原子的修復単位を原文へ戻し、候補文全体の意味と文書構造を再検証する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-16</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同じ表記の述語に、互いに異なる格フレームを持つ語義候補が複数残る文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">各項を <code>sense_id</code>、<code>frame_id</code>、<code>slot_id</code> で対応する候補へ結び、互換性のない意味役割を統合しない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-17</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>clear</code>、<code>ambiguous</code>、<code>unknown</code> のゼロ項が混在する分析メモ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">正規の <code>arguments</code> にはすべて保持し、旧 <code>omitted_args</code> には指示対象を一意に復元できる <code>clear</code> の項だけを投影する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-18</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">複数の語義候補で同じ省略参加者が同じ旧ラベルへ対応し、別の項では候補間の役割または指示対象が競合する分析メモ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">共通する <code>(legacy_label, referent)</code> は旧ビューへ1回だけ投影し、競合する項は投影せず <code>ambiguities</code> に残す</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_品質確認方法">14. 品質確認方法</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>AsciiDoc の変換を実行し、構文警告と欠落がないことを確認する。</p>
+</li>
+<li>
+<p><code>skill-creator</code> の validator で、変更した各スキルの frontmatter、名前、未完了プレースホルダーを確認する。</p>
+</li>
+<li>
+<p>検証シナリオごとに、スキル指示から期待する分析と失敗時挙動を一意に説明できるかレビューする。</p>
+</li>
+<li>
+<p><code>main</code> との差分を最大3巡レビューし、重大または高重要度の未解決指摘を0件にする。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_未確定事項">15. 未確定事項</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>外部 NLP 辞書を使わないため、語義と格フレーム候補の精度は実行するモデルと入力文脈に依存する。
+ただし、複数候補と <code>unknown</code> を保持し、確定不能な情報を補わないことで安全側に実装できる。
+実装を停止させる未確定事項はない。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_参考資料">16. 参考資料</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://aclanthology.org/P15-1093.pdf">Joint Case Argument Identification for Japanese Predicate Argument Structure Analysis</a></p>
+</li>
+<li>
+<p><a href="https://aclanthology.org/H01-1043.pdf">Japanese Case Frame Acquisition</a></p>
+</li>
+<li>
+<p><a href="https://kotoba.ninjal.ac.jp/digest/09/d-09-01/">ことば研究館: 日本語から生成文法理論へ</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+    </article>
+  </div>
+</body>
+</html>
