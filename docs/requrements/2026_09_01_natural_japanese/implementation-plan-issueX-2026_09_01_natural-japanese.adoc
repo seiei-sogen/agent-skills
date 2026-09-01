@@ -374,6 +374,13 @@ python /home/agir_wsl/.local/share/orca/codex-runtime-home/home/skills/.system/s
 
 3巡上限に達したため外部レビューの4巡目は行わず、修正後は validator、AsciiDoc 変換、HTML 契約、静的検査、`git diff --check`、差分の直接確認で回帰がないことを確認する。
 
+=== Phase 10 の main 基準レビュー
+
+最終 commit 後の `codex review --base main` で、P2 が1件見つかった。
+旧 `args` と `omitted_args` の YAML 例が説明文字列になり、v1 の mapping / sequence 型を壊す指摘である。
+
+`args: {}` と `omitted_args: []` に修正し、新 `arguments` から値を導出しながら旧コンテナ型を維持する規則を analyzer、親の縮退スキーマ、要件へ反映した。
+
 == 移行、互換性、ロールバック
 
 実行コード、外部依存、永続データを追加しないため、データ移行はない。

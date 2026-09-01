@@ -151,9 +151,9 @@ entities:
 predicates:
   - id: predicate-1
     surface: 原文の述語
-    verb: surface の互換エイリアス
-    args: arguments から導出する互換ビュー
-    omitted_args: zero の arguments から導出する互換ビュー
+    verb: 原文の述語
+    args: {}
+    omitted_args: []
     lemma: 見出し語
     predicate_type: verb | adjective | verbal-noun | event-noun | embedded
     sense_candidates: []
@@ -342,7 +342,7 @@ rewrite_policy: []
 * `natural-japanese-rewriter` と `natural-japanese-rewrite-analyzer` の名前、配置、暗黙起動方針は維持する。
 * 既存の `polish` 相当の通常出力は維持し、内部分析を既定で表示しない。
 * 既存 analyzer の `protected_ranges`、`rewrite_targets`、`adjuncts`、`ambiguities`、`rewrite_policy` は、拡張後も分析メモで表現できる状態を保つ。
-* 旧 predicate レコードの `verb`、`args`、`omitted_args` は、`schema_version: 2` の正規フィールドから導出する互換ビューとして保持する。判断時は正規の `surface` と `arguments` を優先する。
+* 旧 predicate レコードの `verb`、`args`、`omitted_args` は、`schema_version: 2` の正規フィールドから導出する互換ビューとして保持する。`args` は mapping、`omitted_args` は sequence の型を維持する。判断時は正規の `surface` と `arguments` を優先する。
 * 実行コード、永続データ、外部依存を追加しないため、データ移行とロールバック作業は不要である。
 * 問題があれば、変更した二つの `SKILL.md` を直前版へ戻すことでロールバックできる。
 

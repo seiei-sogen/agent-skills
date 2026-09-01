@@ -88,9 +88,9 @@ entities:
 predicates:
   - id: predicate-1
     surface: 原文の述語
-    verb: surface の互換エイリアス
-    args: arguments から導出する互換ビュー
-    omitted_args: zero の arguments から導出する互換ビュー
+    verb: 原文の述語
+    args: {}
+    omitted_args: []
     lemma: 見出し語
     predicate_type: verb | adjective | verbal-noun | event-noun | embedded
     sense_candidates: []

@@ -615,6 +615,7 @@ body {
 <li><a href="#_main_比較レビュー_1巡目">9.4. main 比較レビュー 1巡目</a></li>
 <li><a href="#_main_比較レビュー_2巡目">9.5. main 比較レビュー 2巡目</a></li>
 <li><a href="#_main_比較レビュー_3巡目">9.6. main 比較レビュー 3巡目</a></li>
+<li><a href="#_phase_10_の_main_基準レビュー">9.7. Phase 10 の main 基準レビュー</a></li>
 </ul>
 </li>
 <li><a href="#_移行互換性ロールバック">10. 移行、互換性、ロールバック</a></li>
@@ -1348,6 +1349,16 @@ python /home/agir_wsl/.local/share/orca/codex-runtime-home/home/skills/.system/s
 </div>
 <div class="paragraph">
 <p>3巡上限に達したため外部レビューの4巡目は行わず、修正後は validator、AsciiDoc 変換、HTML 契約、静的検査、<code>git diff --check</code>、差分の直接確認で回帰がないことを確認する。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_phase_10_の_main_基準レビュー">9.7. Phase 10 の main 基準レビュー</h3>
+<div class="paragraph">
+<p>最終 commit 後の <code>codex review --base main</code> で、P2 が1件見つかった。
+旧 <code>args</code> と <code>omitted_args</code> の YAML 例が説明文字列になり、v1 の mapping / sequence 型を壊す指摘である。</p>
+</div>
+<div class="paragraph">
+<p><code>args: {}</code> と <code>omitted_args: []</code> に修正し、新 <code>arguments</code> から値を導出しながら旧コンテナ型を維持する規則を analyzer、親の縮退スキーマ、要件へ反映した。</p>
 </div>
 </div>
 </div>

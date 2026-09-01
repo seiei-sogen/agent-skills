@@ -152,6 +152,7 @@ Phase 6: polish または diagnostic で出力
 
 `skills/natural-japanese-rewrite-analyzer/SKILL.md:101` の `schema_version: 2` では、`surface` と `arguments` を正規フィールドとする。
 旧 `verb`、`args`、`omitted_args` は、正規フィールドから導出する互換ビューとして保持する。
+`args` は mapping、`omitted_args` は sequence の v1 コンテナ型を維持する。
 
 互換ビューを正規フィールドと独立に編集すると不整合が生じるため、矛盾時は正規フィールドを優先し、矛盾自体を `ambiguities` に記録する。
 

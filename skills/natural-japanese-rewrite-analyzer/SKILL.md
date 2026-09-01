@@ -114,9 +114,9 @@ entities:
 predicates:
   - id: predicate-1
     surface: 原文の述語
-    verb: surface の互換エイリアス
-    args: arguments から導出する互換ビュー
-    omitted_args: zero の arguments から導出する互換ビュー
+    verb: 原文の述語
+    args: {}
+    omitted_args: []
     lemma: 見出し語
     predicate_type: verb | adjective | verbal-noun | event-noun | embedded
     sense_candidates: []
@@ -153,6 +153,7 @@ rewrite_policy: []
 `modality` は、可能性、義務、許可、推量、断定の強さなど、原文に存在する属性だけを持つ。
 `rewrite_policy` は修復案であり、確定不能な情報の補完を指示してはならない。
 `verb`、`args`、`omitted_args` は旧契約向けの互換ビューであり、正規の `surface` と `arguments` から導出する。
+`args` は表面助詞または旧ラベルをキーにした mapping、`omitted_args` は `realization: zero` の項を並べた sequence として、v1 のコンテナ型を維持する。
 両者が矛盾する場合は正規フィールドを優先し、矛盾自体を `ambiguities` へ記録する。
 
 ## 完了条件

@@ -916,9 +916,9 @@ entities:
 predicates:
   - id: predicate-1
     surface: 原文の述語
-    verb: surface の互換エイリアス
-    args: arguments から導出する互換ビュー
-    omitted_args: zero の arguments から導出する互換ビュー
+    verb: 原文の述語
+    args: {}
+    omitted_args: []
     lemma: 見出し語
     predicate_type: verb | adjective | verbal-noun | event-noun | embedded
     sense_candidates: []
@@ -1280,7 +1280,7 @@ rewrite_policy: []</code></pre>
 <p>既存 analyzer の <code>protected_ranges</code>、<code>rewrite_targets</code>、<code>adjuncts</code>、<code>ambiguities</code>、<code>rewrite_policy</code> は、拡張後も分析メモで表現できる状態を保つ。</p>
 </li>
 <li>
-<p>旧 predicate レコードの <code>verb</code>、<code>args</code>、<code>omitted_args</code> は、<code>schema_version: 2</code> の正規フィールドから導出する互換ビューとして保持する。判断時は正規の <code>surface</code> と <code>arguments</code> を優先する。</p>
+<p>旧 predicate レコードの <code>verb</code>、<code>args</code>、<code>omitted_args</code> は、<code>schema_version: 2</code> の正規フィールドから導出する互換ビューとして保持する。<code>args</code> は mapping、<code>omitted_args</code> は sequence の型を維持する。判断時は正規の <code>surface</code> と <code>arguments</code> を優先する。</p>
 </li>
 <li>
 <p>実行コード、永続データ、外部依存を追加しないため、データ移行とロールバック作業は不要である。</p>

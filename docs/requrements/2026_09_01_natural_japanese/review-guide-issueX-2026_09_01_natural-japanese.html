@@ -833,7 +833,8 @@ Phase 6: polish または diagnostic で出力</code></pre>
 <h3 id="_正規契約と互換ビューを分ける">5.4. 正規契約と互換ビューを分ける</h3>
 <div class="paragraph">
 <p><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:101</code> の <code>schema_version: 2</code> では、<code>surface</code> と <code>arguments</code> を正規フィールドとする。
-旧 <code>verb</code>、<code>args</code>、<code>omitted_args</code> は、正規フィールドから導出する互換ビューとして保持する。</p>
+旧 <code>verb</code>、<code>args</code>、<code>omitted_args</code> は、正規フィールドから導出する互換ビューとして保持する。
+<code>args</code> は mapping、<code>omitted_args</code> は sequence の v1 コンテナ型を維持する。</p>
 </div>
 <div class="paragraph">
 <p>互換ビューを正規フィールドと独立に編集すると不整合が生じるため、矛盾時は正規フィールドを優先し、矛盾自体を <code>ambiguities</code> に記録する。</p>
