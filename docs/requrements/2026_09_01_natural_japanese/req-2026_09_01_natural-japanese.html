@@ -948,7 +948,10 @@ rewrite_policy: []</code></pre>
 </div>
 <div class="paragraph">
 <p><code>modality</code> は、可能性、義務、許可、推量、断定の強さなど、原文に存在する属性だけを持つ。
-<code>graph_invariants</code> は、リライト後にも保つ述語、指示対象、意味役割、極性、モダリティを列挙する。</p>
+<code>graph_invariants</code> は、リライト後にも保つ述語、指示対象、意味役割、極性、モダリティを列挙する。
+<code>surface</code> と <code>arguments</code> を正規フィールドとする。
+<code>verb</code>、<code>args</code>、<code>omitted_args</code> は、analyzer 利用時と親スキルの縮退実行時のどちらでも正規フィールドから導出する互換ビューとする。
+<code>args</code> は表面助詞または旧ラベルをキーにした mapping、<code>omitted_args</code> は <code>realization: zero</code> の項を並べた sequence とし、正規フィールドと矛盾する場合は正規フィールドを優先して矛盾を <code>ambiguities</code> に記録する。</p>
 </div>
 </div>
 <div class="sect2">
@@ -1185,13 +1188,16 @@ rewrite_policy: []</code></pre>
 <p>保護範囲</p>
 </li>
 <li>
-<p>Markdown / AsciiDoc などの見出し階層、リストの入れ子、表、コードブロックを含む文書構造の妥当性</p>
+<p>Markdown / AsciiDoc などの見出し、リスト項目、表の行、コードブロックについて、原文と候補文の要素数、順序、階層、入れ子、境界、対応関係が一致すること</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
 <p>不一致があれば <code>SEMANTIC_DRIFT</code> として候補を棄却し、修正して同じ検査を再実行する。
-最大3巡で解消しない場合は該当箇所を原文へ戻し、必要なら <code>要確認</code> に加える。</p>
+最大3巡で解消しない場合は、該当箇所だけでなく、文の分割・結合や共有指示対象で結び付く編集を含む最小の原子的修復単位を原文へ戻す。
+原文へ戻した後の候補文全体へ Phase 1 と上位レイヤー分析を再実行し、意味不変条件と文書構造を原文ともう一度比較する。
+不一致が残る場合は復元単位を段落または構造ブロックへ広げ、最終候補の不一致が0件になるまで出力へ進まない。
+必要なら復元理由を <code>要確認</code> に加える。</p>
 </div>
 </div>
 <div class="sect2">
@@ -1199,6 +1205,8 @@ rewrite_policy: []</code></pre>
 <div class="paragraph">
 <p><code>natural-japanese-rewrite-analyzer</code> が利用できない場合も、親スキルは同じ述語項グラフ出力契約に沿って分析を行う。
 平坦な述語一覧だけで Phase を完了してはならない。
+縮退実行でも <code>surface</code> と <code>arguments</code> を正規フィールドとし、<code>verb</code>、<code>args</code>、<code>omitted_args</code> を正規フィールドから導出する。
+正規フィールドと互換ビューの競合解消、コンテナ型、曖昧性の記録規則も analyzer 利用時と同じにする。
 縮退した事実は最終報告へ含める。</p>
 </div>
 </div>
@@ -1374,16 +1382,16 @@ rewrite_policy: []</code></pre>
 <p>AC-10: 原文にない主体、原因、目的、時刻、確実性を作らない安全制約がある。</p>
 </li>
 <li>
-<p>AC-11: 推敲前後で述語項グラフと非グラフの意味不変条件を比較し、不一致を <code>SEMANTIC_DRIFT</code> として扱う。</p>
+<p>AC-11: 推敲前後で述語項グラフと非グラフの意味不変条件を比較し、文法的に妥当でも見出し、リスト項目、表の行、コードブロックの脱落・並べ替え・階層変更があれば <code>SEMANTIC_DRIFT</code> として扱う。</p>
 </li>
 <li>
-<p>AC-12: 3巡で意味回帰を解消できない箇所は原文へ戻し、必要なら <code>要確認</code> とする。</p>
+<p>AC-12: 3巡で意味回帰を解消できない箇所は、依存する編集を含む原子的修復単位で原文へ戻し、候補文全体を再検証してから、必要なら <code>要確認</code> とする。</p>
 </li>
 <li>
 <p>AC-13: 通常出力は本文中心のまま維持し、ユーザーが求めた場合だけ診断を出力する。</p>
 </li>
 <li>
-<p>AC-14: analyzer が利用できない場合も、親スキルが同じグラフ契約で縮退実行する。</p>
+<p>AC-14: analyzer が利用できない場合も、親スキルが同じグラフ契約で縮退実行し、正規フィールドから旧互換ビューを導出する。</p>
 </li>
 <li>
 <p>AC-15: 二つの <code>SKILL.md</code> が skill validator を通過し、frontmatter とスキル名を維持する。</p>
@@ -1471,6 +1479,21 @@ rewrite_policy: []</code></pre>
 <td class="tableblock halign-left valign-top"><p class="tableblock">T-12</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">analyzer を利用できない環境</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">親スキルが同じ最小出力契約で分析し、縮退した事実を報告する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-13</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">縮退実行で <code>arguments</code> が設定され、空の <code>args</code> と <code>omitted_args</code> が併存する分析メモ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">正規の <code>surface</code> と <code>arguments</code> を優先し、<code>verb</code>、<code>args</code>、<code>omitted_args</code> を導出して、競合を <code>ambiguities</code> に記録する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-14</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">見出し、リスト項目、表の行を脱落または並べ替えた、構文上は妥当な候補文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">原文との要素数、順序、階層、対応関係の不一致を <code>SEMANTIC_DRIFT</code> として検出する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-15</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">文分割または文結合を含む修復の一部だけで意味回帰が解消しない候補文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">依存する編集を含む原子的修復単位を原文へ戻し、候補文全体の意味と文書構造を再検証する</p></td>
 </tr>
 </tbody>
 </table>
