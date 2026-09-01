@@ -1,0 +1,525 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - text: For the complete documentation index, see
+    - link "llms.txt" [ref=e3] [cursor=pointer]:
+      - /url: /llms.txt
+    - text: . Markdown versions of documentation pages are available by appending
+    - code [ref=e4]: .md
+    - text: to the page URL.
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - link "ChatGPT" [ref=e7] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e12]:
+        - link "Home" [ref=e14] [cursor=pointer]:
+          - /url: /
+        - link "Docs" [ref=e16] [cursor=pointer]:
+          - /url: /docs
+        - link "Use cases" [ref=e18] [cursor=pointer]:
+          - /url: /use-cases
+        - link "Training" [ref=e20] [cursor=pointer]:
+          - /url: /training
+        - link "Resources" [ref=e22] [cursor=pointer]:
+          - /url: /resources
+      - generic [ref=e23]:
+        - link "Try ChatGPT" [ref=e27] [cursor=pointer]:
+          - /url: https://chatgpt.com/
+        - button "Toggle light and dark theme" [ref=e32] [cursor=pointer]
+        - button "Search the docs" [ref=e35] [cursor=pointer]
+  - navigation "Docs sections" [ref=e40]:
+    - link "Overview" [ref=e41] [cursor=pointer]:
+      - /url: /docs
+    - link "Features" [ref=e43] [cursor=pointer]:
+      - /url: /docs/features
+    - link "Configuration" [ref=e45] [cursor=pointer]:
+      - /url: /docs/configuration
+    - link "Developers" [ref=e47] [cursor=pointer]:
+      - /url: /docs/developers
+    - link "Security" [ref=e50] [cursor=pointer]:
+      - /url: /docs/security-administration
+    - link "Administration" [ref=e52] [cursor=pointer]:
+      - /url: /docs/administration
+  - generic [ref=e55]:
+    - navigation [ref=e57]:
+      - list [ref=e59]:
+        - listitem [ref=e60]:
+          - link "Overview" [ref=e61] [cursor=pointer]:
+            - /url: /docs/developers
+      - generic [ref=e63]:
+        - heading "Development workflows" [level=3] [ref=e64]
+        - list [ref=e65]:
+          - listitem [ref=e66]:
+            - link "Code review" [ref=e67] [cursor=pointer]:
+              - /url: /docs/code-review
+          - listitem [ref=e69]:
+            - link "Integrated terminal" [ref=e70] [cursor=pointer]:
+              - /url: /docs/integrated-terminal
+      - generic [ref=e72]:
+        - heading "Extend and automate" [level=3] [ref=e73]
+        - list [ref=e74]:
+          - listitem [ref=e75]:
+            - link "Build skills" [ref=e76] [cursor=pointer]:
+              - /url: /docs/build-skills
+          - listitem [ref=e78]:
+            - link "Build plugins" [ref=e79] [cursor=pointer]:
+              - /url: /docs/build-plugins
+          - listitem [ref=e81]:
+            - link "Site tools (WebMCP)" [ref=e82] [cursor=pointer]:
+              - /url: /docs/webmcp
+          - listitem [ref=e84]:
+            - link "Hooks" [ref=e85] [cursor=pointer]:
+              - /url: /docs/hooks
+      - generic [ref=e87]:
+        - heading "Environments" [level=3] [ref=e88]
+        - list [ref=e89]:
+          - listitem [ref=e90]:
+            - link "Modes" [ref=e91] [cursor=pointer]:
+              - /url: /docs/environments/modes
+          - listitem [ref=e93]:
+            - link "Local environments" [ref=e94] [cursor=pointer]:
+              - /url: /docs/environments/local-environment
+          - listitem [ref=e96]:
+            - link "Cloud environment" [ref=e97] [cursor=pointer]:
+              - /url: /docs/environments/cloud-environment
+          - listitem [ref=e99]:
+            - link "Git worktrees" [ref=e100] [cursor=pointer]:
+              - /url: /docs/environments/git-worktrees
+      - generic [ref=e102]:
+        - heading "Build with Codex" [level=3] [ref=e103]
+        - list [ref=e104]:
+          - listitem [ref=e105]:
+            - link "Codex SDK" [ref=e106] [cursor=pointer]:
+              - /url: /docs/codex-sdk
+          - listitem [ref=e108]:
+            - link "App Server" [ref=e109] [cursor=pointer]:
+              - /url: /docs/app-server
+          - listitem [ref=e111]:
+            - link "MCP Server" [ref=e112] [cursor=pointer]:
+              - /url: /docs/mcp-server
+          - listitem [ref=e114]:
+            - link "GitHub Action" [ref=e115] [cursor=pointer]:
+              - /url: /docs/github-action
+          - listitem [ref=e117]:
+            - link "Non-interactive mode" [ref=e118] [cursor=pointer]:
+              - /url: /docs/non-interactive-mode
+      - generic [ref=e120]:
+        - heading "Third-party integrations" [level=3] [ref=e121]
+        - list [ref=e122]:
+          - listitem [ref=e123]:
+            - link "GitHub" [ref=e124] [cursor=pointer]:
+              - /url: /docs/third-party/github
+          - listitem [ref=e126]:
+            - link "GitLab (Beta)" [ref=e127] [cursor=pointer]:
+              - /url: /docs/third-party/gitlab
+          - listitem [ref=e129]:
+            - link "Slack" [ref=e130] [cursor=pointer]:
+              - /url: /docs/third-party/slack
+          - listitem [ref=e132]:
+            - link "Linear" [ref=e133] [cursor=pointer]:
+              - /url: /docs/third-party/linear
+      - generic [ref=e135]:
+        - heading "Reference" [level=3] [ref=e136]
+        - list [ref=e137]:
+          - listitem [ref=e138]:
+            - link "CLI customization" [ref=e139] [cursor=pointer]:
+              - /url: /docs/cli-customization
+          - listitem [ref=e141]:
+            - link "Developer commands" [ref=e142] [cursor=pointer]:
+              - /url: /docs/developer-commands
+          - listitem [ref=e144]:
+            - link "Developer settings" [ref=e145] [cursor=pointer]:
+              - /url: /docs/developer-settings
+    - main [ref=e147]:
+      - generic [ref=e149]:
+        - generic [ref=e150]:
+          - navigation [ref=e152]:
+            - list [ref=e156]:
+              - listitem [ref=e157]:
+                - link "How ChatGPT and Codex use skills" [ref=e158] [cursor=pointer]:
+                  - /url: "#__codexlocalizedvalueprops__codextranslations-u0018-how-chatgpt-and-codex-use-skills"
+              - listitem [ref=e159]:
+                - link "Create a skill" [ref=e160] [cursor=pointer]:
+                  - /url: "#__codexlocalizedvalueprops__codextranslations-u0023-create-a-skill"
+              - listitem [ref=e161]:
+                - link "Where Codex loads local skills" [ref=e162] [cursor=pointer]:
+                  - /url: "#__codexlocalizedvalueprops__codextranslations-u0029-where-codex-loads-local-skills"
+              - listitem [ref=e163]:
+                - link "Distribute skills with plugins" [ref=e164] [cursor=pointer]:
+                  - /url: "#__codexlocalizedvalueprops__codextranslations-u0048-distribute-skills-with-plugins"
+              - listitem [ref=e165]:
+                - link "Install curated skills for local use" [ref=e166] [cursor=pointer]:
+                  - /url: "#__codexlocalizedvalueprops__codextranslations-u0051-install-curated-skills-for-local-use"
+              - listitem [ref=e167]:
+                - link "Enable or disable local Codex skills" [ref=e168] [cursor=pointer]:
+                  - /url: "#__codexlocalizedvalueprops__codextranslations-u0055-enable-or-disable-local-codex-skills"
+              - listitem [ref=e169]:
+                - link "Optional metadata" [ref=e170] [cursor=pointer]:
+                  - /url: "#__codexlocalizedvalueprops__codextranslations-u0058-optional-metadata"
+              - listitem [ref=e171]:
+                - link "Best practices" [ref=e172] [cursor=pointer]:
+                  - /url: "#__codexlocalizedvalueprops__codextranslations-u0061-best-practices"
+          - button "Copy Page" [ref=e174] [cursor=pointer]
+        - generic [ref=e179]:
+          - generic [ref=e181]:
+            - heading "Build skills" [level=1] [ref=e183]
+            - paragraph [ref=e184]: Give ChatGPT and Codex new capabilities and expertise
+          - article [ref=e185]:
+            - paragraph [ref=e186]:
+              - text: Use agent skills to extend ChatGPT and Codex with task-specific capabilities. A skill packages instructions, resources, and optional scripts so either product can follow a workflow reliably. Skills build on the
+              - link "open agent skills standard" [ref=e187] [cursor=pointer]:
+                - /url: https://agentskills.io
+              - text: .
+            - paragraph [ref=e188]:
+              - text: Skills are the authoring format for reusable workflows. Plugins distribute reusable skills and connectors through the universal plugin directory shared by ChatGPT and Codex. Plugins work in Chat and Work across ChatGPT on the web, desktop, and mobile, in Codex in the ChatGPT desktop app, and through Codex CLI. Use skills to design the workflow itself, then package it as a
+              - link "plugin" [ref=e189] [cursor=pointer]:
+                - /url: https://developers.openai.com/plugins/build/plugins
+              - text: when you want other people to install it.
+            - paragraph [ref=e190]: Standalone skills are available in the ChatGPT desktop app, Codex CLI, and IDE extension. Skills bundled in plugins are also available in Chat and Work across ChatGPT on the web, desktop, and mobile.
+            - paragraph [ref=e191]:
+              - text: In the ChatGPT desktop app, open
+              - strong [ref=e192]: Skills
+              - text: in the sidebar to view and explore skills created across your projects.
+            - img "Skills picker showing available skills in the ChatGPT desktop app" [ref=e198]:
+              - generic [ref=e202]:
+                - generic [ref=e203]:
+                  - generic [ref=e204]:
+                    - generic [ref=e208]:
+                      - generic [ref=e209]: Atlas Control (macOS)
+                      - generic [ref=e210]: Use the bundled CLI to control Atlas and inspect local browser data.
+                    - generic [ref=e211]: Personal
+                  - generic [ref=e212]:
+                    - generic [ref=e215]:
+                      - generic [ref=e216]: Exec Plan
+                      - generic [ref=e217]: Create, maintain, and execute long-form execution plans ("ExecPlans") for complex work.
+                    - generic [ref=e218]: Personal
+                  - generic [ref=e219]:
+                    - generic [ref=e222]:
+                      - generic [ref=e223]: GitHub Fix CI
+                      - generic [ref=e224]: Debug failing GitHub Actions CI
+                    - generic [ref=e225]: Personal
+                  - generic [ref=e226]:
+                    - generic [ref=e230]:
+                      - generic [ref=e231]: Linear
+                      - generic [ref=e232]: Manage Linear issues in Codex
+                    - generic [ref=e233]: Personal
+                  - generic [ref=e234]:
+                    - generic [ref=e239]:
+                      - generic [ref=e240]: OpenAI Docs
+                      - generic [ref=e241]: Reference the official OpenAI Developer docs
+                    - generic [ref=e242]: Personal
+                  - generic [ref=e243]:
+                    - generic [ref=e246]:
+                      - generic [ref=e247]: Yeet
+                      - generic [ref=e248]: Stage, commit, and open PR
+                    - generic [ref=e249]: Personal
+                  - generic [ref=e250]:
+                    - generic [ref=e251]:
+                      - generic [ref=e252]: Skill Creator
+                      - generic [ref=e253]: Create or update a skill
+                    - generic [ref=e254]: System
+                  - generic [ref=e255]:
+                    - generic [ref=e258]:
+                      - generic [ref=e259]: Skill Installer
+                      - generic [ref=e260]: Install curated skills from openai/skills or other repos
+                    - generic [ref=e261]: System
+                - generic [ref=e262]:
+                  - generic [ref=e263]: $
+                  - generic [ref=e265]:
+                    - generic [ref=e268]: 5.6 Sol
+                    - generic [ref=e272]: Extra High
+            - paragraph [ref=e279]:
+              - text: Skills use
+              - strong [ref=e280]: progressive disclosure
+              - text: to manage context efficiently. ChatGPT and Codex start with each skill's name and description, then load the full
+              - code [ref=e281]: SKILL.md
+              - text: instructions when they decide to use that skill.
+            - paragraph [ref=e282]: In Codex, the initial list also includes each skill's file path. To avoid crowding out the rest of the prompt, this list uses at most 2% of the model's context window, or 8,000 characters when the context window is unknown. If many skills are installed, Codex shortens skill descriptions first. For large skill sets, Codex may omit some skills from the initial list and show a warning.
+            - paragraph [ref=e283]: This budget applies only to the initial skills list. When Codex selects a skill, it still reads the full SKILL.md instructions for that skill.
+            - paragraph [ref=e284]:
+              - text: A skill is a directory with a
+              - code [ref=e285]: SKILL.md
+              - text: file plus optional scripts and references. The
+              - code [ref=e286]: SKILL.md
+              - text: file must include
+              - code [ref=e287]: name
+              - text: and
+              - code [ref=e288]: description
+              - text: .
+            - tree [ref=e291]:
+              - listitem [ref=e292]:
+                - group "my-skill/ directory" [ref=e293]:
+                  - generic "my-skill/" [ref=e294]
+                  - group [ref=e301]:
+                    - listitem [ref=e302]:
+                      - generic [ref=e303]:
+                        - generic [ref=e307]: SKILL.md
+                        - generic [ref=e309]: "Required: instructions + metadata"
+                    - listitem [ref=e310]:
+                      - generic [ref=e311]:
+                        - generic [ref=e315]: scripts/
+                        - generic [ref=e317]: "Optional: executable code"
+                    - listitem [ref=e318]:
+                      - generic [ref=e319]:
+                        - generic [ref=e323]: references/
+                        - generic [ref=e325]: "Optional: documentation"
+                    - listitem [ref=e326]:
+                      - generic [ref=e327]:
+                        - generic [ref=e331]: assets/
+                        - generic [ref=e333]: "Optional: templates, resources"
+                    - listitem [ref=e334]:
+                      - group "agents/ directory" [ref=e335]:
+                        - generic "agents/" [ref=e336]
+                        - group [ref=e343]:
+                          - listitem [ref=e344]:
+                            - generic [ref=e345]:
+                              - generic [ref=e350]: openai.yaml
+                              - generic [ref=e352]: "Optional: appearance and dependencies"
+            - heading "How ChatGPT and Codex use skills Copy link to __codexlocalizedvalueprops__codextranslations u0018 how chatgpt and codex use skills" [level=2] [ref=e353]:
+              - generic [ref=e354]: How ChatGPT and Codex use skills
+              - button "Copy link to __codexlocalizedvalueprops__codextranslations u0018 how chatgpt and codex use skills" [ref=e355] [cursor=pointer]
+            - paragraph [ref=e358]: "ChatGPT and Codex can activate skills in two ways:"
+            - list [ref=e359]:
+              - listitem [ref=e360]:
+                - strong [ref=e361]: "Explicit invocation:"
+                - text: Include the skill directly in your prompt. In ChatGPT, type
+                - code [ref=e362]: "@"
+                - text: to select a skill. In Codex CLI or the IDE extension, run
+                - code [ref=e363]: /skills
+                - text: or type
+                - code [ref=e364]: $
+                - text: to mention a skill.
+              - listitem [ref=e365]:
+                - strong [ref=e366]: "Implicit invocation:"
+                - text: ChatGPT or Codex can choose a skill when your task matches the skill
+                - code [ref=e367]: description
+                - text: .
+            - paragraph [ref=e368]:
+              - text: Because implicit matching depends on
+              - code [ref=e369]: description
+              - text: ", write concise descriptions with clear scope and boundaries. Front-load the key use case and trigger words so a host can still match the skill if descriptions are shortened."
+            - heading "Create a skill Copy link to __codexlocalizedvalueprops__codextranslations u0023 create a skill" [level=2] [ref=e370]:
+              - generic [ref=e371]: Create a skill
+              - button "Copy link to __codexlocalizedvalueprops__codextranslations u0023 create a skill" [ref=e372] [cursor=pointer]
+            - paragraph [ref=e375]:
+              - text: If you already know the workflow and it's easier to show than describe, use
+              - link "Record & Replay" [ref=e376] [cursor=pointer]:
+                - /url: /docs/extend/record-and-replay
+              - text: . The recorder captures the workflow, inspects the steps, and drafts a reusable skill from the demonstration.
+            - paragraph [ref=e377]:
+              - text: If you want to describe the skill instead, use the built-in creator. In ChatGPT Work, invoke it as
+              - code [ref=e378]: "@skill-creator"
+              - text: ". In Codex, invoke it as:"
+            - generic [ref=e379]:
+              - code [ref=e380]:
+                - generic [ref=e381]: $skill-creator
+              - generic [ref=e382]:
+                - button "Copy code to clipboard" [ref=e383] [cursor=pointer]
+                - status [ref=e386]
+            - paragraph [ref=e387]: The creator asks what the skill does, when it should trigger, and whether it should stay instruction-only or include scripts. Instruction-only is the default.
+            - paragraph [ref=e388]:
+              - text: You can also create a skill manually by creating a folder with a
+              - code [ref=e389]: SKILL.md
+              - text: "file:"
+            - generic [ref=e390]:
+              - code [ref=e391]:
+                - generic [ref=e392]: "---"
+                - generic [ref=e393]: "name: skill-name"
+                - generic [ref=e394]: "description: Explain exactly when this skill should and should not trigger."
+                - generic [ref=e395]: "---"
+                - generic [ref=e396]: Skill instructions for ChatGPT or Codex to follow.
+              - generic [ref=e397]:
+                - button "Copy code to clipboard" [ref=e398] [cursor=pointer]
+                - status [ref=e401]
+            - paragraph [ref=e402]: Codex detects skill changes automatically. If an update doesn't appear, restart Codex.
+            - heading "Where Codex loads local skills Copy link to __codexlocalizedvalueprops__codextranslations u0029 where codex loads local skills" [level=2] [ref=e403]:
+              - generic [ref=e404]: Where Codex loads local skills
+              - button "Copy link to __codexlocalizedvalueprops__codextranslations u0029 where codex loads local skills" [ref=e405] [cursor=pointer]
+            - paragraph [ref=e408]:
+              - text: Codex reads skills from repository, user, admin, and system locations. For repositories, Codex scans
+              - code [ref=e409]: .agents/skills
+              - text: in every directory from your current working directory up to the repository root. If two skills share the same
+              - code [ref=e410]: name
+              - text: ", Codex doesn't merge them; both can appear in skill selectors."
+            - table [ref=e412]:
+              - rowgroup [ref=e413]:
+                - row [ref=e414]:
+                  - columnheader "Skill Scope" [ref=e415]
+                  - columnheader "Location" [ref=e416]
+                  - columnheader "Suggested use" [ref=e417]
+              - rowgroup [ref=e418]:
+                - row [ref=e419]:
+                  - cell [ref=e420]:
+                    - code [ref=e421]: REPO
+                  - cell [ref=e422]:
+                    - code [ref=e423]: $CWD/.agents/skills
+                    - text: "Current working directory: where you launch Codex."
+                  - cell "If you're in a repository or code environment, teams can check in skills relevant to a working folder. For example, skills only relevant to a microservice or a module." [ref=e424]
+                - row [ref=e425]:
+                  - cell [ref=e426]:
+                    - code [ref=e427]: REPO
+                  - cell [ref=e428]:
+                    - code [ref=e429]: $CWD/../.agents/skills
+                    - text: A folder above CWD when you launch Codex inside a Git repository.
+                  - cell "If you're in a repository with nested folders, organizations can check in skills relevant to a shared area in a parent folder." [ref=e430]
+                - row [ref=e431]:
+                  - cell [ref=e432]:
+                    - code [ref=e433]: REPO
+                  - cell [ref=e434]:
+                    - code [ref=e435]: $REPO_ROOT/.agents/skills
+                    - text: The topmost root folder when you launch Codex inside a Git repository.
+                  - cell "If you're in a repository with nested folders, organizations can check in skills relevant to everyone using the repository. These serve as root skills available to any subfolder in the repository." [ref=e436]
+                - row [ref=e437]:
+                  - cell [ref=e438]:
+                    - code [ref=e439]: USER
+                  - cell [ref=e440]:
+                    - code [ref=e441]: $HOME/.agents/skills
+                    - text: Any skills checked into the user's personal folder.
+                  - cell "Use to curate skills relevant to a user that apply to any repository the user may work in." [ref=e442]
+                - row [ref=e443]:
+                  - cell [ref=e444]:
+                    - code [ref=e445]: ADMIN
+                  - cell [ref=e446]:
+                    - code [ref=e447]: /etc/codex/skills
+                    - text: Any skills checked into the machine or container in a shared, system location.
+                  - cell "Use for SDK scripts, automation, and for checking in default admin skills available to each user on the machine." [ref=e448]
+                - row [ref=e449]:
+                  - cell [ref=e450]:
+                    - code [ref=e451]: SYSTEM
+                  - cell "Bundled with Codex by OpenAI." [ref=e452]
+                  - cell "Useful skills relevant to a broad audience such as the skill-creator and plan skills. Available to everyone when they start Codex." [ref=e453]
+            - paragraph [ref=e454]: Codex supports symlinked skill folders and follows the symlink target when scanning these locations.
+            - paragraph [ref=e455]:
+              - text: These locations are for authoring and local discovery. When you want to distribute reusable skills beyond a single repo, or optionally bundle them with connectors, use
+              - link "plugins" [ref=e456] [cursor=pointer]:
+                - /url: https://developers.openai.com/plugins/build/plugins
+              - text: .
+            - heading "Distribute skills with plugins Copy link to __codexlocalizedvalueprops__codextranslations u0048 distribute skills with plugins" [level=2] [ref=e457]:
+              - generic [ref=e458]: Distribute skills with plugins
+              - button "Copy link to __codexlocalizedvalueprops__codextranslations u0048 distribute skills with plugins" [ref=e459] [cursor=pointer]
+            - paragraph [ref=e462]:
+              - text: Direct skill folders are best for local authoring and repo-scoped workflows. If you want to distribute a reusable skill, bundle two or more skills together, or ship a skill alongside a connector, package them as a
+              - link "plugin" [ref=e463] [cursor=pointer]:
+                - /url: https://developers.openai.com/plugins/build/plugins
+              - text: .
+            - paragraph [ref=e464]: Plugins can include one or more skills. They can also optionally bundle registered MCP server connections, bundled MCP server configuration, and presentation assets in a single package.
+            - heading "Install curated skills for local use Copy link to __codexlocalizedvalueprops__codextranslations u0051 install curated skills for local use" [level=2] [ref=e465]:
+              - generic [ref=e466]: Install curated skills for local use
+              - button "Copy link to __codexlocalizedvalueprops__codextranslations u0051 install curated skills for local use" [ref=e467] [cursor=pointer]
+            - paragraph [ref=e470]:
+              - text: To add curated skills beyond the built-ins for your own local Codex setup, use
+              - code [ref=e471]: $skill-installer
+              - text: . For example, to install the
+              - code [ref=e472]: $linear
+              - text: "skill:"
+            - generic [ref=e473]:
+              - code [ref=e474]:
+                - generic [ref=e475]: $skill-installer linear
+              - generic [ref=e476]:
+                - button "Copy code to clipboard" [ref=e477] [cursor=pointer]
+                - status [ref=e480]
+            - paragraph [ref=e481]: You can also prompt the installer to download skills from other repositories. Codex detects newly installed skills automatically; if one doesn't appear, restart Codex.
+            - paragraph [ref=e482]: Use this for local setup and experimentation. For reusable distribution of your own skills, prefer plugins.
+            - heading "Enable or disable local Codex skills Copy link to __codexlocalizedvalueprops__codextranslations u0055 enable or disable local codex skills" [level=2] [ref=e483]:
+              - generic [ref=e484]: Enable or disable local Codex skills
+              - button "Copy link to __codexlocalizedvalueprops__codextranslations u0055 enable or disable local codex skills" [ref=e485] [cursor=pointer]
+            - paragraph [ref=e488]:
+              - text: Use
+              - code [ref=e489]: "[[skills.config]]"
+              - text: entries in
+              - code [ref=e490]: ~/.codex/config.toml
+              - text: "to disable a skill without deleting it:"
+            - generic [ref=e491]:
+              - code [ref=e492]:
+                - generic [ref=e493]: "[[skills.config]]"
+                - generic [ref=e494]: path = "/path/to/skill/SKILL.md"
+                - generic [ref=e495]: enabled = false
+              - generic [ref=e496]:
+                - button "Copy code to clipboard" [ref=e497] [cursor=pointer]
+                - status [ref=e500]
+            - paragraph [ref=e501]:
+              - text: Restart Codex after changing
+              - code [ref=e502]: ~/.codex/config.toml
+              - text: .
+            - heading "Optional metadata Copy link to __codexlocalizedvalueprops__codextranslations u0058 optional metadata" [level=2] [ref=e503]:
+              - generic [ref=e504]: Optional metadata
+              - button "Copy link to __codexlocalizedvalueprops__codextranslations u0058 optional metadata" [ref=e505] [cursor=pointer]
+            - paragraph [ref=e508]:
+              - text: Add
+              - code [ref=e509]: agents/openai.yaml
+              - text: to configure UI metadata in the
+              - link "ChatGPT desktop app" [ref=e510] [cursor=pointer]:
+                - /url: /docs/app
+              - text: ", to set invocation policy, and to declare tool dependencies for a more seamless experience with using the skill."
+            - generic [ref=e511]:
+              - code [ref=e512]:
+                - generic [ref=e513]: "interface:"
+                - generic [ref=e514]: "display_name: \"Optional user-facing name\""
+                - generic [ref=e515]: "short_description: \"Optional user-facing description\""
+                - generic [ref=e516]: "icon_small: \"./assets/small-logo.svg\""
+                - generic [ref=e517]: "icon_large: \"./assets/large-logo.png\""
+                - generic [ref=e518]: "brand_color: \"#3B82F6\""
+                - generic [ref=e519]: "default_prompt: \"Optional surrounding prompt to use the skill with\""
+                - generic [ref=e520]: "policy:"
+                - generic [ref=e521]: "allow_implicit_invocation: false"
+                - generic [ref=e522]: "dependencies:"
+                - generic [ref=e523]: "tools:"
+                - generic [ref=e524]: "- type: \"mcp\""
+                - generic [ref=e525]: "value: \"openaiDeveloperDocs\""
+                - generic [ref=e526]: "description: \"OpenAI Docs MCP server\""
+                - generic [ref=e527]: "transport: \"streamable_http\""
+                - generic [ref=e528]: "url: \"https://developers.openai.com/mcp\""
+              - generic [ref=e529]:
+                - button "Copy code to clipboard" [ref=e530] [cursor=pointer]
+                - status [ref=e533]
+            - paragraph [ref=e534]:
+              - code [ref=e535]: allow_implicit_invocation
+              - text: "(default:"
+              - code [ref=e536]: "true"
+              - text: "): When"
+              - code [ref=e537]: "false"
+              - text: ", Codex won't implicitly invoke the skill based on user prompt; explicit"
+              - code [ref=e538]: $skill
+              - text: invocation still works.
+            - heading "Best practices Copy link to __codexlocalizedvalueprops__codextranslations u0061 best practices" [level=2] [ref=e539]:
+              - generic [ref=e540]: Best practices
+              - button "Copy link to __codexlocalizedvalueprops__codextranslations u0061 best practices" [ref=e541] [cursor=pointer]
+            - list [ref=e544]:
+              - listitem [ref=e545]: Keep each skill focused on one job.
+              - listitem [ref=e546]: Prefer instructions over scripts unless you need deterministic behavior or external tooling.
+              - listitem [ref=e547]: Write imperative steps with explicit inputs and outputs.
+              - listitem [ref=e548]: Test prompts against the skill description to confirm the right trigger behavior.
+            - paragraph [ref=e549]:
+              - text: For more examples, see
+              - link "GitHub CI repair" [ref=e550] [cursor=pointer]:
+                - /url: https://github.com/openai/skills/tree/main/skills/.curated/gh-fix-ci
+              - text: ","
+              - link "PDF" [ref=e551] [cursor=pointer]:
+                - /url: https://github.com/openai/skills/tree/main/skills/.curated/pdf
+              - text: ","
+              - link "Linear" [ref=e552] [cursor=pointer]:
+                - /url: https://github.com/openai/skills/tree/main/skills/.curated/linear
+              - text: ","
+              - link "openai/skills" [ref=e553] [cursor=pointer]:
+                - /url: https://github.com/openai/skills
+              - text: ", and the"
+              - link "agent skills specification" [ref=e554] [cursor=pointer]:
+                - /url: https://agentskills.io/specification
+              - text: . For installable distribution, prefer
+              - link "plugins" [ref=e555] [cursor=pointer]:
+                - /url: https://developers.openai.com/plugins/build/plugins
+              - text: .
+      - navigation [ref=e558]:
+        - link "Next Build plugins" [ref=e560] [cursor=pointer]:
+          - /url: /docs/build-plugins
+          - generic [ref=e561]:
+            - generic [ref=e562]: Next
+            - generic [ref=e563]: Build plugins
+  - generic:
+    - button "Ask AI" [ref=e567] [cursor=pointer]
+    - dialog [ref=e569]:
+      - banner [ref=e570]:
+        - heading "Docs agent" [level=2] [ref=e571]
+        - generic [ref=e572]:
+          - button "Start a new docs agent chat" [ref=e573] [cursor=pointer]
+          - button "Close docs agent" [ref=e576] [cursor=pointer]
+      - paragraph [ref=e581]: Loading docs agent...
