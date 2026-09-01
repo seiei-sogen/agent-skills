@@ -1,0 +1,1079 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data: https: http:; style-src 'unsafe-inline'; font-src 'self' data:;">
+  <meta name="generator" content="asciidoc-to-colorful-html">
+  <title>述語項グラフに基づく natural-japanese-rewriter 強化 レビューガイド</title>
+  <style>
+/*
+ * Standalone Asciidoctor theme.
+ * The palette and document treatments are adapted from
+ * document-base/supplemental-ui/css/custom.css.
+ */
+
+:root {
+  color-scheme: light;
+  --color-ink: #23354a;
+  --color-muted: #607286;
+  --color-primary: #176b87;
+  --color-primary-dark: #123f5d;
+  --color-primary-soft: #e9f5f7;
+  --color-secondary: #6d52a3;
+  --color-secondary-soft: #f1edfa;
+  --color-accent: #d98716;
+  --color-positive: #2f805d;
+  --color-danger: #b64c55;
+  --color-border: #c9d9e3;
+  --color-code-bg: #f3f6f8;
+  --color-surface: #ffffff;
+  --shadow-page: 0 1.4rem 4rem rgb(25 64 88 / 15%);
+  --shadow-soft: 0 0.25rem 1rem rgb(31 75 98 / 9%);
+  --radius-large: 1rem;
+  --radius-medium: 0.55rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 20rem;
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--color-ink);
+  background:
+    radial-gradient(circle at 12% 8%, rgb(64 176 174 / 18%), transparent 28rem),
+    radial-gradient(circle at 88% 12%, rgb(126 93 184 / 13%), transparent 25rem),
+    linear-gradient(145deg, #eef7f8 0%, #f8f7fc 52%, #fff8ed 100%);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP",
+    "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+::selection {
+  color: #142b3c;
+  background: #bde8ed;
+}
+
+.page-frame {
+  width: min(74rem, calc(100% - 2rem));
+  margin: 2.5rem auto;
+}
+
+.doc {
+  position: relative;
+  min-width: 0;
+  padding: clamp(1.4rem, 4vw, 4rem);
+  overflow-wrap: anywhere;
+  border: 1px solid rgb(195 216 226 / 85%);
+  border-radius: var(--radius-large);
+  background: #fff;
+  box-shadow: var(--shadow-page);
+}
+
+.doc::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 0.38rem;
+  border-radius: var(--radius-large) var(--radius-large) 0 0;
+  background: linear-gradient(90deg, var(--color-primary), #43a6a1 48%, var(--color-secondary));
+  content: "";
+}
+
+.doc h1,
+.doc h2,
+.doc h3,
+.doc h4,
+.doc h5,
+.doc h6 {
+  color: var(--color-primary-dark);
+  font-weight: 750;
+  line-height: 1.4;
+  letter-spacing: 0.015em;
+  scroll-margin-top: 1.5rem;
+}
+
+.doc h1,
+.doc #header > h1 {
+  margin: 0 0 2.3rem;
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: 0.025em;
+}
+
+.doc h1::after,
+.doc #header > h1::after {
+  display: block;
+  width: 5.4rem;
+  height: 0.32rem;
+  margin-top: 0.8rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-primary), #43a6a1, var(--color-secondary));
+  content: "";
+}
+
+.doc h2 {
+  margin: 2.8rem 0 1.2rem;
+  padding: 0.68rem 1rem 0.68rem 1.1rem;
+  border-left: 0.34rem solid var(--color-primary);
+  border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
+  background: linear-gradient(90deg, var(--color-primary-soft), #f8fbfc 72%, transparent);
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+}
+
+.doc h3 {
+  margin: 2.25rem 0 0.9rem;
+  padding-bottom: 0.38rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: clamp(1.22rem, 2.3vw, 1.5rem);
+}
+
+.doc h4 {
+  margin: 1.8rem 0 0.7rem;
+  color: #285d72;
+  font-size: 1.14rem;
+}
+
+.doc h5,
+.doc h6 {
+  margin: 1.5rem 0 0.55rem;
+  font-size: 1rem;
+}
+
+.doc p,
+.doc li,
+.doc dd {
+  line-height: 1.82;
+}
+
+.doc p {
+  margin: 0.8rem 0 1rem;
+}
+
+.doc a {
+  color: #086f91;
+  text-decoration-color: #76adbd;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+.doc a:hover {
+  color: #084f70;
+  text-decoration-color: currentcolor;
+}
+
+.doc ul,
+.doc ol {
+  padding-left: 1.55rem;
+}
+
+.doc li + li {
+  margin-top: 0.28rem;
+}
+
+.doc li::marker {
+  color: var(--color-primary);
+  font-weight: 750;
+}
+
+.doc dl dt {
+  margin-top: 1rem;
+  color: var(--color-primary-dark);
+  font-weight: 750;
+}
+
+.doc hr {
+  height: 1px;
+  margin: 2.4rem 0;
+  border: 0;
+  background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+}
+
+.doc #toc,
+.doc .toc {
+  margin: 1.6rem 0 2.2rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid #cddde5;
+  border-radius: var(--radius-medium);
+  background: linear-gradient(135deg, #f1f9fa, #f7f4fc);
+  box-shadow: var(--shadow-soft);
+}
+
+.doc #toctitle {
+  margin-bottom: 0.45rem;
+  color: var(--color-primary-dark);
+  font-weight: 800;
+}
+
+.doc #toc ul {
+  margin: 0.3rem 0;
+}
+
+.doc table.tableblock {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 1.6rem 0 1.9rem;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  border-collapse: collapse;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.doc table.tableblock thead {
+  color: #fff;
+  background: linear-gradient(90deg, var(--color-primary-dark), var(--color-primary));
+}
+
+.doc table.tableblock th,
+.doc table.tableblock td {
+  padding: 0.72rem 0.85rem;
+  border: 1px solid #d7e2e8;
+  text-align: left;
+  vertical-align: top;
+}
+
+.doc table.tableblock th {
+  font-weight: 750;
+}
+
+.doc table.tableblock tbody tr:nth-child(even) {
+  background: #f5f9fa;
+}
+
+.doc table.tableblock tbody tr:hover {
+  background: #edf6f7;
+}
+
+.doc :not(pre) > code,
+.doc kbd {
+  padding: 0.12em 0.4em;
+  border: 1px solid #d6e0e6;
+  border-radius: 0.3rem;
+  color: #87421f;
+  background: var(--color-code-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+.doc kbd {
+  color: #36495a;
+  background: linear-gradient(#fff, #edf1f4);
+  box-shadow: 0 0.12rem 0 #c3ced5;
+}
+
+.doc pre {
+  max-width: 100%;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid #cbd8df;
+  border-left: 0.26rem solid var(--color-primary);
+  border-radius: var(--radius-medium);
+  color: #213446;
+  background: #f4f7f9;
+  box-shadow: var(--shadow-soft);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+  line-height: 1.62;
+  tab-size: 4;
+}
+
+.doc pre code {
+  display: block;
+  padding: 1rem 1.1rem;
+  color: inherit;
+  background: transparent;
+}
+
+.doc .listingblock,
+.doc .literalblock {
+  margin: 1.35rem 0 1.65rem;
+}
+
+.doc .quoteblock blockquote {
+  margin: 1.4rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 0.32rem solid #5b9da5;
+  border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
+  color: #40566a;
+  background: #f2f8f8;
+}
+
+.doc .quoteblock .attribution {
+  margin-top: -0.9rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.doc .sidebarblock,
+.doc .exampleblock > .content {
+  margin: 1.5rem 0;
+  padding: 1rem 1.2rem;
+  border: 1px solid #d8d0e8;
+  border-radius: var(--radius-medium);
+  background: linear-gradient(135deg, #faf8ff, var(--color-secondary-soft));
+  box-shadow: var(--shadow-soft);
+}
+
+.doc .admonitionblock {
+  margin: 1.5rem 0;
+  overflow: hidden;
+  border: 1px solid #c8dce2;
+  border-left: 0.32rem solid var(--color-primary);
+  border-radius: var(--radius-medium);
+  background: #f5fafb;
+  box-shadow: var(--shadow-soft);
+}
+
+.doc .admonitionblock > table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+}
+
+.doc .admonitionblock td.icon {
+  width: 7.5rem;
+  padding: 0.95rem 0.75rem;
+  color: var(--color-primary-dark);
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.doc .admonitionblock td.content {
+  padding: 0.95rem 1rem;
+  border-left: 1px solid rgb(188 211 221 / 85%);
+  background: transparent;
+}
+
+.doc .admonitionblock.tip {
+  border-left-color: var(--color-positive);
+  background: #f0faf5;
+}
+
+.doc .admonitionblock.warning,
+.doc .admonitionblock.caution {
+  border-left-color: var(--color-accent);
+  background: #fff9ed;
+}
+
+.doc .admonitionblock.important {
+  border-left-color: var(--color-danger);
+  background: #fff5f5;
+}
+
+.doc .imageblock {
+  margin: 1.75rem 0 2rem;
+  text-align: center;
+}
+
+.doc img,
+.doc svg,
+.doc video {
+  max-width: 100%;
+  height: auto;
+}
+
+.doc .imageblock img {
+  border: 1px solid #d5e0e5;
+  border-radius: var(--radius-medium);
+  background: #fff;
+  box-shadow: 0 0.4rem 1.2rem rgb(31 75 98 / 12%);
+}
+
+.doc .title,
+.doc .imageblock > .title,
+.doc .listingblock > .title,
+.doc .tableblock > .title {
+  margin: 0.45rem 0;
+  color: var(--color-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.doc mark {
+  padding: 0.08em 0.2em;
+  border-radius: 0.2rem;
+  color: inherit;
+  background: #ffeca8;
+}
+
+.doc details {
+  margin: 1rem 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: #fbfdfd;
+}
+
+.doc summary {
+  color: var(--color-primary-dark);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.doc #footnotes {
+  margin-top: 3rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 0.92rem;
+}
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 0.18rem solid #fff;
+  outline-offset: 0.12rem;
+  box-shadow: 0 0 0 0.34rem #0b5e7a;
+}
+
+@media screen and (max-width: 768px) {
+  .page-frame {
+    width: min(100% - 1rem, 74rem);
+    margin: 0.5rem auto;
+  }
+
+  .doc {
+    padding: 1.35rem 1rem 2rem;
+    border-radius: 0.75rem;
+    font-size: 0.98rem;
+  }
+
+  .doc h1,
+  .doc #header > h1 {
+    margin-bottom: 1.8rem;
+    font-size: 1.85rem;
+  }
+
+  .doc h2 {
+    margin-top: 2.2rem;
+    padding: 0.58rem 0.72rem;
+    font-size: 1.38rem;
+  }
+
+  .doc h3 {
+    font-size: 1.2rem;
+  }
+
+  .doc table.tableblock th,
+  .doc table.tableblock td {
+    min-width: 7rem;
+    padding: 0.58rem 0.65rem;
+  }
+
+  .doc .admonitionblock > table,
+  .doc .admonitionblock > table > tbody,
+  .doc .admonitionblock > table > tbody > tr,
+  .doc .admonitionblock td {
+    display: block;
+    width: 100%;
+  }
+
+  .doc .admonitionblock td.icon {
+    padding-bottom: 0.25rem;
+    text-align: left;
+  }
+
+  .doc .admonitionblock td.content {
+    border-top: 1px solid rgb(188 211 221 / 85%);
+    border-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+@media print {
+  @page {
+    margin: 15mm;
+  }
+
+  body {
+    color: #111;
+    background: #fff;
+    font-size: 10.5pt;
+  }
+
+  .page-frame {
+    width: auto;
+    margin: 0;
+  }
+
+  .doc {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .doc::before {
+    display: none;
+  }
+
+  .doc h1,
+  .doc h2,
+  .doc h3,
+  .doc h4,
+  .doc h5,
+  .doc h6 {
+    color: #111;
+    break-after: avoid;
+  }
+
+  .doc h2 {
+    border-left-color: #555;
+    background: none;
+  }
+
+  .doc table.tableblock,
+  .doc pre,
+  .doc .admonitionblock,
+  .doc .imageblock img,
+  .doc #toc,
+  .doc .sidebarblock,
+  .doc .exampleblock > .content {
+    box-shadow: none;
+  }
+
+  .doc table.tableblock thead {
+    color: #111;
+    background: #eee;
+  }
+
+  .doc pre,
+  .doc table,
+  .doc .admonitionblock,
+  .doc .imageblock {
+    break-inside: avoid;
+  }
+
+  .doc a {
+    color: inherit;
+    text-decoration: underline;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div class="page-frame">
+    <article class="doc">
+<h1>述語項グラフに基づく natural-japanese-rewriter 強化 レビューガイド</h1>
+<div id="toc" class="toc">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_このレビューガイドの使い方">1. このレビューガイドの使い方</a></li>
+<li><a href="#_最初に読む_root">2. 最初に読む root</a>
+<ul class="sectlevel2">
+<li><a href="#_主_root">2.1. 主 root</a></li>
+<li><a href="#_補助_root">2.2. 補助 root</a></li>
+</ul>
+</li>
+<li><a href="#_推奨する読解順">3. 推奨する読解順</a></li>
+<li><a href="#_実行時フロー">4. 実行時フロー</a></li>
+<li><a href="#_難しい処理">5. 難しい処理</a>
+<ul class="sectlevel2">
+<li><a href="#_表層と意味を分離する">5.1. 表層と意味を分離する</a></li>
+<li><a href="#_実現形式と談話上の役割を分ける">5.2. 実現形式と談話上の役割を分ける</a></li>
+<li><a href="#_不確実性を消さない">5.3. 不確実性を消さない</a></li>
+<li><a href="#_正規契約と互換ビューを分ける">5.4. 正規契約と互換ビューを分ける</a></li>
+<li><a href="#_意味回帰と文書構造を同時に守る">5.5. 意味回帰と文書構造を同時に守る</a></li>
+</ul>
+</li>
+<li><a href="#_重要コードの解説">6. 重要コードの解説</a></li>
+<li><a href="#_テストとの対応">7. テストとの対応</a></li>
+<li><a href="#_重点チェック">8. 重点チェック</a></li>
+<li><a href="#_既知の制約と対象外">9. 既知の制約と対象外</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="_このレビューガイドの使い方">1. このレビューガイドの使い方</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>このガイドは、<code>natural-japanese-rewriter</code> と <code>natural-japanese-rewrite-analyzer</code> の変更を、要件、実行時フロー、意味不変条件、検証結果の順に確認するための案内である。</p>
+</div>
+<div class="paragraph">
+<p>想定読者は、次を判断するレビュアーである。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>日本語推敲の基礎を述語項グラフへ置く設計が、原文の意味保持に寄与するか</p>
+</li>
+<li>
+<p>親スキルと analyzer の責務、入出力契約、縮退動作が整合するか</p>
+</li>
+<li>
+<p>自然な省略を残しつつ、曖昧な項だけを安全に修復できるか</p>
+</li>
+<li>
+<p>推敲後の意味回帰と文書構造の破損を検出できるか</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>レビュー対象は、二つの <code>SKILL.md</code>、要件、実装計画、派生 HTML、実装前バックアップである。
+外部 NLP エンジン、辞書、実行時コードの品質は対象外である。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_最初に読む_root">2. 最初に読む root</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_主_root">2.1. 主 root</h3>
+<div class="paragraph">
+<p><code>skills/natural-japanese-rewriter/SKILL.md:13</code> の「述語項グラフを修復する日本語リライト」から読む。</p>
+</div>
+<div class="paragraph">
+<p>このファイルは、入力、子スキル、6 Phase、停止条件、出力モードを統括する。
+変更全体の利用者向け挙動を最短で把握できるため、主 root とする。</p>
+</div>
+<div class="paragraph">
+<p>特に次を先に確認する。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>skills/natural-japanese-rewriter/SKILL.md:21</code>: 子スキル利用時と不在時の責務</p>
+</li>
+<li>
+<p><code>skills/natural-japanese-rewriter/SKILL.md:50</code>: 最優先の意味保持</p>
+</li>
+<li>
+<p><code>skills/natural-japanese-rewriter/SKILL.md:66</code>: 述語項グラフと縮退スキーマ</p>
+</li>
+<li>
+<p><code>skills/natural-japanese-rewriter/SKILL.md:200</code>: 意味回帰検査</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_補助_root">2.2. 補助 root</h3>
+<div class="paragraph">
+<p><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:10</code> の「述語項グラフによる日本語リライト前分析」を補助 root とする。</p>
+</div>
+<div class="paragraph">
+<p>親が要求するグラフを、どの順序で構築し、どの YAML 契約で返すかを定義している。
+親の Phase 1 と縮退スキーマが正しいか判断するには、analyzer の正規契約との突き合わせが必要である。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_推奨する読解順">3. 推奨する読解順</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 37.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">順序</th>
+<th class="tableblock halign-left valign-top">読む箇所</th>
+<th class="tableblock halign-left valign-top">確認目的</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc:6</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">背景、基礎理論、対象範囲を把握する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:13</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">利用者から見たパイプライン全体、意味保持、出力を把握する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:18</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">項、ゼロ項、主題性、不確実性の分析原則を確認する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:101</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>schema_version: 2</code> の正規フィールドと旧契約互換ビューを確認する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:66</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">analyzer 不在時の縮退スキーマが正規契約を再現するか比較する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:132</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">談話、情報構造、語用論、敬語、文体の積み上げ順を確認する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:156</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">修復トリガー、非トリガー、スタイルだけの修復を確認する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">8</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:200</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">意味回帰、文書構造、3巡停止条件を確認する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">9</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>docs/requrements/2026_09_01_natural_japanese/implementation-plan-issueX-2026_09_01_natural-japanese.adoc:289</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">実装結果、検証、3巡レビューの指摘と修正を確認する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>docs/backups/2026_09_01/</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">変更前の親・分析スキル一式と比較し、意図しない変更がないか確認する</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_実行時フロー">4. 実行時フロー</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-text" data-lang="text">入力と出力モードを確定
+  ├─ 対象不明 → 対象を1件確認して終了
+  └─ 対象確定
+       ↓
+Phase 1: analyzer で述語項グラフを構築
+  ├─ analyzer あり → 正規契約を使用
+  └─ analyzer なし → 親の同一スキーマで縮退し、最終報告に記録
+       ↓
+Phase 2: 談話 → 情報構造 → 語用論 → 対人関係 → 文体を固定
+       ↓
+Phase 3: 修復する / 意図的に残す / 要確認を分類
+  ├─ 復元可能な自然な省略 → 残す
+  ├─ 安全に直せる曖昧さ・翻訳調・冗長さ → 修復する
+  └─ 確定不能 → 原文保持または要確認
+       ↓
+Phase 4: 意味制約を優先して候補文を生成
+       ↓
+Phase 5: グラフ、上位レイヤー、保護範囲、文書構造を再比較
+  ├─ 一致 → Phase 6
+  ├─ 不一致 → SEMANTIC_DRIFT として再生成
+  └─ 3巡で未解消 → 該当箇所を原文へ戻し、必要なら要確認
+       ↓
+Phase 6: polish または diagnostic で出力</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>このスキル自体は外部サービスへ接続しない。
+ファイル入力では、Phase 5 を通過した必要最小限の編集だけを対象ファイルへ反映する。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_難しい処理">5. 難しい処理</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_表層と意味を分離する">5.1. 表層と意味を分離する</h3>
+<div class="paragraph">
+<p>助詞、語順、態、項の明示・省略が変わっても、意味役割が同じなら許容する。
+表層の完全一致を要求すると、主題化や自然な省略を保ったリライトができないためである。</p>
+</div>
+<div class="paragraph">
+<p>一方、述語の語義、指示対象、項の役割、極性、モダリティ、発話行為、敬語の方向は意味不変条件として保持する。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_実現形式と談話上の役割を分ける">5.2. 実現形式と談話上の役割を分ける</h3>
+<div class="paragraph">
+<p><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:54</code> では、<code>realization</code> と <code>discourse_role</code> を別フィールドにしている。</p>
+</div>
+<div class="paragraph">
+<p>これにより、次を同時に表現できる。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>このPRは確認しました。</code> の <code>このPR</code>: <code>overt + topic</code></p>
+</li>
+<li>
+<p>次文の <code>確認しました。</code> で継続する対象: <code>zero + topic-continuation</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><code>topic</code> を実現形式の一種にすると、明示か省略かと主題性が排他的になり、AC-04 を満たせないため採用しなかった。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_不確実性を消さない">5.3. 不確実性を消さない</h3>
+<div class="paragraph">
+<p>語義や先行詞を一意にできない場合は、候補集合、<code>ambiguous</code>、<code>unknown</code> を保持する。
+数値確信度は、根拠のない精密さを与えるため必須にしていない。</p>
+</div>
+<div class="paragraph">
+<p>安全な候補すべてに共通する修正だけを行い、それ以外は原文保持または <code>要確認</code> とする。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_正規契約と互換ビューを分ける">5.4. 正規契約と互換ビューを分ける</h3>
+<div class="paragraph">
+<p><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:101</code> の <code>schema_version: 2</code> では、<code>surface</code> と <code>arguments</code> を正規フィールドとする。
+旧 <code>verb</code>、<code>args</code>、<code>omitted_args</code> は、正規フィールドから導出する互換ビューとして保持する。</p>
+</div>
+<div class="paragraph">
+<p>互換ビューを正規フィールドと独立に編集すると不整合が生じるため、矛盾時は正規フィールドを優先し、矛盾自体を <code>ambiguities</code> に記録する。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_意味回帰と文書構造を同時に守る">5.5. 意味回帰と文書構造を同時に守る</h3>
+<div class="paragraph">
+<p><code>skills/natural-japanese-rewriter/SKILL.md:200</code> では、候補文へ Phase 1 と Phase 2 を再実行する。
+意味グラフだけでなく、見出し階層、リストの入れ子、表、コードブロックの妥当性も確認する。</p>
+</div>
+<div class="paragraph">
+<p>意味が同じでも Markdown や AsciiDoc が壊れた候補は完成品にできないため、文書構造を回帰ゲートへ含めている。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_重要コードの解説">6. 重要コードの解説</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>本変更は実行コードではなく、モデルが従うスキル契約の変更である。
+次の表では、各セクションを実行時コンポーネントとして説明する。</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 27.2727%;">
+<col style="width: 18.1818%;">
+<col style="width: 27.2727%;">
+<col style="width: 27.2728%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">パスと行</th>
+<th class="tableblock halign-left valign-top">責務</th>
+<th class="tableblock halign-left valign-top">入力と出力</th>
+<th class="tableblock halign-left valign-top">失敗時挙動</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:21</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">子スキルの選択と縮退</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">analyzer の可用性から正規または縮退グラフへ進む</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">analyzer 不在でも停止せず、同一契約を自前実行して報告する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:66</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 1 と縮退スキーマ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">原文から entity、predicate、argument、issue、invariant を作る</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">候補を確定できなければ <code>ambiguous</code> または <code>unknown</code> を保持する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:156</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">修復判断</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">問題コードとスタイル上の問題を、修復・保持・要確認へ分類する</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">安全に直せない曖昧さは原文へ戻す</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:200</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">意味回帰</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">原文と候補文の意味不変条件と文書構造を比較する</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">最大3巡後に原文へ戻し、必要なら要確認へ退避する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewriter/SKILL.md:220</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">出力</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">内部分析から <code>polish</code> または <code>diagnostic</code> を生成する</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">不一致が残る場合は完了扱いにしない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:35</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">述語と語義候補の抽出</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">原文から複数の語義・格フレーム候補を作る</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">一意にできなければ候補を保持する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:54</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">項スロットと指示対象の接続</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">述語、表面句、指示対象から argument edge を作る</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">先行詞競合は <code>ambiguous</code>、根拠なしは <code>unknown</code> にする</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:82</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">問題と不変条件の記録</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">分析済みグラフから問題コードと <code>graph_invariants</code> を作る</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">安全に直せない問題を <code>blocked</code> として親へ渡す</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese-rewrite-analyzer/SKILL.md:101</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">YAML 出力契約</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">分析結果を <code>schema_version: 2</code> と互換ビューで表す</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">正規・互換フィールドの矛盾を曖昧性として残す</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>ファイル編集以外の副作用はない。
+内部分析は、<code>diagnostic</code> が明示されない限りユーザーへ全文を表示しない。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_テストとの対応">7. テストとの対応</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 30%;">
+<col style="width: 30%;">
+<col style="width: 20%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">要件</th>
+<th class="tableblock halign-left valign-top">実装</th>
+<th class="tableblock halign-left valign-top">検証</th>
+<th class="tableblock halign-left valign-top">結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-01</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">親スキル: 13行目、analyzer: 10行目</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">基礎理論の直接確認</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">成功</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-02</code> から <code>AC-07</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">analyzer: 28行目から157行目</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">問題コード9種、YAML 構文、独立分析テスト</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">成功</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-08</code> から <code>AC-10</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">親スキル: 132行目から184行目</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">複層解析、修復・非修復、安全制約の静的確認</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">成功</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-11</code> から <code>AC-13</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">親スキル: 185行目から234行目</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">意味回帰、3巡停止条件、<code>polish</code> / <code>diagnostic</code> の確認</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">成功</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-14</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">親スキル: 66行目から130行目</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">analyzer 契約との項目比較、issue 形状と列挙値の確認</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">成功</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-15</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">二つのスキル全体</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>quick_validate.py</code> と YAML fenced block の構文解析</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">成功</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-16</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">要件、計画、本ガイドと各 HTML</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AsciiDoc 変換、埋め込み CSS、外部 stylesheet / JavaScript 不在</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">成功</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>独立フォワードテストでは、次を確認した。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>ER図の業務連絡を、可能性と因果を保ったまま自然にリライトできた。</p>
+</li>
+<li>
+<p><code>顧客の確認</code> の主体・対象・相手、修正対象、共有対象・共有先を、確定せず候補として診断できた。</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><code>main</code> 比較レビューは3巡実施した。
+1巡目の4件、2巡目の3件、3巡目の2件をすべて修正し、重大または高重要度の未解決指摘は0件である。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_重点チェック">8. 重点チェック</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>レビュアーには、特に次を確認してほしい。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>analyzer の正規スキーマと、親の縮退スキーマで、entity、predicate、argument、issue の形と列挙値が一致しているか。</p>
+</li>
+<li>
+<p><code>realization</code> と <code>discourse_role</code> の分離で、明示・省略と主題・焦点を独立に表せるか。</p>
+</li>
+<li>
+<p>旧 <code>verb</code>、<code>args</code>、<code>omitted_args</code> を互換ビューとして残す判断が、移行コストと契約の明確さのバランスを取れているか。</p>
+</li>
+<li>
+<p>翻訳調や冗長さを直す経路が、意味グラフの修復トリガーだけに閉じていないか。</p>
+</li>
+<li>
+<p>Phase 5 が、モダリティ、発話行為、敬語の方向、文書構造を漏れなく比較しているか。</p>
+</li>
+<li>
+<p><code>polish</code> で内部分析を出しすぎず、<code>diagnostic</code> では判断根拠を確認できるか。</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_既知の制約と対象外">9. 既知の制約と対象外</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>外部の語義辞書、格フレーム辞書、形態素解析器を使わないため、候補抽出の精度は実行モデルと入力文脈に依存する。</p>
+</li>
+<li>
+<p>本変更はスキル指示の実装であり、意味グラフを実行コードとして永続化または機械検証しない。</p>
+</li>
+<li>
+<p>解消不能な曖昧さを自動で決めず、原文保持または <code>要確認</code> にする設計である。</p>
+</li>
+<li>
+<p><code>references/detailed-rules.md</code> 全体の再編、UI メタデータ、起動条件、外部依存の追加は対象外である。</p>
+</li>
+<li>
+<p>GitHub Enterprise Managed User の制約により、CLI から PR 本文を更新できない。最終本文は生成し、必要に応じて手動反映する。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+    </article>
+  </div>
+</body>
+</html>

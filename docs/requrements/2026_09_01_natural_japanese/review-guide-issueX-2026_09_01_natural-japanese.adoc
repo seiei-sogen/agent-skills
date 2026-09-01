@@ -1,0 +1,296 @@
+= 述語項グラフに基づく natural-japanese-rewriter 強化 レビューガイド
+:toc: left
+:toclevels: 3
+:sectnums:
+
+== このレビューガイドの使い方
+
+このガイドは、`natural-japanese-rewriter` と `natural-japanese-rewrite-analyzer` の変更を、要件、実行時フロー、意味不変条件、検証結果の順に確認するための案内である。
+
+想定読者は、次を判断するレビュアーである。
+
+* 日本語推敲の基礎を述語項グラフへ置く設計が、原文の意味保持に寄与するか
+* 親スキルと analyzer の責務、入出力契約、縮退動作が整合するか
+* 自然な省略を残しつつ、曖昧な項だけを安全に修復できるか
+* 推敲後の意味回帰と文書構造の破損を検出できるか
+
+レビュー対象は、二つの `SKILL.md`、要件、実装計画、派生 HTML、実装前バックアップである。
+外部 NLP エンジン、辞書、実行時コードの品質は対象外である。
+
+== 最初に読む root
+
+=== 主 root
+
+`skills/natural-japanese-rewriter/SKILL.md:13` の「述語項グラフを修復する日本語リライト」から読む。
+
+このファイルは、入力、子スキル、6 Phase、停止条件、出力モードを統括する。
+変更全体の利用者向け挙動を最短で把握できるため、主 root とする。
+
+特に次を先に確認する。
+
+* `skills/natural-japanese-rewriter/SKILL.md:21`: 子スキル利用時と不在時の責務
+* `skills/natural-japanese-rewriter/SKILL.md:50`: 最優先の意味保持
+* `skills/natural-japanese-rewriter/SKILL.md:66`: 述語項グラフと縮退スキーマ
+* `skills/natural-japanese-rewriter/SKILL.md:200`: 意味回帰検査
+
+=== 補助 root
+
+`skills/natural-japanese-rewrite-analyzer/SKILL.md:10` の「述語項グラフによる日本語リライト前分析」を補助 root とする。
+
+親が要求するグラフを、どの順序で構築し、どの YAML 契約で返すかを定義している。
+親の Phase 1 と縮退スキーマが正しいか判断するには、analyzer の正規契約との突き合わせが必要である。
+
+== 推奨する読解順
+
+[cols="1,3,4",options="header"]
+|===
+|順序
+|読む箇所
+|確認目的
+
+|1
+|`docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc:6`
+|背景、基礎理論、対象範囲を把握する
+
+|2
+|`skills/natural-japanese-rewriter/SKILL.md:13`
+|利用者から見たパイプライン全体、意味保持、出力を把握する
+
+|3
+|`skills/natural-japanese-rewrite-analyzer/SKILL.md:18`
+|項、ゼロ項、主題性、不確実性の分析原則を確認する
+
+|4
+|`skills/natural-japanese-rewrite-analyzer/SKILL.md:101`
+|`schema_version: 2` の正規フィールドと旧契約互換ビューを確認する
+
+|5
+|`skills/natural-japanese-rewriter/SKILL.md:66`
+|analyzer 不在時の縮退スキーマが正規契約を再現するか比較する
+
+|6
+|`skills/natural-japanese-rewriter/SKILL.md:132`
+|談話、情報構造、語用論、敬語、文体の積み上げ順を確認する
+
+|7
+|`skills/natural-japanese-rewriter/SKILL.md:156`
+|修復トリガー、非トリガー、スタイルだけの修復を確認する
+
+|8
+|`skills/natural-japanese-rewriter/SKILL.md:200`
+|意味回帰、文書構造、3巡停止条件を確認する
+
+|9
+|`docs/requrements/2026_09_01_natural_japanese/implementation-plan-issueX-2026_09_01_natural-japanese.adoc:289`
+|実装結果、検証、3巡レビューの指摘と修正を確認する
+
+|10
+|`docs/backups/2026_09_01/`
+|変更前の親・分析スキル一式と比較し、意図しない変更がないか確認する
+|===
+
+== 実行時フロー
+
+[source,text]
+----
+入力と出力モードを確定
+  ├─ 対象不明 → 対象を1件確認して終了
+  └─ 対象確定
+       ↓
+Phase 1: analyzer で述語項グラフを構築
+  ├─ analyzer あり → 正規契約を使用
+  └─ analyzer なし → 親の同一スキーマで縮退し、最終報告に記録
+       ↓
+Phase 2: 談話 → 情報構造 → 語用論 → 対人関係 → 文体を固定
+       ↓
+Phase 3: 修復する / 意図的に残す / 要確認を分類
+  ├─ 復元可能な自然な省略 → 残す
+  ├─ 安全に直せる曖昧さ・翻訳調・冗長さ → 修復する
+  └─ 確定不能 → 原文保持または要確認
+       ↓
+Phase 4: 意味制約を優先して候補文を生成
+       ↓
+Phase 5: グラフ、上位レイヤー、保護範囲、文書構造を再比較
+  ├─ 一致 → Phase 6
+  ├─ 不一致 → SEMANTIC_DRIFT として再生成
+  └─ 3巡で未解消 → 該当箇所を原文へ戻し、必要なら要確認
+       ↓
+Phase 6: polish または diagnostic で出力
+----
+
+このスキル自体は外部サービスへ接続しない。
+ファイル入力では、Phase 5 を通過した必要最小限の編集だけを対象ファイルへ反映する。
+
+== 難しい処理
+
+=== 表層と意味を分離する
+
+助詞、語順、態、項の明示・省略が変わっても、意味役割が同じなら許容する。
+表層の完全一致を要求すると、主題化や自然な省略を保ったリライトができないためである。
+
+一方、述語の語義、指示対象、項の役割、極性、モダリティ、発話行為、敬語の方向は意味不変条件として保持する。
+
+=== 実現形式と談話上の役割を分ける
+
+`skills/natural-japanese-rewrite-analyzer/SKILL.md:54` では、`realization` と `discourse_role` を別フィールドにしている。
+
+これにより、次を同時に表現できる。
+
+* `このPRは確認しました。` の `このPR`: `overt + topic`
+* 次文の `確認しました。` で継続する対象: `zero + topic-continuation`
+
+`topic` を実現形式の一種にすると、明示か省略かと主題性が排他的になり、AC-04 を満たせないため採用しなかった。
+
+=== 不確実性を消さない
+
+語義や先行詞を一意にできない場合は、候補集合、`ambiguous`、`unknown` を保持する。
+数値確信度は、根拠のない精密さを与えるため必須にしていない。
+
+安全な候補すべてに共通する修正だけを行い、それ以外は原文保持または `要確認` とする。
+
+=== 正規契約と互換ビューを分ける
+
+`skills/natural-japanese-rewrite-analyzer/SKILL.md:101` の `schema_version: 2` では、`surface` と `arguments` を正規フィールドとする。
+旧 `verb`、`args`、`omitted_args` は、正規フィールドから導出する互換ビューとして保持する。
+
+互換ビューを正規フィールドと独立に編集すると不整合が生じるため、矛盾時は正規フィールドを優先し、矛盾自体を `ambiguities` に記録する。
+
+=== 意味回帰と文書構造を同時に守る
+
+`skills/natural-japanese-rewriter/SKILL.md:200` では、候補文へ Phase 1 と Phase 2 を再実行する。
+意味グラフだけでなく、見出し階層、リストの入れ子、表、コードブロックの妥当性も確認する。
+
+意味が同じでも Markdown や AsciiDoc が壊れた候補は完成品にできないため、文書構造を回帰ゲートへ含めている。
+
+== 重要コードの解説
+
+本変更は実行コードではなく、モデルが従うスキル契約の変更である。
+次の表では、各セクションを実行時コンポーネントとして説明する。
+
+[cols="3,2,3,3",options="header"]
+|===
+|パスと行
+|責務
+|入力と出力
+|失敗時挙動
+
+|`skills/natural-japanese-rewriter/SKILL.md:21`
+|子スキルの選択と縮退
+|analyzer の可用性から正規または縮退グラフへ進む
+|analyzer 不在でも停止せず、同一契約を自前実行して報告する
+
+|`skills/natural-japanese-rewriter/SKILL.md:66`
+|Phase 1 と縮退スキーマ
+|原文から entity、predicate、argument、issue、invariant を作る
+|候補を確定できなければ `ambiguous` または `unknown` を保持する
+
+|`skills/natural-japanese-rewriter/SKILL.md:156`
+|修復判断
+|問題コードとスタイル上の問題を、修復・保持・要確認へ分類する
+|安全に直せない曖昧さは原文へ戻す
+
+|`skills/natural-japanese-rewriter/SKILL.md:200`
+|意味回帰
+|原文と候補文の意味不変条件と文書構造を比較する
+|最大3巡後に原文へ戻し、必要なら要確認へ退避する
+
+|`skills/natural-japanese-rewriter/SKILL.md:220`
+|出力
+|内部分析から `polish` または `diagnostic` を生成する
+|不一致が残る場合は完了扱いにしない
+
+|`skills/natural-japanese-rewrite-analyzer/SKILL.md:35`
+|述語と語義候補の抽出
+|原文から複数の語義・格フレーム候補を作る
+|一意にできなければ候補を保持する
+
+|`skills/natural-japanese-rewrite-analyzer/SKILL.md:54`
+|項スロットと指示対象の接続
+|述語、表面句、指示対象から argument edge を作る
+|先行詞競合は `ambiguous`、根拠なしは `unknown` にする
+
+|`skills/natural-japanese-rewrite-analyzer/SKILL.md:82`
+|問題と不変条件の記録
+|分析済みグラフから問題コードと `graph_invariants` を作る
+|安全に直せない問題を `blocked` として親へ渡す
+
+|`skills/natural-japanese-rewrite-analyzer/SKILL.md:101`
+|YAML 出力契約
+|分析結果を `schema_version: 2` と互換ビューで表す
+|正規・互換フィールドの矛盾を曖昧性として残す
+|===
+
+ファイル編集以外の副作用はない。
+内部分析は、`diagnostic` が明示されない限りユーザーへ全文を表示しない。
+
+== テストとの対応
+
+[cols="2,3,3,2",options="header"]
+|===
+|要件
+|実装
+|検証
+|結果
+
+|`AC-01`
+|親スキル: 13行目、analyzer: 10行目
+|基礎理論の直接確認
+|成功
+
+|`AC-02` から `AC-07`
+|analyzer: 28行目から157行目
+|問題コード9種、YAML 構文、独立分析テスト
+|成功
+
+|`AC-08` から `AC-10`
+|親スキル: 132行目から184行目
+|複層解析、修復・非修復、安全制約の静的確認
+|成功
+
+|`AC-11` から `AC-13`
+|親スキル: 185行目から234行目
+|意味回帰、3巡停止条件、`polish` / `diagnostic` の確認
+|成功
+
+|`AC-14`
+|親スキル: 66行目から130行目
+|analyzer 契約との項目比較、issue 形状と列挙値の確認
+|成功
+
+|`AC-15`
+|二つのスキル全体
+|`quick_validate.py` と YAML fenced block の構文解析
+|成功
+
+|`AC-16`
+|要件、計画、本ガイドと各 HTML
+|AsciiDoc 変換、埋め込み CSS、外部 stylesheet / JavaScript 不在
+|成功
+|===
+
+独立フォワードテストでは、次を確認した。
+
+* ER図の業務連絡を、可能性と因果を保ったまま自然にリライトできた。
+* `顧客の確認` の主体・対象・相手、修正対象、共有対象・共有先を、確定せず候補として診断できた。
+
+`main` 比較レビューは3巡実施した。
+1巡目の4件、2巡目の3件、3巡目の2件をすべて修正し、重大または高重要度の未解決指摘は0件である。
+
+== 重点チェック
+
+レビュアーには、特に次を確認してほしい。
+
+. analyzer の正規スキーマと、親の縮退スキーマで、entity、predicate、argument、issue の形と列挙値が一致しているか。
+. `realization` と `discourse_role` の分離で、明示・省略と主題・焦点を独立に表せるか。
+. 旧 `verb`、`args`、`omitted_args` を互換ビューとして残す判断が、移行コストと契約の明確さのバランスを取れているか。
+. 翻訳調や冗長さを直す経路が、意味グラフの修復トリガーだけに閉じていないか。
+. Phase 5 が、モダリティ、発話行為、敬語の方向、文書構造を漏れなく比較しているか。
+. `polish` で内部分析を出しすぎず、`diagnostic` では判断根拠を確認できるか。
+
+== 既知の制約と対象外
+
+* 外部の語義辞書、格フレーム辞書、形態素解析器を使わないため、候補抽出の精度は実行モデルと入力文脈に依存する。
+* 本変更はスキル指示の実装であり、意味グラフを実行コードとして永続化または機械検証しない。
+* 解消不能な曖昧さを自動で決めず、原文保持または `要確認` にする設計である。
+* `references/detailed-rules.md` 全体の再編、UI メタデータ、起動条件、外部依存の追加は対象外である。
+* GitHub Enterprise Managed User の制約により、CLI から PR 本文を更新できない。最終本文は生成し、必要に応じて手動反映する。

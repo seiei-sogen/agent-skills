@@ -127,7 +127,8 @@ ____
 * 述語の語義が選択する項、選択的斜格、付加部、判定不能の別
 * 表面の助詞または構文
 * 意味役割と、必要な場合のドメイン役割
-* 明示、ゼロ、主題、関係節の空所、名詞化、一般主体、未解決の別
+* 明示、ゼロ、関係節の空所、名詞化、一般主体、未解決の別
+* 主題、主題継続、焦点、対比などの談話上の役割
 * 指示対象または候補集合
 * 復元可能性 `clear`、`probable`、`ambiguous`、`unknown`
 * 判断根拠
@@ -140,6 +141,7 @@ ____
 
 [source,yaml]
 ----
+schema_version: 2
 protected_ranges: []
 rewrite_targets: []
 entities:
@@ -149,11 +151,16 @@ entities:
 predicates:
   - id: predicate-1
     surface: 原文の述語
+    verb: surface の互換エイリアス
+    args: arguments から導出する互換ビュー
+    omitted_args: zero の arguments から導出する互換ビュー
     lemma: 見出し語
     predicate_type: verb | adjective | verbal-noun | event-noun | embedded
     sense_candidates: []
-    voice: active | passive | causative | causative-passive | potential
+    voice: active | passive | causative | causative-passive | potential | not-applicable | unknown
     polarity: positive | negative
+    tense: 原文の時制または unknown
+    aspect: 原文のアスペクトまたは unknown
     modality: {}
     arguments:
       - role: 意味役割
@@ -161,7 +168,8 @@ predicates:
         kind: core | selected-oblique | adjunct | uncertain
         surface: 原文の項または null
         surface_particle: 表面の助詞または null
-        realization: overt | zero | topic | relative-gap | nominalized | generic | unresolved
+        realization: overt | zero | relative-gap | nominalized | generic | unresolved
+        discourse_role: topic | topic-continuation | focus | contrast | none | unknown
         referent: entity-1 | null
         candidates: []
         recoverability: clear | probable | ambiguous | unknown
@@ -243,6 +251,8 @@ rewrite_policy: []
 * 名詞化によって動作主と対象を区別できない
 * 曖昧な述語や形式名詞が関係を隠す
 * 重要な項と述語が離れ、誤読が起こり得る
+* 意味関係は明確だが、翻訳調、冗長、過度に硬い表現、周囲と不整合な文体が読みやすさを損なう
+* 意味役割を変えずに直せる、不自然な語順、助詞、重複がある
 
 次の場合は修復トリガーとせず、項を無理に補わない。
 
@@ -282,8 +292,9 @@ rewrite_policy: []
 * 可能性、義務、許可、推量、断定の強さ
 * topic、focus、対比
 * 発話行為と requested action
-* 敬語の主体と対人関係
+* 敬語の主体、方向、対人関係
 * 保護範囲
+* Markdown / AsciiDoc などの見出し階層、リストの入れ子、表、コードブロックを含む文書構造の妥当性
 
 不一致があれば `SEMANTIC_DRIFT` として候補を棄却し、修正して同じ検査を再実行する。
 最大3巡で解消しない場合は該当箇所を原文へ戻し、必要なら `要確認` に加える。
@@ -317,7 +328,7 @@ rewrite_policy: []
 
 === コンテキスト効率
 
-1〜2文や UI 文言でも全 Phase の意味は保つが、内部表現は必要なノードと辺だけに簡略化できる。
+1〜2文や UI 文言でも全 Phase の意味と最小出力契約のトップレベルキーは保つが、内部表現は必要なノードと辺だけに簡略化できる。
 長文、複数述語、名詞化、技術的曖昧さを含む場合はグラフと上位レイヤーを省略しない。
 既存の `references/detailed-rules.md` は、判断が難しい場合だけ読む。
 
@@ -331,6 +342,7 @@ rewrite_policy: []
 * `natural-japanese-rewriter` と `natural-japanese-rewrite-analyzer` の名前、配置、暗黙起動方針は維持する。
 * 既存の `polish` 相当の通常出力は維持し、内部分析を既定で表示しない。
 * 既存 analyzer の `protected_ranges`、`rewrite_targets`、`adjuncts`、`ambiguities`、`rewrite_policy` は、拡張後も分析メモで表現できる状態を保つ。
+* 旧 predicate レコードの `verb`、`args`、`omitted_args` は、`schema_version: 2` の正規フィールドから導出する互換ビューとして保持する。判断時は正規の `surface` と `arguments` を優先する。
 * 実行コード、永続データ、外部依存を追加しないため、データ移行とロールバック作業は不要である。
 * 問題があれば、変更した二つの `SKILL.md` を直前版へ戻すことでロールバックできる。
 
