@@ -1,3 +1,14 @@
+
+
+
+実装が終わったものに対して、レビューガイドを作るスキルを作りたい。
+
+難しい関数とかは図で説明するようにしたい。
+
+AsciiDocで出力。
+\\wsl.localhost\Ubuntu-24.04\home\agir_wsl\develop\ghq_repos\github.com\seiei-sogen\agent-skills\skills\asciidoc-to-colorful-html\SKILL.md
+で
+
 /home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/agent-skills/skills/matt-kei/handoff
 
 だが、ディレクトリを移動した。

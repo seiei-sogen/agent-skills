@@ -16,6 +16,7 @@ description: 既存の AsciiDoc 要件定義書 req-*.adoc、または GitHub is
 - `grilling-jp`
 - `quality-gated-review-improve`
 - `commit-push`
+- `review-guide`
 - `asciidoc-to-colorful-html`
 - `pr-update-gh`
 
@@ -38,6 +39,7 @@ GitHub issue URL を入力にする場合だけ、`suggest-git-branch-name` も�
 - 要件定義書 HTML: `req-<topic>.html`
 - 実装計画 HTML: `implementation-plan-<issue-token>-<topic>.html`
 - レビューガイド: `review-guide-<issue-token>-<topic>.adoc`
+- レビューガイド図: `review-guide-<issue-token>-<topic>-<symbol-or-flow>.svg`
 - レビューガイド HTML: `review-guide-<issue-token>-<topic>.html`
 
 成果物は要件定義書と同じディレクトリへ置く。ユーザーが保存先を指定した場合はその指定を優先する。
@@ -120,13 +122,13 @@ JSON が妥当で、必須フィールドと根拠パスを持つことを確認
 
 ## Phase 9: レビューガイド
 
-最終差分をもとにレビューガイドを作成する。最初に読むべき root、推奨する読解順、変更の実行時フロー、難しい処理の不変条件と失敗時挙動、重要コードの解説、テストとの対応、重点チェック項目を記載する。
+`review-guide`を使い、Phase 8の修正と再検証を終えた最終実装からレビューガイドを生成する。対象として`main`と現在のブランチの差分、未コミットの対象変更、要件定義書、実装計画書、検証結果を渡し、出力先に`review-guide-<issue-token>-<topic>.adoc`を指定する。
 
-パス、シンボル、必要な行番号を実在確認し、コードを大量に複製しない。レビューガイド自体を最終検証の対象へ含める。検証後、`asciidoc-to-colorful-html` を使って `review-guide-<issue-token>-<topic>.html` へ変換し、変換元の最新内容と一致することを確認する。
+子スキルが生成したAsciiDoc、難しい処理に対するSVG図、`review-guide-<issue-token>-<topic>.html`を最終検証の対象に含める。成果物が現在の最終差分と一致しない場合、図示すべき処理が図示されていない場合、または生成したSVGがHTMLへ埋め込まれていない場合はPhase 10へ進まない。
 
 ## Phase 10: commit、push、PR 更新
 
-[プラットフォーム別レビューと PR](references/platform-review-and-pr.md) の PR 手順に従う。HTML 生成後に要件定義書、実装計画、またはレビューガイドを更新していた場合は、対応する HTML を `asciidoc-to-colorful-html` で再生成し、変換元の最新内容と一致することを確認する。レビューガイドとその HTML まで含む対象変更だけを commit し、現在のブランチを push する。現在のブランチが `main` なら、変更内容に合う作業ブランチを作ってから進める。
+[プラットフォーム別レビューと PR](references/platform-review-and-pr.md) の PR 手順に従う。HTML 生成後に要件定義書、実装計画、レビューガイド、またはSVG図を更新していた場合は、対応する HTML を `asciidoc-to-colorful-html` で再生成し、変換元の最新内容と一致することを確認する。レビューガイド、参照するSVG図、そのHTMLまで含む対象変更だけを commit し、現在のブランチを push する。現在のブランチが `main` なら、変更内容に合う作業ブランチを作ってから進める。
 
 現在のブランチにオープンな PR がなければ `main` 向け PR を作成する。PR が存在する場合はその PR を使う。その後 `pr-update-gh` を実行し、レビューガイドへの導線、実施した検証、確認してほしい点を含む本文へ更新して、再取得した本文と URL を確認する。
 
@@ -136,7 +138,7 @@ JSON が妥当で、必須フィールドと根拠パスを持つことを確認
 
 最後に次を簡潔に報告する。
 
-- 更新・生成した要件定義書、調査レポート、実装計画、レビューガイド、および3文書の HTML
+- 更新・生成した要件定義書、調査レポート、実装計画、レビューガイド、SVG図、および3文書の HTML
 - 品質ゲートの最終点と終了理由
 - 実装概要と検証結果
 - プラットフォームレビューの方式、指摘、修正結果

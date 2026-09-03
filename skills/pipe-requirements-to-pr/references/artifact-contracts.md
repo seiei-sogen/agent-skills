@@ -24,6 +24,7 @@ implementation-plan-<issue-token>-<topic>.adoc
 req-<topic>.html
 implementation-plan-<issue-token>-<topic>.html
 review-guide-<issue-token>-<topic>.adoc
+review-guide-<issue-token>-<topic>-<symbol-or-flow>.svg
 review-guide-<issue-token>-<topic>.html
 ```
 
@@ -93,18 +94,6 @@ AsciiDoc として、少なくとも次を含める。
 
 ## レビューガイド
 
-AsciiDoc として、最終差分に基づく次の順序を基本にする。
+内容、SVG図、検証の契約は`review-guide`スキルを正本とする。パイプラインは最終差分と関連成果物を入力にし、このファイルで確定した`review-guide-<issue-token>-<topic>.adoc`を出力先として指定する。
 
-1. `このレビューガイドの使い方`: 想定読者、対象、非対象
-2. `最初に読む root`: 入口となるファイルとシンボル、その理由
-3. `推奨する読解順`: ファイル・シンボルごとの確認目的
-4. `実行時フロー`: 入力から出力、早期終了、失敗、外部 I/O
-5. `難しい処理`: 不変条件、設計理由、代替案を採らなかった理由
-6. `重要コードの解説`: パス、シンボル、責務、入力、出力、副作用、失敗時挙動
-7. `テストとの対応`: 要件・実装・テストの対応と実行結果
-8. `重点チェック`: レビュアーに判断してほしい具体的な点
-9. `既知の制約と対象外`
-
-root は変更全体の理解を最短で始められる入口であり、単なるリポジトリルートではない。複数の入口がある場合は主 root と補助 root を区別する。
-
-コード解説はコードの逐語訳ではなく、なぜその処理が必要か、何を守るか、どこで壊れ得るかを説明する。行番号を記載する場合は最終 commit 直前に再確認する。
+SVG図は`review-guide-<issue-token>-<topic>-<symbol-or-flow>.svg`としてレビューガイドと同じディレクトリへ置き、HTMLへdata URIとして埋め込む。

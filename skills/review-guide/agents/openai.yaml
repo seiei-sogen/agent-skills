@@ -1,0 +1,4 @@
+interface:
+  display_name: "レビューガイド"
+  short_description: "実装差分からSVG図入りのレビューガイドを生成する"
+  default_prompt: "$review-guide を使って、完了した実装のレビューガイドをAsciiDocとHTMLで作成してください。"
