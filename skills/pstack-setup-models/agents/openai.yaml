@@ -1,0 +1,4 @@
+interface:
+  display_name: "pstackモデル設定"
+  short_description: "Claude CodeとCodexに合わせてpstackのモデル設定を開始する"
+  default_prompt: "$pstack-setup-models を使ってpstackのモデルを設定してください。"

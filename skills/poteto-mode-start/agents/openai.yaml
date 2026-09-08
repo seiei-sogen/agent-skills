@@ -1,0 +1,4 @@
+interface:
+  display_name: "poteto modeを開始"
+  short_description: "現在の開発タスクをpstackのpoteto-modeで実行する"
+  default_prompt: "$poteto-mode-start を使って、この開発タスクを進めてください。"
