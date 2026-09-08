@@ -4,9 +4,9 @@
 
 ## 共通のレビュー対象
 
-`main` が存在し、現在の作業ブランチが意図した変更を含むことを確認する。レビュー対象は次の和集合とする。
+`develop` が存在し、現在の作業ブランチが意図した変更を含むことを確認する。レビュー対象は次の和集合とする。
 
-- `main...HEAD` の commit 済み差分
+- `develop...HEAD` の commit 済み差分
 - index の差分
 - working tree の差分
 - 対象となる untracked ファイル
@@ -15,7 +15,7 @@
 
 ## Claude Code
 
-ホストに code-review 機能がある場合はそれを使い、比較対象を現在のブランチと `main` に設定する。レビュー担当モデルは Opus、reasoning effort は `xhigh` を指定する。ホストがそのモデル名または effort を受け付けない場合は、利用可能な最も強いレビュー設定を使い、最終報告に差異を記録する。
+ホストに code-review 機能がある場合はそれを使い、比較対象を現在のブランチと `develop` に設定する。レビュー担当モデルは Opus、reasoning effort は `xhigh` を指定する。ホストがそのモデル名または effort を受け付けない場合は、利用可能な最も強いレビュー設定を使い、最終報告に差異を記録する。
 
 code-review の所見には、重大度、根拠となるパスと行、再現条件または破られる契約、修正案を求める。スタイル上の好みだけの所見は修正対象にしない。
 
@@ -24,12 +24,12 @@ code-review の所見には、重大度、根拠となるパスと行、再現�
 OpenAI 公式の [Developer commands](https://developers.openai.com/codex/cli/slash-commands) に従う。`/review` は対話 TUI でユーザーが起動する working tree レビューであるため、自律パイプラインでは非対話の `codex review` を使う。
 
 - 未コミットの実装は `codex review --uncommitted` でレビューする。
-- commit 済みの現在ブランチは `codex review --base main` でレビューする。
-- 最終 commit 後、push 前に `codex review --base main` を必ず再実行する。
+- commit 済みの現在ブランチは `codex review --base develop` でレビューする。
+- 最終 commit 後、push 前に `codex review --base develop` を必ず再実行する。
 
 commit 済み差分と未コミット差分の両方がある場合は、最初の2つを両方実行する。
 
-`codex review` を実行できない環境では停止しない。`main...HEAD` と未コミット変更を直接読み、同じ finding-first 形式でレビューする。この代替を使ったことを最終報告に記載する。
+`codex review` を実行できない環境では停止しない。`develop...HEAD` と未コミット変更を直接読み、同じ finding-first 形式でレビューする。この代替を使ったことを最終報告に記載する。
 
 所見は重大度順に、`パス:行番号`、問題、影響、根拠を示す。所見がなければ、確認した範囲と残存リスクを記録する。
 
@@ -52,18 +52,18 @@ commit 済み差分と未コミット差分の両方がある場合は、最初�
 
 ### Phase 5 の初回 PR
 
-親スキルで `commit-push` の完了を確認した後、`main...HEAD` の差分と commit 履歴を再確認する。現在のブランチを head に持つ PR を検索し、後述の手順で特定または作成する。
+親スキルで `commit-push` の完了を確認した後、`develop...HEAD` の差分と commit 履歴を再確認する。現在のブランチを head に持つ PR を検索し、後述の手順で特定または作成する。
 
 ### Phase 10 の最終更新
 
 1. `git status` と差分を再確認する。
 2. パイプライン対象のファイルだけを stage する。
 3. リポジトリ規約に沿う commit メッセージで commit する。
-4. Codex では `codex review --base main` を実行する。修正した場合は検証、commit、同レビューを繰り返す。
-5. `main...HEAD` の差分と commit 履歴を再確認する。
+4. Codex では `codex review --base develop` を実行する。修正した場合は検証、commit、同レビューを繰り返す。
+5. `develop...HEAD` の差分と commit 履歴を再確認する。
 6. 現在のブランチを upstream へ push する。
 
-現在のブランチが `main` の場合は、要件が不具合修正なら `fix/`、それ以外は `feat/` を先頭にし、`<issue-token>-<topic>` をリポジトリの命名規則に合わせて正規化したブランチを作る。既存の同名ブランチを推測で再利用しない。
+現在のブランチが `develop` の場合は、要件が不具合修正なら `fix/`、それ以外は `feat/` を先頭にし、`<issue-token>-<topic>` をリポジトリの命名規則に合わせて正規化したブランチを作る。既存の同名ブランチを推測で再利用しない。
 
 既存のユーザー変更は stage しない。同じファイルに対象変更と既存変更が混在し、安全に部分 stage できない場合は停止する。
 
@@ -71,7 +71,7 @@ commit 済み差分と未コミット差分の両方がある場合は、最初�
 
 現在のブランチを head に持つオープンな PR を正確に検索する。
 
-- 存在しない場合: `main` を base に通常の PR を作成する。ユーザーが draft を指定した場合だけ draft にする。
+- 存在しない場合: `develop` を base に通常の PR を作成する。ユーザーが draft を指定した場合だけ draft にする。
 - 1件存在する場合: その PR を使う。
 - 複数件または状態不明の場合: 推測で選ばず停止する。
 
