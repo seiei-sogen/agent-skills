@@ -14,7 +14,7 @@ description: 既存の AsciiDoc 要件定義書 req-*.adoc、または GitHub is
 
 - `pre-investigation-report`
 - `grilling-jp`
-- `quality-gated-review-improve`
+- `pipe-generate-quality-gated-implementation-plan`
 - `commit-push`
 - `review-guide`
 - `asciidoc-to-colorful-html`
@@ -36,6 +36,7 @@ GitHub issue URL を入力にする場合だけ、`suggest-git-branch-name` も�
 
 - 調査レポート: `<topic>.json`
 - 実装計画: `implementation-plan-<issue-token>-<topic>.adoc`
+- 実装計画の解説 HTML: `easy-implementation-plan-<issue-token>-<topic>.html`
 - 要件定義書 HTML: `req-<topic>.html`
 - 実装計画 HTML: `implementation-plan-<issue-token>-<topic>.html`
 - レビューガイド: `review-guide-<issue-token>-<topic>.adoc`
@@ -76,15 +77,15 @@ JSON が妥当で、必須フィールドと根拠パスを持つことを確認
 
 ## Phase 3: 実装計画の自動壁打ちと生成
 
-更新済み要件定義書と調査レポートを入力に `grilling-jp` を再実行する。この Phase では、実装方式、変更境界、依存順、テスト戦略、移行、ロールバック、運用上の論点を依存順に検討する。各論点の推奨回答を Phase 2 と同じ自動モードで採用し、採用理由と影響を整理する。
-
-実装上の主要論点と派生論点が尽きたら、採用した推奨回答を統合して実装計画を生成し、指定パスへ有効な AsciiDoc として保存する。タスクごとに要件との対応、対象ファイルまたは探索起点、変更内容、依存順、テスト、完了条件を記載する。未確定のファイル名やシンボルを推測で断定せず、探索タスクとして明記する。
+更新済み要件定義書、調査レポート、実装計画と解説 HTML の指定パスを入力に `pipe-generate-quality-gated-implementation-plan` を使う。
+実装計画の自動壁打ちと生成、Phase 4 の文書品質ゲート、最終版の実装計画に対する解説 HTML の生成を子スキルへ委譲する。
+子スキルが更新した要件定義書と実装計画を、以後の最終版として扱う。
 
 ## Phase 4: 文書の品質ゲート
 
-`quality-gated-review-improve` を使い、要件定義書と実装計画を同じ変更の文書ペアとしてレビュー・更新する。各文書の品質に加えて、要件と計画の矛盾、漏れ、過剰実装、検証可能性を採点対象に含める。
-
-要件定義書を正としつつ、要件側の欠陥が見つかった場合は要件を直して計画へ再反映する。原則90点以上、かつ文書間の重大な不整合が0件になったら Phase 5 へ進む。子スキルの例外終了条件に該当した場合は、残課題が実装を危険にしないことを確認する。
+子スキルの完了報告から、要件定義書と実装計画の最終点が原則90点以上で、文書間の重大な不整合が0件であることを確認する。
+子スキルの例外終了条件に該当した場合は、残課題が実装を危険にしないことを確認する。
+解説 HTML が最終版の実装計画を説明していない場合は Phase 3 へ戻る。
 
 ## Phase 5: 文書の commit、push、PR 作成
 
@@ -92,15 +93,15 @@ JSON が妥当で、必須フィールドと根拠パスを持つことを確認
 
 現在のブランチが `develop` なら、変更内容に合う作業ブランチを作る。開始時に記録した既存変更が作業ツリーに残っていないこと、および現在の未コミット変更がすべてこのパイプラインの対象であることを確認する。`commit-push` は未コミット変更をすべて commit するため、対象外の変更を分離できない場合は実行せず、該当ファイルを報告して停止する。
 
-`commit-push` を実行し、品質ゲート済みの要件定義書、実装計画、調査レポートを含む現在の対象変更を1つのコミットとして現在のブランチへ push する。子スキルの完了報告から、作成された commit と upstream の追跡参照が一致することを確認する。
+`commit-push` を実行し、品質ゲート済みの要件定義書、実装計画、実装計画の解説 HTML、調査レポートを含む現在の対象変更を1つのコミットとして現在のブランチへ push する。子スキルの完了報告から、作成された commit と upstream の追跡参照が一致することを確認する。
 
-[プラットフォーム別レビューと PR](references/platform-review-and-pr.md) の Phase 5 初回 PR 手順に従い、現在のブランチの PR を特定または作成する。初回本文には要件定義書と実装計画の位置、品質ゲートの結果、実装以降が未完了であることを記載する。PR を再取得し、head、base、state、URL、本文を確認できたら Phase 6 へ進む。
+[プラットフォーム別レビューと PR](references/platform-review-and-pr.md) の Phase 5 初回 PR 手順に従い、現在のブランチの PR を特定または作成する。初回本文には要件定義書、実装計画、解説 HTML の位置、品質ゲートの結果、実装以降が未完了であることを記載する。PR を再取得し、head、base、state、URL、本文を確認できたら Phase 6 へ進む。
 
 ## Phase 6: AsciiDoc の HTML 化
 
 `asciidoc-to-colorful-html` を使い、品質ゲートを通過した要件定義書と実装計画をそれぞれ単体 HTML へ変換する。既定の出力名を使い、`req-<topic>.html` と `implementation-plan-<issue-token>-<topic>.html` を生成する。
 
-両方の HTML が成果物契約と子スキルの出力契約を満たし、変換元の最新内容と一致することを確認する。変換警告から include、画像、xref などの文書不備が判明した場合は Phase 4 に戻って AsciiDoc を修正・再評価し、その後に両方の HTML を再生成する。
+両方の HTML が成果物契約と子スキルの出力契約を満たし、変換元の最新内容と一致することを確認する。変換警告から include、画像、xref などの文書不備が判明した場合は Phase 3 に戻って AsciiDoc を修正・再評価し、解説 HTML と両方の変換 HTML を再生成する。
 
 ## Phase 7: 実装と検証
 
@@ -128,7 +129,7 @@ JSON が妥当で、必須フィールドと根拠パスを持つことを確認
 
 ## Phase 10: commit、push、PR 更新
 
-[プラットフォーム別レビューと PR](references/platform-review-and-pr.md) の PR 手順に従う。HTML 生成後に要件定義書、実装計画、レビューガイド、またはSVG図を更新していた場合は、対応する HTML を `asciidoc-to-colorful-html` で再生成し、変換元の最新内容と一致することを確認する。レビューガイド、参照するSVG図、そのHTMLまで含む対象変更だけを commit し、現在のブランチを push する。現在のブランチが `develop` なら、変更内容に合う作業ブランチを作ってから進める。
+[プラットフォーム別レビューと PR](references/platform-review-and-pr.md) の PR 手順に従う。HTML 生成後に要件定義書または実装計画を更新していた場合は、Phase 3 の品質ゲートを再実行し、実装計画の解説 HTML を再生成する。要件定義書、実装計画、レビューガイド、またはSVG図を更新していた場合は、対応する HTML を `asciidoc-to-colorful-html` で再生成し、変換元の最新内容と一致することを確認する。実装計画の解説 HTML、レビューガイド、参照するSVG図、そのHTMLまで含む対象変更だけを commit し、現在のブランチを push する。現在のブランチが `develop` なら、変更内容に合う作業ブランチを作ってから進める。
 
 現在のブランチにオープンな PR がなければ `develop` 向け PR を作成する。PR が存在する場合はその PR を使う。その後 `pr-update-gh` を実行し、レビューガイドへの導線、実施した検証、確認してほしい点を含む本文へ更新して、再取得した本文と URL を確認する。
 
@@ -138,7 +139,7 @@ JSON が妥当で、必須フィールドと根拠パスを持つことを確認
 
 最後に次を簡潔に報告する。
 
-- 更新・生成した要件定義書、調査レポート、実装計画、レビューガイド、SVG図、および3文書の HTML
+- 更新・生成した要件定義書、調査レポート、実装計画、実装計画の解説 HTML、レビューガイド、SVG図、および3文書の HTML
 - 品質ゲートの最終点と終了理由
 - 実装概要と検証結果
 - プラットフォームレビューの方式、指摘、修正結果

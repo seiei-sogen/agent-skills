@@ -21,6 +21,7 @@
 req-<topic>.adoc
 <topic>.json
 implementation-plan-<issue-token>-<topic>.adoc
+easy-implementation-plan-<issue-token>-<topic>.html
 req-<topic>.html
 implementation-plan-<issue-token>-<topic>.html
 review-guide-<issue-token>-<topic>.adoc
@@ -86,6 +87,8 @@ AsciiDoc として、少なくとも次を含める。
 ## HTML 派生成果物
 
 `req-<topic>.html`、`implementation-plan-<issue-token>-<topic>.html`、`review-guide-<issue-token>-<topic>.html` は、検証を通過した同名の AsciiDoc から `asciidoc-to-colorful-html` で生成する。
+
+`easy-implementation-plan-<issue-token>-<topic>.html` は、品質ゲートを通過した実装計画から `easy-to-understand` で生成する解説 HTML とする。
 
 - CSS とローカル画像を埋め込み、単一ファイルで表示できる状態にする。
 - HTML の内容変更は変換元の AsciiDoc へ反映し、HTML を再生成する。

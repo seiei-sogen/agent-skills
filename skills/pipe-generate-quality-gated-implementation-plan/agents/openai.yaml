@@ -1,0 +1,4 @@
+interface:
+  display_name: "品質ゲート済み実装計画"
+  short_description: "要件から実装計画とやさしい解説HTMLを作る"
+  default_prompt: "$pipe-generate-quality-gated-implementation-plan を使って、要件定義書と事前調査JSONから実装計画と解説HTMLを作成してください。"
