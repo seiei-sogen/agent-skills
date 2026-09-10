@@ -63,6 +63,6 @@ cat >&2 << MSG
 po-guard: 現在の段階は「$stage」です。この段階で書けるのは docs/progressive-outlining/ 配下だけです。
   対象: $abs
 コードやスケルトンを書く段階ではありません。設計文書（docs/progressive-outlining/）の更新に留めてください。
-次の段階へ進めるのはユーザーだけです（/po:skeleton または /po:implement）。
+次の段階へ進めるのはユーザーだけです（/po:skeleton-03 または /po:implement-04）。
 MSG
 exit 2

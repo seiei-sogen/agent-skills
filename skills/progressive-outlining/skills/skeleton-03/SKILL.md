@@ -1,17 +1,17 @@
 ---
-name: skeleton
-description: Progressive Outlining の第3段階。アウトラインと批評を型定義・関数シグネチャ・テスト名に落とす。本体は未実装のまま、型検査だけ通す。
-disable-model-invocation: true
-argument-hint: "[slug]"
-arguments: [slug]
-allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/po-stage.sh *)
+name: skeleton-03
+description: Progressive Outlining の第3段階。ユーザーが skeleton-03 を明示した場合に、アウトラインと批評を型定義・関数シグネチャ・テスト名へ落とす。
 ---
 
-!`${CLAUDE_PLUGIN_ROOT}/scripts/po-stage.sh skeleton ${CLAUDE_PROJECT_DIR}`
+# skeleton-03 で型とシグネチャに落とす
 
-# /po:skeleton — 型とシグネチャに落とす
+## 段階を開始する
 
-対象: `docs/progressive-outlining/$slug/`（全ファイルを読む。最新の批評に未対処の指摘があれば、まずそれを私に見せ、アウトラインに反映してから進む）
+呼び出し時に指定された値を `<slug>` とする。
+slug が空なら、slug を確認してから進める。
+最初にリポジトリルートの `docs/progressive-outlining/.stage` へ `skeleton` と書く。
+
+対象: `docs/progressive-outlining/<slug>/`（全ファイルを読む。最新の批評に未対処の指摘があれば、まずそれを私に見せ、アウトラインに反映してから進む）
 
 ## 書くもの
 
@@ -30,9 +30,9 @@ allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/po-stage.sh *)
 ## 検証
 
 - 型検査を通す（`cargo check` / `tsc --noEmit` / プロジェクトの該当コマンド）。通らない間はシグネチャを直す
-- 通ったら `docs/progressive-outlining/$slug/03-skeleton.md` に、シグネチャに現れない設計判断（エラー処理方針、境界を跨ぐデータの所有権、各テストの意図）を書く
+- 通ったら `docs/progressive-outlining/<slug>/03-skeleton.md` に、シグネチャに現れない設計判断（エラー処理方針、境界を跨ぐデータの所有権、各テストの意図）を書く
 
 ## 終わり方
 
 型検査の結果と、書いてみてアウトラインから変えた点を私に報告する。
-私が満足したら `/po:critique $slug`（スケルトンの批評）か `/po:implement $slug` を提案する。
+私が満足したら、`critique-02 <slug>` でスケルトンを批評するか、`implement-04 <slug>` へ進むことを提案する。

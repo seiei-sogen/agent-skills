@@ -1,6 +1,6 @@
 ---
 name: critic
-description: Progressive Outlining の批評専用サブエージェント。設計文書・スケルトンを読み取り中心で審査し、docs/progressive-outlining/ 配下にだけ結果を書く。/po:critique から呼ばれる。
+description: Progressive Outlining の批評専用サブエージェント。設計文書・スケルトンを読み取り中心で審査し、docs/progressive-outlining/ 配下にだけ結果を書く。/po:critique-02 から呼ばれる。
 tools: Read, Grep, Glob, Write
 maxTurns: 30
 ---
