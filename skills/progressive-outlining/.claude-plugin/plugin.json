@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "po",
+  "displayName": "Progressive Outlining",
+  "version": "0.1.0",
+  "description": "Progressive Outlining（アウトライン→批評→スケルトン→実装）でコードを書くための段階制スキル群。段階遷移は人間が決め、段階外の書き込みはフックでブロックする。",
+  "keywords": ["progressive-outlining", "planning", "design", "workflow"]
+}

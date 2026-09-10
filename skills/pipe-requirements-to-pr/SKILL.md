@@ -12,6 +12,7 @@ description: 既存の AsciiDoc 要件定義書 req-*.adoc、または GitHub is
 
 開始時に次のスキルを利用できることを確認し、それぞれの `SKILL.md` を実行する段階で最後まで読む。
 
+- `poteto-mode-start`
 - `pre-investigation-report`
 - `grilling-jp`
 - `pipe-generate-quality-gated-implementation-plan`
@@ -23,6 +24,12 @@ description: 既存の AsciiDoc 要件定義書 req-*.adoc、または GitHub is
 GitHub issue URL を入力にする場合だけ、`suggest-git-branch-name` も利用できることを確認し、issue 初期化を始める前にその `SKILL.md` を最後まで読む。
 
 指示が衝突する場合は、現在のユーザー指示、この親スキルの段階固有の指示、子スキルの通常指示の順に優先する。子スキルが見つからなければ、その工程を同等手順で代替せず、見つからないスキル名を報告して停止する。
+
+## poteto-mode で全工程を進める
+
+パイプラインを始める前に `poteto-mode-start` を使う。
+このスキルへの依頼全体を対象タスクとして渡し、以後の調査レポート作成、要件定義、実装計画、実装、検証、レビュー、commit、push、PR 作成と更新を poteto-mode が有効な状態で進める。
+poteto-mode がすでに有効な場合は再度呼び出さず、その状態を引き継ぐ。
 
 ## 入力と成果物を確定する
 

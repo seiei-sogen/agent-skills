@@ -11,6 +11,7 @@ description: 初期要件定義書ドラフトのローカルパスから、pre-
 
 開始時に次のスキルを利用できることを確認し、それぞれを実行する段階で `SKILL.md` を最後まで読む。
 
+- `poteto-mode-start`
 - `pre-investigation-report`
 - `grilling-jp`
 - `quality-gated-review-improve`
@@ -31,6 +32,12 @@ description: 初期要件定義書ドラフトのローカルパスから、pre-
 4. 現在のブランチ、remote、upstream、GitHub CLI の認証状態、作業ツリーを確認し、開始時点の変更一覧を記録する。
 
 パスがない、複数ある、ディレクトリである、リポジトリ外にある、または空ファイルである場合は、ファイルを変更せず停止する。detached HEAD、GitHub CLI の未認証、または push 先を一意に確定できない状態でも、ファイルを変更する前に停止する。入力ファイルに未コミット変更があっても、その現在内容をユーザーが指定した下書きとして扱う。入力ファイル以外の既存変更は変更、stage、commit しない。
+
+## poteto-mode で要件定義を進める
+
+入力と開始状態を確定した後、事前調査を始める前に `poteto-mode-start` を使う。
+このスキルへの依頼全体を対象タスクとして渡し、以後の調査レポート作成、要件定義、品質ゲート、HTML 生成、commit、push、PR 作成と更新を poteto-mode が有効な状態で進める。
+poteto-mode がすでに有効な場合は再度呼び出さず、その状態を引き継ぐ。
 
 ## Phase 1: 事前調査レポートを生成する
 
