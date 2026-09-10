@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # PreToolUse フック（Write|Edit|MultiEdit|NotebookEdit）
-# 段階が outline / critique のとき、docs/po/ 配下以外への書き込みを exit 2 でブロックする。
+# 段階が outline / critique のとき、docs/progressive-outlining/ 配下以外への書き込みを exit 2 でブロックする。
 # skeleton / implement / off、または .stage が無いプロジェクトでは何もしない。
 # JSON の読み取りは jq を優先し、無ければ python3 にフォールバックする。
 set -u
@@ -37,7 +37,7 @@ cwd="$(json_get cwd)"
 root="${CLAUDE_PROJECT_DIR:-$cwd}"
 [ -n "$root" ] || exit 0
 
-stage_file="$root/docs/po/.stage"
+stage_file="$root/docs/progressive-outlining/.stage"
 [ -f "$stage_file" ] || exit 0
 stage="$(tr -d '[:space:]' < "$stage_file")"
 
@@ -56,13 +56,13 @@ case "$file" in
 esac
 
 case "$abs" in
-  "$root/docs/po/"*) exit 0 ;;
+  "$root/docs/progressive-outlining/"*) exit 0 ;;
 esac
 
 cat >&2 << MSG
-po-guard: 現在の段階は「$stage」です。この段階で書けるのは docs/po/ 配下だけです。
+po-guard: 現在の段階は「$stage」です。この段階で書けるのは docs/progressive-outlining/ 配下だけです。
   対象: $abs
-コードやスケルトンを書く段階ではありません。設計文書（docs/po/）の更新に留めてください。
+コードやスケルトンを書く段階ではありません。設計文書（docs/progressive-outlining/）の更新に留めてください。
 次の段階へ進めるのはユーザーだけです（/po:skeleton または /po:implement）。
 MSG
 exit 2

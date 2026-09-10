@@ -11,7 +11,7 @@ allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/po-stage.sh *)
 
 # /po:skeleton — 型とシグネチャに落とす
 
-対象: `docs/po/$slug/`（全ファイルを読む。最新の批評に未対処の指摘があれば、まずそれを私に見せ、アウトラインに反映してから進む）
+対象: `docs/progressive-outlining/$slug/`（全ファイルを読む。最新の批評に未対処の指摘があれば、まずそれを私に見せ、アウトラインに反映してから進む）
 
 ## 書くもの
 
@@ -30,7 +30,7 @@ allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/scripts/po-stage.sh *)
 ## 検証
 
 - 型検査を通す（`cargo check` / `tsc --noEmit` / プロジェクトの該当コマンド）。通らない間はシグネチャを直す
-- 通ったら `docs/po/$slug/03-skeleton.md` に、シグネチャに現れない設計判断（エラー処理方針、境界を跨ぐデータの所有権、各テストの意図）を書く
+- 通ったら `docs/progressive-outlining/$slug/03-skeleton.md` に、シグネチャに現れない設計判断（エラー処理方針、境界を跨ぐデータの所有権、各テストの意図）を書く
 
 ## 終わり方
 

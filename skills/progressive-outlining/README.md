@@ -11,10 +11,10 @@ Andrew Ng の Progressive Outlining（アウトライン → 批評 → 箇条�
 
 設計原則:
 
-- 段階ごとの成果物を `docs/po/<slug>/` にファイルとして残す
+- 段階ごとの成果物を `docs/progressive-outlining/<slug>/` にファイルとして残す
 - 段階遷移は人間が決める（全スキル `disable-model-invocation: true`）
 - 批評は会話履歴を持たない別コンテキスト（`context: fork`）で行う
-- outline / critique 段階では `docs/po/` 以外への Write / Edit をフックで決定論的にブロックする
+- outline / critique 段階では `docs/progressive-outlining/` 以外への Write / Edit をフックで決定論的にブロックする
 
 ## 導入
 
@@ -37,7 +37,7 @@ claude plugin validate ./po
 ## 使い方
 
 ```
-/po:outline auth-refactor     # 議論を何往復か。成果物: docs/po/auth-refactor/01-outline.md
+/po:outline auth-refactor     # 議論を何往復か。成果物: docs/progressive-outlining/auth-refactor/01-outline.md
 /po:critique auth-refactor    # 別コンテキストで批評 → 02-critique.md
 /po:outline auth-refactor     # 批評を反映（再入可）
 /po:skeleton auth-refactor    # 型・シグネチャ・テスト名。型検査を通す → 03-skeleton.md
@@ -46,10 +46,10 @@ claude plugin validate ./po
 /code-review
 ```
 
-段階は `docs/po/.stage` に記録される。ガードを外すには:
+段階は `docs/progressive-outlining/.stage` に記録される。ガードを外すには:
 
 ```bash
-echo off > docs/po/.stage    # または rm docs/po/.stage
+echo off > docs/progressive-outlining/.stage    # または rm docs/progressive-outlining/.stage
 ```
 
 ## 構成
@@ -75,7 +75,7 @@ po/
 
 - **rubric.md**: 批評の質はここで決まる。「判定できる問い」の形を保つ。
 - **批評モデル**: `agents/critic.md` の frontmatter に `model: opus` などを足すと、批評だけ強いモデルで回せる。
-- **ガード対象**: `po-guard.sh` は「outline / critique では docs/po/ 以外禁止」という単純な規則。src/ のパターン指定より言語・レイアウトに依存しない。
+- **ガード対象**: `po-guard.sh` は「outline / critique では docs/progressive-outlining/ 以外禁止」という単純な規則。src/ のパターン指定より言語・レイアウトに依存しない。
 
 ## 既知の制約
 
