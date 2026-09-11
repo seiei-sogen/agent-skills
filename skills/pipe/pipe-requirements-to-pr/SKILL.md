@@ -17,9 +17,12 @@ description: 既存の AsciiDoc 要件定義書 req-*.adoc、または GitHub is
 - `pipe-grilling-auto-to-requirements-pr`
 - `pipe-generate-quality-gated-implementation-plan`
 - `commit-push`
+- `ponytail:ponytail-review`
 - `review-guide`
 - `asciidoc-to-colorful-html`
 - `pr-update-gh`
+
+差分に TypeScript または JavaScript が含まれる場合だけ、`anti-slop-typescript` も利用できることを確認し、Phase 5 を始める前にその `SKILL.md` を最後まで読む。
 
 GitHub issue URL を入力にする場合だけ、`suggest-git-branch-name` も利用できることを確認し、issue 初期化を始める前にその `SKILL.md` を最後まで読む。
 
@@ -121,9 +124,11 @@ Git リポジトリ、`develop`、現在のブランチ、作業ツリー、適�
 
 ## Phase 5: develop 比較レビュー
 
-[プラットフォーム別レビューと PR](references/platform-review-and-pr.md) を読み、実行環境に応じたレビューを行う。対象は `develop` と現在のブランチの差分、および未コミットの対象変更である。
+[レビューと PR](references/review-and-pr.md) を読み、差分をレビューする。対象は `develop` と現在のブランチの差分、および未コミットの対象変更である。Claude Code や Codex のホスト固有レビュー機能は使わない。
 
-正しさ、回帰、エラー処理、セキュリティ、データ損失、契約、境界条件、テスト、保守性の順で確認する。根拠のある指摘は修正して検証を再実行する。最大3巡で、重大または高重要度の未解決指摘が0件になったら完了する。安全に直せない重大指摘が残る場合は Phase 7 の最終更新へ進まず停止し、既存 PR の URL と未解決指摘を報告する。
+`ponytail:ponytail-review` で過剰設計を洗い出す。差分に TypeScript または JavaScript が含まれる場合は `anti-slop-typescript` も使い、防御的な過剰実装、見せかけの型安全、不要なヘルパー、冗長な実行時チェックを洗い出す。含まれない場合は省略し、省略した理由を最終報告に残す。
+
+両スキルの所見に加えて、正しさ、回帰、エラー処理、セキュリティ、データ損失、契約、境界条件、テスト、保守性を確認する。根拠のある指摘は修正して検証を再実行する。単純化の指摘であっても、要件定義書と実装計画で決めた挙動、公開 API、永続化形式、セキュリティ検査、外部入力に対する正当な防御的チェックは変えない。最大3巡で、重大または高重要度の未解決指摘が0件になったら完了する。安全に直せない重大指摘が残る場合は Phase 7 の最終更新へ進まず停止し、既存 PR の URL と未解決指摘を報告する。
 
 ## Phase 6: レビューガイド
 
@@ -133,7 +138,7 @@ Git リポジトリ、`develop`、現在のブランチ、作業ツリー、適�
 
 ## Phase 7: commit、push、PR 更新
 
-[プラットフォーム別レビューと PR](references/platform-review-and-pr.md) の PR 手順に従う。HTML 生成後に要件定義書または実装計画を更新していた場合は、Phase 2 の品質ゲートを再実行し、実装計画の解説 HTML を再生成する。要件定義書、実装計画、レビューガイド、またはSVG図を更新していた場合は、対応する HTML を `asciidoc-to-colorful-html` で再生成し、変換元の最新内容と一致することを確認する。実装計画の解説 HTML、レビューガイド、参照するSVG図、そのHTMLまで含む対象変更だけを commit し、現在のブランチを push する。
+[レビューと PR](references/review-and-pr.md) の PR 手順に従う。HTML 生成後に要件定義書または実装計画を更新していた場合は、Phase 2 の品質ゲートを再実行し、実装計画の解説 HTML を再生成する。要件定義書、実装計画、レビューガイド、またはSVG図を更新していた場合は、対応する HTML を `asciidoc-to-colorful-html` で再生成し、変換元の最新内容と一致することを確認する。実装計画の解説 HTML、レビューガイド、参照するSVG図、そのHTMLまで含む対象変更だけを commit し、現在のブランチを push する。
 
 Phase 1 で作成した PR をそのまま使う。オープンな PR が見つからない場合だけ `develop` 向け PR を作成する。その後 `pr-update-gh` を実行し、レビューガイドへの導線、実施した検証、確認してほしい点を含む本文へ更新して、再取得した本文と URL を確認する。
 
@@ -146,7 +151,7 @@ Phase 1 で作成した PR をそのまま使う。オープンな PR が見つ�
 - 更新・生成した要件定義書、調査レポート、実装計画、実装計画の解説 HTML、レビューガイド、SVG図、および3文書の HTML
 - 各子パイプラインの品質ゲートの最終点と終了理由
 - 実装概要と検証結果
-- プラットフォームレビューの方式、指摘、修正結果
+- レビューで使ったスキル、指摘、修正結果
 - 要件定義のチェックポイント commit、実装計画のチェックポイント commit、最終 commit、ブランチ、PR の URL
 - 残課題。なければ「なし」
 
