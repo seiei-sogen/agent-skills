@@ -5,11 +5,11 @@ description: pstack のモデル設定を、実行中の Claude Code または C
 
 # pstack のモデルを設定する
 
-実行中のホストを確認し、open-pstack 本体の `pstack:setup-pstack` を次の方法で呼び出す。
+実行中のホストを確認し、open-pstack-sogen 本体の `pstack:setup-pstack` を次の方法で呼び出す。
 
 - Claude Code では `/pstack:setup-pstack` を実行する。
 - Codex では `pstack:setup-pstack` スキルを使う。
 
 呼び出したスキルの対話と検証を、モデル設定が保存されるか、設定を保存せず終了するまで続ける。
 
-`pstack:setup-pstack` が見つからない場合は、open-pstack が未導入または未読み込みであることと、導入元の `https://github.com/ericlitman/open-pstack` を伝える。
+`pstack:setup-pstack` が見つからない場合は、open-pstack-sogen が未導入または未読み込みであることと、導入元の `https://github.com/seiei-sogen/open-pstack-sogen` を伝える。

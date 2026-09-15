@@ -7,7 +7,7 @@ description: 現在の開発タスクを、実行中の Claude Code または Co
 
 このスキルと一緒に渡されたユーザーの依頼全体を、poteto-mode で実行する対象タスクとして扱う。
 
-実行中のホストを確認し、open-pstack 本体の `pstack:poteto-mode` を次の方法で呼び出す。
+実行中のホストを確認し、open-pstack-sogen 本体の `pstack:poteto-mode` を次の方法で呼び出す。
 
 - Claude Code では `/pstack:poteto-mode <ユーザーの依頼>` を実行する。
 - Codex では `pstack:poteto-mode` スキルを使い、ユーザーの依頼をそのまま対象タスクにする。
@@ -16,4 +16,4 @@ description: 現在の開発タスクを、実行中の Claude Code または Co
 
 対象タスクが渡されていない場合は、何を進めるかをユーザーに確認する。
 
-`pstack:poteto-mode` が見つからない場合は、open-pstack が未導入または未読み込みであることと、導入元の `https://github.com/ericlitman/open-pstack` を伝える。
+`pstack:poteto-mode` が見つからない場合は、open-pstack-sogen が未導入または未読み込みであることと、導入元の `https://github.com/seiei-sogen/open-pstack-sogen` を伝える。
