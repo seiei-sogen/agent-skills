@@ -22,7 +22,7 @@ description: 既存の AsciiDoc 要件定義書 req-*.adoc、または GitHub is
 - `asciidoc-to-colorful-html`
 - `pr-update-gh`
 
-差分に TypeScript または JavaScript が含まれる場合だけ、`anti-slop-typescript` も利用できることを確認し、Phase 5 を始める前にその `SKILL.md` を最後まで読む。
+差分に TypeScript または JavaScript が含まれる場合だけ、`anti-ai-slop-typescript-general` も利用できることを確認し、Phase 5 を始める前にその `SKILL.md` を最後まで読む。
 
 GitHub issue URL を入力にする場合だけ、`suggest-git-branch-name` も利用できることを確認し、issue 初期化を始める前にその `SKILL.md` を最後まで読む。
 
@@ -126,7 +126,7 @@ Git リポジトリ、`develop`、現在のブランチ、作業ツリー、適�
 
 [レビューと PR](references/review-and-pr.md) を読み、差分をレビューする。対象は `develop` と現在のブランチの差分、および未コミットの対象変更である。Claude Code や Codex のホスト固有レビュー機能は使わない。
 
-`ponytail:ponytail-review` で過剰設計を洗い出す。差分に TypeScript または JavaScript が含まれる場合は `anti-slop-typescript` も使い、防御的な過剰実装、見せかけの型安全、不要なヘルパー、冗長な実行時チェックを洗い出す。含まれない場合は省略し、省略した理由を最終報告に残す。
+`ponytail:ponytail-review` で過剰設計を洗い出す。差分に TypeScript または JavaScript が含まれる場合は `anti-ai-slop-typescript-general` も使い、防御的な過剰実装、見せかけの型安全、不要なヘルパー、冗長な実行時チェックを洗い出す。含まれない場合は省略し、省略した理由を最終報告に残す。
 
 両スキルの所見に加えて、正しさ、回帰、エラー処理、セキュリティ、データ損失、契約、境界条件、テスト、保守性を確認する。根拠のある指摘は修正して検証を再実行する。単純化の指摘であっても、要件定義書と実装計画で決めた挙動、公開 API、永続化形式、セキュリティ検査、外部入力に対する正当な防御的チェックは変えない。最大3巡で、重大または高重要度の未解決指摘が0件になったら完了する。安全に直せない重大指摘が残る場合は Phase 7 の最終更新へ進まず停止し、既存 PR の URL と未解決指摘を報告する。
 
