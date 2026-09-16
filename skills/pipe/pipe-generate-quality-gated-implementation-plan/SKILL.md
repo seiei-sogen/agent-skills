@@ -1,11 +1,11 @@
 ---
 name: pipe-generate-quality-gated-implementation-plan
-description: 更新済みの AsciiDoc 要件定義書と事前調査 JSON から、実装計画を自動壁打ちで生成し、要件との品質ゲートを通して解説 HTML まで作る。要件作成前の相談や実装依頼には使わない。
+description: 更新済みの AsciiDoc 要件定義書と事前調査 JSON から、実装計画を自動壁打ちで生成し、要件との品質ゲートを通す。要件作成前の相談や実装依頼には使わない。
 ---
 
 # 品質ゲート済みの実装計画を生成する
 
-更新済みの要件定義書と事前調査レポートから、実装可能な計画と、その計画をやさしく説明する HTML を作る。
+更新済みの要件定義書と事前調査レポートから、実装可能な計画を作る。
 コードの実装、commit、push、PR 作成は行わない。
 
 方式を選ぶ理由と、その判断を別の案件でも使える条件を実装計画に残す。以下の方式比較と学びの整理は、設計判断、未知の技術、障害原因の検討がある場合に行う。単純な文言修正や既存手順で決まる変更では省略し、理由を最終報告に一言添える。
@@ -17,7 +17,6 @@ description: 更新済みの AsciiDoc 要件定義書と事前調査 JSON から
 - `poteto-mode-start`
 - `grilling-jp`
 - `quality-gated-review-improve`
-- `easy-to-understand`
 
 子スキルが見つからない場合は同等手順で代替せず、見つからないスキル名を報告して停止する。
 指示が衝突する場合は、現在のユーザー指示、このスキルの工程固有の指示、子スキルの通常指示の順に優先する。
@@ -29,12 +28,11 @@ description: 更新済みの AsciiDoc 要件定義書と事前調査 JSON から
 - 更新済みの `req-<topic>.adoc` 1件
 - その要件を調査した有効な JSON レポート 1件
 
-[成果物の契約](../pipe-requirements-to-pr/references/artifact-contracts.md) を読み、実装計画と解説 HTML の保存先を確定する。
+[成果物の契約](../pipe-requirements-to-pr/references/artifact-contracts.md) を読み、実装計画の保存先を確定する。
 ユーザーが保存先を指定していない場合は、要件定義書と同じディレクトリへ次の名前で保存する。
 
 ```text
 implementation-plan-<issue-token>-<topic>.adoc
-easy-implementation-plan-<issue-token>-<topic>.html
 ```
 
 入力が不足している場合は、必要なパスを確認してから始める。
@@ -44,7 +42,7 @@ easy-implementation-plan-<issue-token>-<topic>.html
 ## poteto-mode で実装計画を進める
 
 入力と成果物を確定した後、実装計画の生成を始める前に `poteto-mode-start` を使う。
-このスキルへの依頼全体を対象タスクとして渡し、以後の自動壁打ち、実装計画の生成、品質ゲート、解説 HTML の生成を poteto-mode が有効な状態で進める。
+このスキルへの依頼全体を対象タスクとして渡し、以後の自動壁打ち、実装計画の生成、品質ゲートを poteto-mode が有効な状態で進める。
 
 ## 実装計画を生成する
 
@@ -98,23 +96,11 @@ easy-implementation-plan-<issue-token>-<topic>.html
 原則90点以上で、文書間の重大な不整合が0件になったら合格とする。
 子スキルの例外終了条件に該当した場合は、残課題が実装を危険にしないことを確認する。
 
-## 解説 HTML を作る
-
-品質ゲートを通過した最終版の実装計画だけを入力に `easy-to-understand` を使う。
-出力は `easy-implementation-plan-<issue-token>-<topic>.html` とする。
-この HTML は、実装計画をそのまま変換した `implementation-plan-<issue-token>-<topic>.html` とは別の成果物として扱う。
-
-予備知識がない読者でも、目的、変更箇所、タスクの依存順、テスト方法、主なリスクを理解できる内容にする。
-図が理解を助ける箇所では図を使う。
-実装計画に方式比較と学びがある場合は、代表的な失敗例から、各方式の仕組みと限界、今回の選択理由、次に思い出す兆候を説明する。用語集だけにせず、計画で未確認の内容は HTML でも未確認と示す。
-HTML が単体で開け、最終版の実装計画を説明していることを確認する。
-要件定義書または実装計画を後から更新した場合は、品質ゲートを再確認して解説 HTML を再生成する。
-
 ## 完了報告
 
 次を簡潔に報告する。
 
 - 更新した要件定義書
-- 生成した実装計画と解説 HTML
+- 生成した実装計画
 - 品質ゲートの最終点と終了理由
 - 残課題。なければ「なし」
