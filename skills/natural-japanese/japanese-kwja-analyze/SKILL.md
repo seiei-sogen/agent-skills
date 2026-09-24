@@ -1,5 +1,5 @@
 ---
-name: japanese-kwja-analyze-file
+name: japanese-kwja-analyze
 description: KWJA で日本語テキストファイルを解析し、タイポ修正、分かち書き、単語正規化、形態素解析、固有表現認識、言語素性、係り受け、述語項構造、橋渡し照応、共参照、談話関係を含む結果を元ファイルと同じ階層の .txt に保存する。ファイルを KWJA で解析してほしいときに使う。
 ---
 
