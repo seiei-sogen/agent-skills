@@ -10,21 +10,26 @@ description: >-
   「リライトして」「校正して」などの依頼で起動する。
 ---
 
-# 述語項グラフを修復する日本語リライト
+# KWJA の解析結果を使う日本語リライト
 
 日本語推敲を文字列の整形ではなく、述語項グラフの修復として実行する親スキルである。
-原文の語義、述語、項、指示対象を分析した上で、媒体に合う自然な日本語へ書き直す。
+KWJA の解析ファイルから述語、項、指示対象を読み取り、媒体に合う自然な日本語へ書き直す。
 
 すべての省略項を表面化することが目的ではない。
 省略したまま自然に読める項は、無理に表面化しない。
 
 ## 子スキルと優先順位
 
-Phase 1 で `natural-japanese-rewrite-analyzer` の `SKILL.md` を最後まで読み、同スキルの出力契約で述語項グラフを作る。
-見つからない場合はパイプラインを止めず、同じ出力契約で分析を自前実行する。
-平坦な述語一覧だけで Phase 1 を完了してはならず、代替した事実を Phase 6 で報告する。
+Phase 1 で [japanese-kwja-analyze](../japanese-kwja-analyze/SKILL.md) と [natural-japanese-rewrite-analyzer](../natural-japanese-rewrite-analyzer/SKILL.md) を読む。
+前者が KWJA の解析ファイルを生成し、後者がその結果をリライト用の分析メモに整理する。
+タイポ修正、分かち書き、単語正規化、形態素解析、固有表現認識、言語素性付与、係り受け解析、述語項構造解析、橋渡し照応解析、共参照解析、談話関係解析は KWJA の結果を使う。
+LLM はその結果と原文を読み、自然さ、媒体、発話意図を判断して文章を生成する。
 
-指示が衝突する場合は、現在のユーザー指示、この親スキルの Phase 固有の指示、子スキルの通常指示の順に優先する。
+必要なスキルが見つからない場合や KWJA の実行・解析ファイルの読み取りに失敗した場合は、リライトを止めて原因を報告する。
+LLM による言語解析で代行せず、対象ファイルも編集しない。
+
+指示が衝突する場合は、現在のユーザー指示、この親スキルのリライトモードと Phase 固有の指示、子スキルの通常指示の順に優先する。
+デストロイモードで許容する意味の変更も、KWJA が出力した解析事実とは分けて扱う。
 
 ## 入力と出力モード
 
@@ -69,98 +74,21 @@ Phase 1 で `natural-japanese-rewrite-analyzer` の `SKILL.md` を最後まで�
 一意に決まらない箇所は候補を保持し、安全な候補すべてに共通する変更だけを行う。
 それでも誤解を避けられない場合は原文を保持し、必要なときだけ `要確認` とする。
 
-## Phase 1: 述語項グラフを構築する
+## Phase 1: KWJA の解析ファイルから分析メモを作る
 
-`natural-japanese-rewrite-analyzer` を使い、次を含む分析メモを作る。
+`natural-japanese-rewrite-analyzer` に原文と対象範囲を渡す。
+同スキルの手順で `japanese-kwja-analyze` を実行し、生成された `.kwja.txt` を入力に分析メモを作る。
+解析用テキストの準備、原文との対応付け、KNP の読み取り、分析メモのスキーマは同スキルの契約に従う。
+
+生成へ進む前に `analysis_source.input_file` と `analysis_source.result_file` の実ファイルを読み、対象範囲の全文が処理されたことを確認する。
+長い解析結果は文 ID を保持して分割して読み、文をまたぐ照応と談話関係も追う。
+コマンドの成功やファイルパスの取得だけで分析完了としない。
+同じ実行内で内容が変わっていない入力の解析結果は再利用し、親スキルから重複実行しない。
+
+KWJA にない語義、項、関係は `unknown` または曖昧さとして残す。
 デストロイモードでは `graph_invariants` と `rewrite_policy` を原文の分析資料として扱い、書き直しの制限にはしない。
 
-- `protected_ranges` と `rewrite_targets`
-- 語義候補を持つ述語ノード
-- ID を持つ語義候補、格フレーム、項スロット
-- 共有可能な指示対象ノード
-- 述語と指示対象を結ぶ項スロット
-- 項の表面助詞、統語関係、意味役割、実現形式、復元可能性、根拠
-- 付加部、問題コード、曖昧さ
-- `graph_invariants` と `rewrite_policy`
-
-子スキルを利用できない場合も、少なくとも次のスキーマと列挙値を保つ。
-
-```yaml
-schema_version: 2
-protected_ranges: []
-rewrite_targets: []
-entities:
-  - id: entity-1
-    text: 表面に現れた表現または null
-    candidates: []
-predicates:
-  - id: predicate-1
-    surface: 原文の述語
-    verb: 原文の述語
-    args: {}
-    omitted_args: []
-    lemma: 見出し語
-    predicate_type: verb | adjective | verbal-noun | event-noun | embedded
-    sense_candidates:
-      - id: sense-1
-        gloss: 語義候補
-        case_frames:
-          - id: frame-1
-            slots:
-              - id: slot-1
-                role: 意味役割
-                domain_role: ドメイン固有役割または null
-                kind: core | selected-oblique | adjunct | uncertain
-                legacy_label: 旧 args で使う単一ラベルまたは null
-                surface_particles: []
-    sense: sense-1 | unknown
-    voice: active | passive | causative | causative-passive | potential | not-applicable | unknown
-    polarity: positive | negative
-    tense: 原文の時制または unknown
-    aspect: 原文のアスペクトまたは unknown
-    modality: {}
-    arguments:
-      - sense_id: sense-1
-        frame_id: frame-1
-        slot_id: slot-1
-        role: 意味役割
-        domain_role: ドメイン固有役割または null
-        kind: core | selected-oblique | adjunct | uncertain
-        surface: 原文の項または null
-        surface_particle: 表面の助詞または null
-        syntactic_relation: 統語関係または unknown
-        realization: overt | zero | relative-gap | nominalized | generic | unresolved
-        discourse_role: topic | topic-continuation | focus | contrast | none | unknown
-        referent: 指示対象IDまたは null
-        candidates: []
-        recoverability: clear | probable | ambiguous | unknown
-        evidence: 判断根拠
-adjuncts: []
-issues:
-  - code: UNRESOLVED_CORE_ARGUMENT | AMBIGUOUS_ANTECEDENT | CASE_FRAME_MISMATCH | SUBJECT_DRIFT | ATTACHMENT_AMBIGUITY | NOMINAL_ROLE_AMBIGUITY | VAGUE_PREDICATE | OVEREXPLICIT_ARGUMENT | SEMANTIC_DRIFT
-    predicate_ids: []
-    evidence: 原文上の根拠
-    repairability: safe | contextual | blocked
-ambiguities: []
-graph_invariants: []
-rewrite_policy: []
-```
-
-`surface` と `arguments` を正規フィールドとする。
-各 `argument` の `sense_id`、`frame_id`、`slot_id` は、同じ predicate の `sense_candidates` 内に実在する ID を参照し、役割と種別は参照先スロットと一致させる。
-`verb`、`args`、`omitted_args` は旧契約向けの互換ビューであり、正規フィールドから毎回導出する。
-`legacy_label` は v1 へ投影するときの単一キーであり、表面助詞や語義別の意味役割を完全には表さない。
-確定語義があればその格フレーム、確定していなければ残っているすべての語義候補と格フレームを投影元とする。
-`args` は、各 `legacy_label` について、すべての投影元に同ラベルのスロットがあり、その項が同じ非 null の `referent` を指し、`candidates` に競合候補がない場合だけ、そのラベルと指示対象を1回記録する mapping として v1 のコンテナ型を維持する。
-`omitted_args` は、その合意に加えて、対応するすべての項が `realization: zero` と `recoverability: clear` を満たす場合だけ、同じラベルと指示対象を1回記録する sequence とする。
-`probable`、`ambiguous`、`unknown` の項、または投影元の間でラベル、指示対象、実現形式が一致しない項は旧ビューへ投影せず、正規の `arguments` と `ambiguities` に残す。
-`args` と `omitted_args` は lossy view であり、語義別の意味判断には使用しない。
-正規フィールドと互換ビューが矛盾する場合は正規フィールドを優先し、矛盾自体を `ambiguities` へ記録する。
-
-ゼロ項、主題化、並列述語の項共有と主体切り替え、態、名詞化、軽動詞を検査する。
-語義や指示対象を確定できなければ、複数候補、`ambiguous`、`unknown` のまま保持する。
-
-完了条件: 全述語候補がグラフにあり、重要な項が指示対象、候補集合、`unknown` のいずれかになり、原文にない情報を確定していない。
+完了条件: 対象テキストに対応する KWJA の解析ファイルを読み終え、子スキルの出力契約を満たす分析メモがあり、各判断を原文と解析ファイルへたどれる。
 
 ## Phase 2: 上位レイヤーの制約を固定する
 
@@ -182,6 +110,7 @@ Phase 1 の意味グラフを土台に、下位から上位へ次を分析する
    - 媒体、文末、簡潔さ、丁寧さ
 
 不明な属性は `unknown` とする。デストロイモードでは自然な表現に必要な解釈を選べる。セーフモードでは文体の都合で下位レイヤーの語義、指示関係、発話行為を変更してはならない。
+選んだ解釈は生成方針に記録し、KWJA の解析結果や未出力の項を補うためには使わない。
 
 完了条件: 原文に存在する topic / focus、発話行為、requested action、敬語の方向、文体が、保持する制約または `unknown` として整理されている。
 
@@ -238,7 +167,12 @@ Markdown の見出し、箇条書き、表、コードブロック、JSON / YAML
 
 セーフモードでは次の意味回帰検査を行う。
 
-候補文へ Phase 1 と Phase 2 を再実行し、原文と意味的に比較する。
+候補文を原文用とは別の作業ファイルへ保存し、Phase 1 と Phase 2 を再実行する。
+候補文用の KWJA 解析ファイルを新たに生成して読み、原文用の解析ファイルを残したまま比較する。
+候補文を再修正した場合も、更新後の内容を KWJA で再解析する。
+文 ID や基本句 ID は解析ごとに付け直されるため、ID の一致ではなく、原文と候補文の対応箇所、指示対象、意味役割を照合する。
+タイポ修正・正規化後の解析表記だけで意味保持を判断せず、修正前の原文と候補文も直接比較する。
+KWJA の予測と本文が食い違う箇所や対応を確定できない箇所は、検査合格にせず `要確認` とする。
 語順、助詞、態、項の明示または省略は一致しなくてもよいが、次は一致しなければならない。
 
 - 述語の語義と出来事
@@ -270,6 +204,6 @@ Markdown の見出し、箇条書き、表、コードブロック、JSON / YAML
 3. 修復で明確になった関係
 
 分析メモ全体、内部手順、問題のない箇所の説明は出さない。
-子スキルを利用できず自前分析へ縮退した場合は、その事実を報告する。
+使用した KWJA 解析ファイルのパスを短く示す。セーフモードでは原文用と最終候補用の両方を示す。
 
 リライト本文が出力され、両モード共通の保護範囲と文書構造が保持され、`要確認` がすべて報告済みなら完了とする。セーフモードでは意味不変条件の不一致も0件とする。
