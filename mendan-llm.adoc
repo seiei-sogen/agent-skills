@@ -1,0 +1,7 @@
+{
+  my_skill_data: "/home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/asciidoc-rust-cv-extra/docs/skill-sheet/2026_09"
+
+  input_corp_data: "/home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/asciidoc-rust-cv-extra/pages/2026/2026_09_oshigoto/09_18_KDDI_SMART_mobilities/input"
+  
+  output_dir: "/home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/asciidoc-rust-cv-extra/pages/2026/2026_09_oshigoto/09_18_KDDI_SMART_mobilities/output"
+}
