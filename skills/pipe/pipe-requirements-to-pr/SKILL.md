@@ -20,6 +20,7 @@ description: 既存の AsciiDoc 要件定義書 req-*.adoc、または GitHub is
 - `ponytail:ponytail-review`
 - `review-guide`
 - `asciidoc-to-colorful-html`
+- `easy-to-understand`
 - `pr-update-gh`
 
 差分に TypeScript または JavaScript が含まれる場合だけ、`anti-ai-slop-typescript-general` も利用できることを確認し、Phase 5 を始める前にその `SKILL.md` を最後まで読む。
@@ -53,7 +54,7 @@ poteto-mode がすでに有効な場合は再度呼び出さず、その状態�
 - レビューガイド図: `review-guide-<issue-token>-<topic>-<symbol-or-flow>.svg`
 - レビューガイド HTML: `review-guide-<issue-token>-<topic>.html`
 
-このうち調査レポート、確定した要件定義書、要件定義書 HTML は Phase 1 の子パイプラインが生成する。実装計画と解説 HTML は Phase 2 の子パイプラインが生成する。残りはこの親スキルが生成する。
+このうち調査レポートと確定した要件定義書は Phase 1 の子パイプラインが生成する。実装計画は Phase 2 の子パイプラインが生成する。HTML は更新コストを抑えるため Phase 1〜5 では生成・更新せず、実装とレビュー修正を終えた Phase 6 でまとめて生成する。残りもこの親スキルが生成する。
 
 成果物は要件定義書と同じディレクトリへ置く。ユーザーが保存先を指定した場合はその指定を優先する。
 
@@ -72,43 +73,37 @@ Git リポジトリ、`develop`、現在のブランチ、作業ツリー、適�
 
 ## Phase 1: 要件定義（子パイプラインへ委譲）
 
-要件定義書のパスを入力に `pipe-grilling-auto-to-requirements-pr` を使う。事前調査、自動壁打ちによる要件確定、要件の品質ゲート、要件定義書 HTML の生成、要件成果物の commit と push、初回 PR の作成と本文更新までを子パイプラインへ委譲する。
+要件定義書のパスを入力に `pipe-grilling-auto-to-requirements-pr` を使う。事前調査、自動壁打ちによる要件確定、要件の品質ゲート、要件成果物の commit と push、初回 PR の作成と本文更新までを子パイプラインへ委譲する。
 
 委譲時に次を段階固有の指示として明示し、子スキルの既定より優先させる。
 
 - PR の base は `develop` とする。
 - 作業ブランチは親が確定したものを使い、子スキル側で新しいブランチを作らない。現在のブランチが `develop` なら、委譲前に変更内容へ合う作業ブランチを作る。
-- 調査レポートと要件定義書 HTML の保存先は [成果物の契約](references/artifact-contracts.md) で確定した名前に従う。
+- 調査レポートの保存先は [成果物の契約](references/artifact-contracts.md) で確定した名前に従う。
 - 開始時に記録した既存変更は stage も commit もしない。
 
 完了報告から次を確認する。満たさない場合は Phase 2 へ進まず、停止理由と残課題を報告する。
 
 - 調査レポートが有効な JSON で、必須フィールド、根拠パス、`open_questions` を含む
 - 要件定義書が自動壁打ちと品質ゲートを通過した最終版で、品質点が80点以上である
-- 要件定義書 HTML が最終版と一致する
 - 対象成果物だけの commit が remote にあり、現在のブランチのオープンな PR を再取得して確認できている
 
 この PR を以後の唯一の PR として扱い、後続 Phase で新しい PR を重ねて作らない。
 
 ## Phase 2: 実装計画（子パイプラインへ委譲）
 
-更新済み要件定義書、調査レポート、実装計画と解説 HTML の指定パスを入力に `pipe-generate-quality-gated-implementation-plan` を使う。
-実装計画の自動壁打ちと生成、要件定義書との文書品質ゲート、最終版の実装計画に対する解説 HTML の生成を子パイプラインへ委譲する。
+更新済み要件定義書、調査レポート、実装計画の指定パスを入力に `pipe-generate-quality-gated-implementation-plan` を使う。
+実装計画の自動壁打ちと生成、要件定義書との文書品質ゲートを子パイプラインへ委譲する。
 子スキルが更新した要件定義書と実装計画を、以後の最終版として扱う。
 
 完了報告から、要件定義書と実装計画の最終点が原則90点以上で、文書間の重大な不整合が0件であることを確認する。
 子スキルの例外終了条件に該当した場合は、残課題が実装を危険にしないことを確認する。
-解説 HTML が最終版の実装計画を説明していない場合は、この Phase をやり直す。
 
-子スキルが要件定義書を更新していた場合は、`asciidoc-to-colorful-html` で `req-<topic>.html` を再生成し、変換元の最新内容と一致することを確認する。
-
-## Phase 3: 実装計画の HTML 化と commit、push
-
-`asciidoc-to-colorful-html` を使い、品質ゲートを通過した実装計画を既定の出力名で `implementation-plan-<issue-token>-<topic>.html` へ変換する。成果物契約と子スキルの出力契約を満たし、変換元の最新内容と一致することを確認する。変換警告から include、画像、xref などの文書不備が判明した場合は Phase 2 に戻って AsciiDoc を修正・再評価し、解説 HTML と変換 HTML を再生成する。
+## Phase 3: 実装計画の commit、push
 
 文書ペアが品質ゲートを通過した時点で、実装へ進む前のチェックポイントを共有する。開始時に記録した既存変更が作業ツリーに残っていないこと、および現在の未コミット変更がすべてこのパイプラインの対象であることを確認する。`commit-push` は未コミット変更をすべて commit するため、対象外の変更を分離できない場合は実行せず、該当ファイルを報告して停止する。
 
-`commit-push` を実行し、実装計画、実装計画の解説 HTML、実装計画 HTML、再生成した要件定義書 HTML を含む現在の対象変更を1つのコミットとして現在のブランチへ push する。子スキルの完了報告から、作成された commit と upstream の追跡参照が一致することを確認する。PR 本文の更新は Phase 7 でまとめて行う。
+`commit-push` を実行し、実装計画と更新した要件定義書を含む現在の対象変更を1つのコミットとして現在のブランチへ push する。子スキルの完了報告から、作成された commit と upstream の追跡参照が一致することを確認する。PR 本文の更新は Phase 7 でまとめて行う。
 
 ## Phase 4: 実装と検証
 
@@ -132,19 +127,27 @@ Git リポジトリ、`develop`、現在のブランチ、作業ツリー、適�
 
 ## Phase 6: レビューガイド
 
+レビューガイドの生成直前に、Phase 5 の修正と再検証を終えた要件定義書と実装計画から、次の HTML を生成する。
+
+- `asciidoc-to-colorful-html` で要件定義書を `req-<topic>.html` へ変換する。
+- `asciidoc-to-colorful-html` で実装計画を `implementation-plan-<issue-token>-<topic>.html` へ変換する。
+- `easy-to-understand` で実装計画の解説 HTML を `easy-implementation-plan-<issue-token>-<topic>.html` に生成する。
+
+成果物契約と各スキルの出力契約を満たし、HTML が変換元の最新内容と一致することを確認する。変換警告から include、画像、xref などの文書不備が判明した場合は AsciiDoc を修正し、Phase 2 の品質ゲートを再実行してから対応する HTML を再生成する。文書修正が実装に影響する場合は Phase 4〜5 も再実行する。すべての HTML が最終文書と一致したら、レビューガイドを生成する。
+
 `review-guide`を使い、Phase 5の修正と再検証を終えた最終実装からレビューガイドを生成する。対象として`develop`と現在のブランチの差分、未コミットの対象変更、要件定義書、実装計画書、検証結果を渡し、出力先に`review-guide-<issue-token>-<topic>.adoc`を指定する。
 
 子スキルが生成したAsciiDoc、難しい処理に対するSVG図、`review-guide-<issue-token>-<topic>.html`を最終検証の対象に含める。成果物が現在の最終差分と一致しない場合、図示すべき処理が図示されていない場合、または生成したSVGがHTMLへ埋め込まれていない場合はPhase 7へ進まない。
 
 ## Phase 7: commit、push、PR 更新
 
-[レビューと PR](references/review-and-pr.md) の PR 手順に従う。HTML 生成後に要件定義書または実装計画を更新していた場合は、Phase 2 の品質ゲートを再実行し、実装計画の解説 HTML を再生成する。要件定義書、実装計画、レビューガイド、またはSVG図を更新していた場合は、対応する HTML を `asciidoc-to-colorful-html` で再生成し、変換元の最新内容と一致することを確認する。実装計画の解説 HTML、レビューガイド、参照するSVG図、そのHTMLまで含む対象変更だけを commit し、現在のブランチを push する。
+[レビューと PR](references/review-and-pr.md) の PR 手順に従う。HTML 生成後に要件定義書または実装計画を更新していた場合は、Phase 2 の品質ゲートを再実行し、Phase 6 の手順で実装計画の解説 HTML を再生成する。要件定義書、実装計画、レビューガイド、またはSVG図を更新していた場合は、対応する HTML を `asciidoc-to-colorful-html` で再生成し、変換元の最新内容と一致することを確認する。実装計画の解説 HTML、レビューガイド、参照するSVG図、そのHTMLまで含む対象変更だけを commit し、現在のブランチを push する。
 
 Phase 1 で作成した PR をそのまま使う。オープンな PR が見つからない場合だけ `develop` 向け PR を作成する。その後 `pr-update-gh` を実行し、レビューガイドへの導線、実施した検証、確認してほしい点を含む本文へ更新して、再取得した本文と URL を確認する。
 
 ## 再開と完了報告
 
-各 Phase の開始時に既存成果物と Git / PR の状態を検証する。完了条件を満たす Phase は再利用し、途中または不整合な Phase から再開する。ファイルの存在だけで完了扱いにしない。子パイプラインへ委譲した Phase も、子スキルの完了条件で再開可否を判断する。
+各 Phase の開始時に既存成果物と Git / PR の状態を検証する。完了条件を満たす Phase は再利用し、途中または不整合な Phase から再開する。ファイルの存在だけで完了扱いにしない。子パイプラインへ委譲した Phase は、この親スキルの段階固有の指示を反映した子スキルの完了条件で再開可否を判断する。Phase 1〜5 の再開時は HTML の未生成や未更新を不整合とみなさず、Phase 6 で最新文書との一致を確認する。
 
 最後に次を簡潔に報告する。
 
