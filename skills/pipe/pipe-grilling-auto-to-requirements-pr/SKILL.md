@@ -117,10 +117,7 @@ Git と GitHub の状態を再取得し、リポジトリの既定ブランチ�
 
 現在のブランチにオープンな PR がある場合は、その PR を後続で再利用する。PR がなく、base との差分に対象成果物と無関係な既存 commit が含まれる場合は、意図しない変更を PR に混ぜず、commit 前に対象を報告して停止する。
 
-1. `git add -- <入力ファイル> <調査レポート>` で対象成果物だけを stage する。
-2. `git diff --cached` と `git status --short` を確認し、対象が入力ファイルと調査レポートだけであることを確かめる。
-3. リポジトリの規約に従う短い件名で1回 commit する。
-4. upstream があれば通常の `git push`、なければ `origin` へ `git push --set-upstream origin <現在のブランチ>` を1回実行する。
+`commit-push` は未コミット変更をすべて commit する。入力ファイルと調査レポートだけが未コミットであることを確認してから、`commit-push` を実行する。
 
 stage する差分がなく、再利用できる PR もない場合は、PR を作成せず「PR にする差分がない」と報告する。commit hook または push が失敗した場合は回避せず、force push、rebase、pull、追加 commit へ進まず、現在の状態を報告する。
 

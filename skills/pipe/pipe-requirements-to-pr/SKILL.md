@@ -141,7 +141,7 @@ Git リポジトリ、`develop`、現在のブランチ、作業ツリー、適�
 
 ## Phase 7: commit、push、PR 更新
 
-[レビューと PR](references/review-and-pr.md) の PR 手順に従う。HTML 生成後に要件定義書または実装計画を更新していた場合は、Phase 2 の品質ゲートを再実行し、Phase 6 の手順で実装計画の解説 HTML を再生成する。要件定義書、実装計画、レビューガイド、またはSVG図を更新していた場合は、対応する HTML を `asciidoc-to-colorful-html` で再生成し、変換元の最新内容と一致することを確認する。実装計画の解説 HTML、レビューガイド、参照するSVG図、そのHTMLまで含む対象変更だけを commit し、現在のブランチを push する。
+[レビューと PR](references/review-and-pr.md) の PR 手順に従う。HTML 生成後に要件定義書または実装計画を更新していた場合は、Phase 2 の品質ゲートを再実行し、Phase 6 の手順で実装計画の解説 HTML を再生成する。要件定義書、実装計画、レビューガイド、またはSVG図を更新していた場合は、対応する HTML を `asciidoc-to-colorful-html` で再生成し、変換元の最新内容と一致することを確認する。実装計画の解説 HTML、レビューガイド、参照するSVG図、そのHTMLまで含む対象変更だけが未コミットであることを確認してから、`commit-push` を実行する。
 
 Phase 1 で作成した PR をそのまま使う。オープンな PR が見つからない場合だけ `develop` 向け PR を作成する。その後 `pr-update-gh` を実行し、レビューガイドへの導線、実施した検証、確認してほしい点を含む本文へ更新して、再取得した本文と URL を確認する。
 
