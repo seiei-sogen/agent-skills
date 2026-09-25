@@ -1,8 +1,8 @@
-# RESOURCES.md Format
+# RESOURCES.md フォーマット
 
-`RESOURCES.md` is the curated set of trusted sources for this topic. Knowledge for explainers should be drawn from here, not from parametric guesses. Wisdom comes from the communities listed here.
+`RESOURCES.md`は、このトピックのために厳選された信頼できる情報源のセットです。説明者の知識は、ここから引き出すべきであり、推定的な推測から得るべきではありません。知恵は、ここにリストされたコミュニティから得られます。
 
-## Structure
+## 構造
 
 ```md
 # {Topic} Resources
@@ -22,11 +22,11 @@
   Use for: real-time coaching feedback on lifts.
 ```
 
-## Rules
+## ルール
 
-- **High-trust only.** Prefer primary sources, recognised experts, peer-reviewed work, and communities with strong moderation. If a resource is marketing dressed as education, leave it out.
-- **Annotate every entry.** A bare link is useless in three months. Add one line: what it covers and when to reach for it.
-- **Group by Knowledge / Wisdom.** Mirrors the philosophy in [SKILL.md](./SKILL.md). It is fine for a resource to appear in only one group.
-- **Surface gaps explicitly.** If no good resource exists for an area the mission needs, write a `## Gaps` section listing what is missing. This drives future search.
-- **Prune ruthlessly.** A resource that turned out to be wrong, shallow, or off-mission should be removed, not buried. Better five sharp sources than thirty mediocre ones.
-- **Record community preferences.** If the user has opted out of joining communities, note it here so future sessions don't keep proposing them.
+- **高信頼のみ。** 主に一次情報源、認められた専門家、査読済みの研究、強力なモデレーションを持つコミュニティを優先してください。もし情報源が教育に見せかけたマーケティングであれば、除外してください。
+- **すべての項目に注釈を付ける。** 生のリンクは3か月後には役に立たない。1行追加する：何を扱っているか、いつ参照すべきか。
+- **知識/知恵でグループ化する。** [SKILL.md](./SKILL.md)の哲学を反映している。一つのリソースが1つのグループにだけ現れるのは問題ない。
+- **ギャップを明示的に示す。** ミッションに必要な分野で良いリソースが存在しない場合、何が不足しているかを示す`## Gaps`セクションを書きます。これは将来の検索の指針となります。
+- **徹底的に削除する。** 誤っていた、浅い、またはミッションに合わないリソースは埋もれさせるのではなく削除する方が良いです。中途半端な三十のリソースよりも、鋭い五つのリソースの方が優れています。
+- **コミュニティの好みを記録します。** ユーザーがコミュニティへの参加をオプトアウトしている場合、ここに記録しておき、将来のセッションで提案されないようにします。

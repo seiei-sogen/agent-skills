@@ -1,5 +1,5 @@
 interface:
-  display_name: "Improve Codebase Architecture"
-  short_description: "Find and grill architecture improvements"
+  display_name: "コードベースのアーキテクチャを改善する"
+  short_description: "アーキテクチャの改善点を見つけて詳細に検討する"
 policy:
   allow_implicit_invocation: false

@@ -1,6 +1,6 @@
-# CONTEXT.md Format
+# CONTEXT.md フォーマット
 
-## Structure
+## 構造
 
 ```md
 # {Context Name}
@@ -22,18 +22,18 @@ A person or organization that places orders.
 _Avoid_: Client, buyer, account
 ```
 
-## Rules
+## ルール
 
-- **Be opinionated.** When multiple words exist for the same concept, pick the best one and list the others under `_Avoid_`.
-- **Keep definitions tight.** One or two sentences max. Define what it IS, not what it does.
-- **Only include terms specific to this project's context.** General programming concepts (timeouts, error types, utility patterns) don't belong even if the project uses them extensively. Before adding a term, ask: is this a concept unique to this context, or a general programming concept? Only the former belongs.
-- **Group terms under subheadings** when natural clusters emerge. If all terms belong to a single cohesive area, a flat list is fine.
+- **意見を持て。** 同じ概念に複数の単語がある場合は、最良のものを選び、その他は`_Avoid_`の下にリストしてください。
+- **定義は簡潔に。** 最大1、2文で。何を『する』かではなく、何であるかを定義してください。
+- **このプロジェクトの文脈に特有の用語のみを含めてください。** 一般的なプログラミングの概念（タイムアウト、エラータイプ、ユーティリティパターンなど）は、プロジェクトで広く使われていても含めるべきではありません。用語を追加する前に次の質問をしてください：これはこの文脈に固有の概念か、それとも一般的なプログラミング概念か？前者のみが含まれます。
+- **自然なクラスターが現れたら、用語を小見出しでグループ化します。** すべての用語が単一のまとまりのある領域に属する場合は、フラットなリストで構いません。
 
-## Single vs multi-context repos
+## 単一コンテキスト vs 複数コンテキストのリポジトリ
 
-**Single context (most repos):** One `CONTEXT.md` at the repo root.
+**単一コンテキスト（ほとんどのリポジトリ）:** リポジトリのルートに1つの`CONTEXT.md`。
 
-**Multiple contexts:** A `CONTEXT-MAP.md` at the repo root lists the contexts, where they live, and how they relate to each other:
+**複数コンテキスト:** リポジトリのルートにある1つの`CONTEXT-MAP.md`がコンテキストを列挙し、それらの配置場所や相互関係を示します:
 
 ```md
 # Context Map
@@ -51,10 +51,10 @@ _Avoid_: Client, buyer, account
 - **Ordering ↔ Billing**: Shared types for `CustomerId` and `Money`
 ```
 
-The skill infers which structure applies:
+スキルはどの構造が適用されるかを推測します:
 
-- If `CONTEXT-MAP.md` exists, read it to find contexts
-- If only a root `CONTEXT.md` exists, single context
-- If neither exists, create a root `CONTEXT.md` lazily when the first term is resolved
+- もし存在`CONTEXT-MAP.md`なら、文脈を見つけるために読んでください
+- もし根の根`CONTEXT.md`のみ、単一の文脈が存在する場合
+- どちらも存在しない場合は、最初の項が解決されたときに怠惰に根`CONTEXT.md`を作成します
 
-When multiple contexts exist, infer which one the current topic relates to. If unclear, ask.
+複数の文脈が存在する場合は、現在のトピックがどの文脈に関連しているかを推測してください。分かりにくい場合は質問してください。

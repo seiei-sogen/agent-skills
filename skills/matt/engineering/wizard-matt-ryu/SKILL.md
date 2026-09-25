@@ -1,44 +1,44 @@
 ---
 name: wizard-matt-ryu
-description: Generate an interactive bash wizard that walks a human through steps only they can perform. Use when provisioning infrastructure, setting up credentials or CI secrets, walking an unfamiliar third-party dashboard, or running a one-off migration or cutover. Don't invoke this for steps the agent can perform itself.
+description: インタラクティブなbashウィザードを生成し、人間だけが実行できる手順を案内します。インフラのプロビジョニング、資格情報やCIシークレットの設定、慣れていないサードパーティのダッシュボードの操作、または一度限りのマイグレーションや移行を行う場合に使用してください。エージェント自身が実行できる手順には呼び出さないでください。
 ---
 
-# Wizard
+# ウィザード
 
-A **wizard** is a bash script that walks a human, step by step, through a manual procedure that's tedious to do by hand and tedious to re-explain to an AI every time. It opens each URL, says exactly what to click and copy, captures the values, writes them where they belong (`.env`, GitHub secrets), confirms at every stage, and shows how many stages are left. It might configure third-party services, run a one-off migration, or move the project from one state to another.
+「**ウィザード**」とは、人間が手作業で行うには面倒で、毎回AIに説明するのも手間な手順を、ステップごとに案内するbashスクリプトのことです。各URLを開き、どこをクリックして何をコピーするかを正確に指示し、値を取得して適切な場所（`.env`やGitHubのシークレットなど）に書き込み、各段階で確認を行い、残りのステージ数を表示します。サードパーティのサービスを設定したり、一度限りの移行を実行したり、プロジェクトをある状態から別の状態に移動させたりすることがあります。
 
-The delightful UX is already solved by [template.sh](template.sh): stage-by-stage progress, confirmation gates, cross-platform URL opening (including WSL), hidden secret entry, idempotent `.env` upserts, `gh secret`/`gh variable` writes, and a closing summary. **Your job is only to scope the procedure and author its stages.** The library above the `STAGES` marker is identical in every wizard; that consistency is the point: never hand-edit it.
+使いやすい操作は [template.sh](template.sh) に実装済みです。ステージごとの進捗、確認、WSL を含む環境での URL 表示、秘密情報の非表示入力、`.env` の繰り返し実行可能な更新、`gh secret` / `gh variable` の設定、最後の要約を備えています。**ここでは手順の範囲を決め、各ステージを書くことだけに集中する。** `STAGES` マーカーより上の共通ライブラリは編集しない。
 
-A wizard is ephemeral by default: built for one run, saved to a scratch or `scripts/` path, deleted when the job's done. Commit it only when the user wants a repeatable setup path that should live in the repo.
+ウィザードはデフォルトで一時的です：1回の実行向けに作られ、スクラッチや`scripts/`パスに保存され、ジョブが完了したら削除されます。ユーザーが繰り返し使用可能なセットアップパスをリポジトリ内に保持したい場合にのみコミットしてください。
 
-## Process
+## プロセス
 
-### 1. Scope the procedure
+### 1. 手順の範囲を決める
 
-Work out every manual step the human must take and every value that gets captured along the way. Read the repo first, don't ask cold:
+人間が行う必要のあるすべての手動ステップと、その途中で取得されるすべての値を整理します。最初にリポジトリを読み、突然質問しないでください:
 
-- For setup: `.env`, `.env.example`, `.env.*`, `README`, `docker-compose*`, framework config, and `.github/workflows/*` (every `secrets.*` / `vars.*` reference is a value the wizard must produce).
-- For a migration or transition: the current state, the target state, and the irreversible actions between them.
+- セットアップの場合：`.env`、`.env.example`、`.env.*`、`README`、`docker-compose*`、フレームワーク構成、および`.github/workflows/*`（すべての`secrets.*` / `vars.*` 参照は、ウィザードが生成する必要がある値です）。
+- マイグレーションや切替の場合：現在の状態、目標の状態、その間に必要な不可逆の操作。
 
-Then show the user the ordered list of stages and the values each produces, and confirm: they may add, drop, or reorder.
+その後、ユーザーにステージの順序付きリストと各ステージが生成する値を表示し、確認させます：ユーザーは追加、削除、または順序の変更が可能です。
 
-**Done when:** every stage is named in order, and for each captured value you know (a) where the human gets it, (b) where it's written (`.env`, a GitHub secret, both, or nowhere; some stages are pure actions), and (c) whether it's secret (hidden entry) or public.
+**完了条件:** すべてのステージが順番に名付けられ、キャプチャされた各値について、(a) 人間がどこで得るか、(b) どこに書かれているか（`.env`、GitHubのシークレット、両方、またはどこにもないか；一部のステージは純粋な操作です）、(c) 秘密か（非表示エントリ）または公開かを把握していること。
 
-### 2. Map each stage's journey
+### 2. 各ステージの旅程をマッピングする
 
-For each stage, write the precise path a human follows: which URL to open, what to do there, where a value is shown, which variable it fills: e.g. "Dashboard → Developers → API keys → Reveal test key → copy". Where you don't actually know the current UI or the exact command, say so and ask the user or check the docs: never invent steps that may not exist.
+各ステージについて、人間がたどる正確な手順を書きます：どのURLを開くのか、そこで何をするのか、どの値が表示されるのか、どの変数に入るのか。例：「ダッシュボード → 開発者 → APIキー → テストキーを表示 → コピー」。現在のUIや正確なコマンドが分からない場合は、その旨を伝えてユーザーに確認するか、ドキュメントを参照してください：存在しないかもしれない手順を作り出してはいけません。
 
-**Done when:** every stage traces to concrete instructions a stranger could follow.
+**完了の条件:** すべてのステージが、見知らぬ人でも従える具体的な指示に結びつくこと。
 
-### 3. Author the wizard
+### 3. ウィザードを作成する
 
-Copy `template.sh` to the target path. Replace the example stage with one `stage` per step, in dependency order. Use the library helpers: `stage`, `say`/`step`, `open_url`, `ask`/`ask_secret`, `write_env`, `set_secret`/`set_var`, `pause`/`confirm`. Set `TOTAL_STAGES` to the number of stages you wrote.
+`template.sh`をターゲットパスにコピーします。依存関係の順に、例のステージを1ステップごとに`stage`に置き換えます。ライブラリのヘルパーを使用します: `stage`、`say`/`step`、`open_url`、`ask`/`ask_secret`、`write_env`、`set_secret`/`set_var`、`pause`/`confirm`。`TOTAL_STAGES`を作成したステージの数に設定します。
 
-Hold the bar the template sets: open the URL before asking for its value, use `ask_secret` for anything secret, `write_env` every persisted value, `set_secret` only the values CI actually needs, and `confirm` before any irreversible action. Each `stage` clears the screen so only the current step is visible: keep a stage to one focused task so nothing the human needs scrolls away. Don't touch the library above the marker.
+テンプレートが設定するバーを保持してください：値を尋ねる前にURLを開き、秘密のものには`ask_secret`を使用し、すべての永続化された値には`write_env`を使用し、CIが実際に必要とする値のみには`set_secret`を使用し、取り返しのつかない操作の前には`confirm`を使用します。各`stage`は画面をクリアして現在のステップだけが見えるようにします：人間が必要とするものがスクロールして消えないように、一つの集中したタスクのためにステージを維持してください。マーカーの上のライブラリには触れないでください。
 
-### 4. Verify and hand off
+### 4. 検証して引き渡す
 
-- `bash -n <script>`; run `shellcheck` if available.
+- `bash -n <script>`; 利用可能であれば`shellcheck`を実行します。
 - `chmod +x <script>`.
-- Don't run it end-to-end yourself: it opens browsers and blocks on human input. Trace it statically instead: every value from step 1 is captured and lands where step 1 said, and every `set_secret` name exactly matches a `secrets.*` reference in CI.
-- Tell the user how to run it. If it's a repeatable setup path, commit it and link it from the README so the next person runs the script instead of asking an AI.
+- 自分で最初から最後まで実行しないでください：ブラウザを開き、人間の入力でブロックされます。代わりに静的にトレースしてください：ステップ1のすべての値はキャプチャされ、ステップ1で指定された場所に到達し、すべての`set_secret`の名前はCI内の`secrets.*`の参照と完全に一致します。
+- ユーザーにそれを実行する方法を教えてください。もしそれが繰り返し可能なセットアップ手順であれば、それをコミットしてREADMEからリンクし、次の人がAIに尋ねる代わりにスクリプトを実行できるようにしてください。

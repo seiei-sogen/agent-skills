@@ -1,32 +1,32 @@
-# Engineering
+# エンジニアリング
 
-Skills I use daily for code work.
+コード作業で日常的に使用するスキル。
 
-## User-invoked
+## ユーザー起動
 
-Reachable only when you type them (Claude Code: `disable-model-invocation: true`; Codex: `policy.allow_implicit_invocation: false` in `agents/openai.yaml`).
+ユーザーが入力したときのみ利用可能（Claude Code: `disable-model-invocation: true`; Codex: `policy.allow_implicit_invocation: false` in `agents/openai.yaml`）。
 
-- **[ask-matt](./ask-matt/SKILL.md)**: Ask which skill or flow fits your situation. A router over the user-invoked skills in this repo.
-- **[grill-with-docs](./grill-with-docs/SKILL.md)**: Grilling session that also builds your project's domain model, sharpening terminology and updating `CONTEXT.md` and ADRs inline.
-- **[triage](./triage/SKILL.md)**: Move issues through a state machine of triage roles.
-- **[improve-codebase-architecture](./improve-codebase-architecture/SKILL.md)**: Scan a codebase for deepening opportunities, present them as a visual HTML report, then grill through whichever one you pick.
-- **[setup-matt-pocock-skills](./setup-matt-pocock-skills/SKILL.md)**: Configure this repo for the engineering skills (issue tracker, triage labels, domain doc layout). Run once per repo.
-- **[to-spec](./to-spec/SKILL.md)**: Turn the current conversation into a spec and publish it to the issue tracker.
-- **[to-tickets](./to-tickets/SKILL.md)**: Break any plan, spec, or conversation into a set of tracer-bullet tickets, each declaring its blocking edges, whether as text in a local file or as native blocking links on a real tracker.
-- **[implement](./implement/SKILL.md)**: Build the work described by a spec or set of tickets, driving `/tdd` at pre-agreed seams and closing out with `/code-review` before committing.
-- **[wayfinder](./wayfinder/SKILL.md)**: Plan a huge chunk of work (more than one agent session can hold) as a shared map of decision tickets on the issue tracker, resolved one at a time until the way to the destination is clear.
+- **[ask-matt-matt-ryu](./ask-matt-matt-ryu/SKILL.md)**: 自分の状況に合うスキルやフローを問い合わせます。このリポジトリのユーザー起動スキル上のルーター。
+- **[grill-with-docs-matt-ryu](./grill-with-docs-matt-ryu/SKILL.md)**: プロジェクトのドメインモデルを構築しながらグリルするセッションで、専門用語を磨き、`CONTEXT.md` および ADR をインラインで更新します。
+- **[triage-matt-ryu](./triage-matt-ryu/SKILL.md)**: 課題をトリアージの役割の状態機械を通じて移動させます。
+- **[improve-codebase-architecture-matt-ryu](./improve-codebase-architecture-matt-ryu/SKILL.md)**: コードベースをスキャンして改善の機会を深め、視覚的な HTML レポートとして提示し、その中から選んだものをグリルします。
+- **[setup-matt-pocock-skills-matt-ryu](./setup-matt-pocock-skills-matt-ryu/SKILL.md)**: このリポジトリをエンジニアリングスキル用に設定します（課題トラッカー、トリアージラベル、ドメインドキュメントの配置）。リポジトリごとに一度実行してください。
+- **[to-spec-matt-ryu](./to-spec-matt-ryu/SKILL.md)**: 現在の会話を仕様に変換し、課題トラッカーに公開します。
+- **[to-tickets-matt-ryu](./to-tickets-matt-ryu/SKILL.md)**: 任意のプラン、仕様、または会話を一連のトレイサーブレットチケットに分解し、それぞれが依存関係を宣言します。これは、ローカルファイル内のテキストとしてでも、実際のトラッカー上のネイティブブロッキングリンクとしてでもかまいません。
+- **[implement-matt-ryu](./implement-matt-ryu/SKILL.md)**: 仕様または一連のチケットによって記述された作業を構築し、事前に合意された継ぎ目で`/tdd-matt-ryu`を推進し、コミット前に`/code-review-matt-ryu`を完了させます。
+- **[wayfinder-matt-ryu](./wayfinder-matt-ryu/SKILL.md)**: 問題トラッカー上での意思決定チケットの共有マップとして、1つのエージェントセッションで処理できる以上の大規模な作業を計画し、目的地への道が明確になるまで1つずつ解決します。
 
-## Model-invoked
+## モデル呼び出し可能
 
-Model- or user-reachable (rich trigger phrasing so the model can reach for them).
+モデルまたはユーザーが到達可能（モデルがアクセスできるように豊富なトリガーフレーズを使用）
 
-- **[prototype](./prototype/SKILL.md)**: Build a throwaway prototype to answer a design question: a single shareable HTML file for state/logic, or several toggleable UI variations.
+- **[prototype-matt-ryu](./prototype-matt-ryu/SKILL.md)**: デザインの質問に答えるための使い捨てプロトタイプを作成する：状態/ロジック用の単一の共有可能なHTMLファイル、または複数の切り替え可能なUIバリエーション。
 
-- **[diagnosing-bugs](./diagnosing-bugs/SKILL.md)**: Disciplined diagnosis loop for hard bugs and performance regressions: build a feedback loop that goes red on this bug → minimise → hypothesise → instrument → fix → regression-test.
-- **[research](./research/SKILL.md)**: Investigate a question against high-trust primary sources and capture the findings as a cited Markdown file in the repo, run as a background agent.
-- **[tdd](./tdd/SKILL.md)**: Test-driven development with a red-green-refactor loop. Builds features or fixes bugs one vertical slice at a time.
-- **[domain-modeling](./domain-modeling/SKILL.md)**: Actively build and sharpen a project's domain model by challenging terms, stress-testing with scenarios, and updating `CONTEXT.md` and ADRs inline.
-- **[codebase-design](./codebase-design/SKILL.md)**: Shared discipline and vocabulary for designing deep modules: small interfaces, clean seams, testable through the interface.
-- **[code-review](./code-review/SKILL.md)**: Two-axis review of the diff since a fixed point: **Standards** (does it follow the repo's coding standards, plus a Fowler smell baseline?) and **Spec** (does it faithfully implement the originating issue/spec?), run as parallel sub-agents.
-- **[resolving-merge-conflicts](./resolving-merge-conflicts/SKILL.md)**: Work through an in-progress git merge or rebase conflict hunk by hunk, resolving by intent traced to each side's primary source, then finish the operation, never `--abort`.
-- **[wizard](./wizard/SKILL.md)**: Generate an interactive bash wizard that walks a human through steps only they can perform: provisioning infrastructure, setting up credentials or CI secrets, walking an unfamiliar third-party dashboard, or running a one-off migration or cutover.
+- **[diagnosing-bugs-matt-ryu](./diagnosing-bugs-matt-ryu/SKILL.md)**: 難しいバグやパフォーマンス低下のための規律ある診断ループ：このバグで赤になるフィードバックループを作る → 最小化 → 仮説立て → 計測 → 修正 → リグレッションテスト。
+- **[research-matt-ryu](./research-matt-ryu/SKILL.md)**: 高信頼の一次情報源に対して質問を調査し、調査結果を引用付きのMarkdownファイルとしてリポジトリに保存し、バックグラウンドエージェントとして実行します。
+- **[tdd-matt-ryu](./tdd-matt-ryu/SKILL.md)**: レッド・グリーン・リファクタリングのループによるテスト駆動開発。機能の構築やバグ修正を垂直方向に一切れずつ行います。
+- **[domain-modeling-matt-ryu](./domain-modeling-matt-ryu/SKILL.md)**: 用語に挑戦し、シナリオでストレステストを行い、`CONTEXT.md`やADRをインラインで更新することで、プロジェクトのドメインモデルを積極的に構築・洗練する。
+- **[codebase-design-matt-ryu](./codebase-design-matt-ryu/SKILL.md)**: 小さなインターフェース、クリーンな境界、インターフェースを通じてテスト可能なモジュール設計のための共有規律と語彙。
+- **[code-review-matt-ryu](./code-review-matt-ryu/SKILL.md)**: 固定ポイント以降の差分に対する二軸レビュー：**Standards**（リポジトリのコーディング規約に従っているか、さらにFowlerのスメルベースラインも含む）および**Spec**（元の課題/仕様を忠実に実装しているか）、並列サブエージェントとして実行。
+- **[resolving-merge-conflicts-matt-ryu](./resolving-merge-conflicts-matt-ryu/SKILL.md)**: 進行中の git マージまたはリベースの競合をハンクごとに処理し、それぞれのサイドの主要なソースに追跡された意図に基づいて解決し、その後操作を完了します、決して `--abort` しない。
+- **[wizard-matt-ryu](./wizard-matt-ryu/SKILL.md)**: インタラクティブなBashウィザードを生成し、人間が実行できるステップ（インフラのプロビジョニング、資格情報やCIシークレットの設定、慣れていないサードパーティのダッシュボードの操作、または一度限りのマイグレーションやカットオーバーの実行）を案内します。

@@ -1,54 +1,54 @@
 ---
 name: to-questionnaire-matt-ryu
-description: Turn a decision you can't fully answer into a questionnaire for someone else to fill in.
+description: 完全に答えられない決定を、他の誰かが記入できるアンケートに変える。
 disable-model-invocation: true
 ---
 
-Turn something the user can't answer alone into a **questionnaire**: a Markdown document they hand to one person to fill in async, or fill out together over a meeting. The recipient holds knowledge the user lacks; the questionnaire pulls it out of them.
+ユーザーが一人では答えられないものを**アンケート**に変える: ユーザーが1人に渡して非同期で記入してもらうMarkdownドキュメント、または会議中に一緒に記入するものです。受け取る人はユーザーが持っていない知識を持っており、アンケートはそれを引き出します。
 
-**Grill the send, not the subject.** Interview the user only about the _send_, which they can always answer: who it goes to, and what they need back. The questions in the document then target the **gap** between what the recipient knows and what the user needs.
+**送信内容を焦点に、件名ではなく。** ユーザーには常に答えられる _送信内容_ についてのみインタビューしてください：誰に送るのか、そして何を返してもらう必要があるのか。文書内の質問は、その後、受信者の知っていることとユーザーが必要とすることとの **ギャップ** を狙います。
 
 
-1. **Who is it going to?** Ask, in one exchange, the recipient's role, expertise, and relationship to the user. This fixes the questionnaire's tone and how much context it must carry. Done when you know who the recipient is and what they know that the user doesn't.
+1. **これは誰に送られるのですか？** 1回のやり取りで、受信者の役割、専門知識、ユーザーとの関係を尋ねます。これにより、質問票の口調と必要な文脈量が決まります。受信者が誰で、ユーザーが知らないことを受信者が何を知っているかが分かれば完了です。
 
-2. **What do you need back?** Ask, in one exchange, the specific decisions or facts the user can't resolve alone and needs from this person. Done when you have a concrete list of what the user must walk away able to do or decide.
+2. **何を返してもらう必要がありますか？** 一度のやり取りで、ユーザー自身では解決できず、この人から必要とする具体的な決定や事実を尋ねます。ユーザーが確実にできるようになることや決定しなければならないことの具体的なリストがあると完了です。
 
-3. **Write the questionnaire.** Draft questions aimed at the gap from steps 1–2, following the Document structure below. Write it to `to-questionnaire-<slug>.md` in the current directory (slug from the topic) and report the path. Done when the file exists and every item the user named in step 2 is covered by a question.
+3. **アンケートを作成してください。** ステップ1〜2のギャップに向けた質問をドラフトし、以下のドキュメント構造に従ってください。現在のディレクトリ内の`to-questionnaire-<slug>.md`（トピックから取ったスラッグ）に書き込み、パスを報告してください。ファイルが存在し、ユーザーがステップ2で指定したすべての項目が質問でカバーされている場合に完了です。
 
-## Document structure
+## ドキュメント構造
 
-Frame the document as a **discovery questionnaire**: the user lacks context, the recipient holds it. Order questions most-important-first, since async means you may only get one pass, and group them under `##` headings by theme once there are more than a handful. Write it using the template below.
+文書を**発見のためのアンケート**として構成してください：ユーザーは文脈を持っておらず、受信者がそれを持っています。重要な質問を最初に並べてください。非同期通信では一度しか回答が得られない可能性があるためです。また、質問が少なくとも数件以上になったら、テーマごとに`##`の見出しの下にグループ化してください。以下のテンプレートを使用して作成してください。
 
 <questionnaire-template>
 
-# <Questionnaire title>
+# <アンケートのタイトル>
 
-**Purpose:** why this questionnaire exists and the decision riding on it.
+**目的:** このアンケートが存在する理由と、それに基づく決定事項。
 
-**From:** <the user>, **To:** <the recipient>, **How your answers will be used:** <where they go>
+**送信者:** <ユーザー>、**宛先:** <回答者>、**回答の使用方法:** <回答の利用先>
 
-## Context
+## 文脈
 
-One paragraph orienting a recipient who wasn't in the user's head. Enough to answer well, not a page.
+ユーザーの考えの中にいなかった受信者を対象にした1段落の説明。十分に回答できる情報で、ページ単位の長さではない。
 
-## How to answer
+## 回答方法
 
-Deadline and rough effort. Partial answers and "I don't know" are useful: flag anything you're unsure of rather than skipping it.
+締め切りと大まかな作業量。部分的な回答や「分かりません」も役立ちます：分からないことはスキップせずに注意を示してください。
 
-## <Theme heading>
+## <テーマ見出し>
 
-One `##` section per theme. Under each, its questions, most-important-first. Every question is one idea, never compound, with an answer stub directly beneath, and a one-line _why this matters_ only where the question could be misread or invite a throwaway answer.
+テーマごとに`##`のセクションを1つずつ設けます。その下に、それぞれの質問を、重要なものから順に配置します。各質問は1つのアイデアだけで構成し、絶対に複合的にせず、質問の直下に回答の下書きを置きます。また、質問が誤解されやすい場合や、軽く答えられそうな場合のみ、1行の「なぜこれが重要か」を付けます。
 
 <question-example>
-### What load is the system expected to handle at launch?
+### システムがローンチ時に処理することが期待される負荷はどれくらいですか？
 
-_Why this matters: it decides whether we provision for burst traffic now or defer it._
+_なぜこれが重要か：現在バーストトラフィックのためにプロビジョニングするか、それとも後回しにするかを決定するからです。_
 
 >
 </question-example>
 
-## Anything else?
+## 他に何か？
 
-A closing catch-all: anything we didn't ask that we should know?
+締めくくりとしてのキャッチオール：私たちが聞いていないが知っておくべきことはありますか？
 
 </questionnaire-template>

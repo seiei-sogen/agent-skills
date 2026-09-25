@@ -1,12 +1,12 @@
 ---
 name: research-matt-ryu
-description: Investigate a question against high-trust primary sources and capture the findings as a Markdown file in the repo. Use when the user wants a topic researched, docs or API facts gathered, or reading legwork delegated to a background agent.
+description: 高信頼の一次情報源に基づいて質問を調査し、結果をリポジトリのMarkdownファイルとして記録します。ユーザーがトピックの調査、ドキュメントやAPIの事実の収集、または読み取り作業をバックグラウンドエージェントに委任したい場合に使用します。
 ---
 
-Spin up a **background agent** to do the research, so you keep working while it reads.
+作業を続けながら調査が進められるように、**バックグラウンドエージェント**を起動します。
 
-Its job:
+その役割は次の通りです:
 
-1. Investigate the question against **primary sources** (official docs, source code, specs, first-party APIs), not a secondary write-up of them. Follow every claim back to the source that owns it.
-2. Write the findings to a single Markdown file, citing each claim's source.
-3. Save it where the repo already keeps such notes; match the existing convention, and if there is none, put it somewhere sensible and say where.
+1. **一次情報**（公式文書、ソースコード、仕様書、一次API）に基づいて質問を調査してください。それらの二次的なまとめ記事ではありません。すべての主張を、その主張を所有するソースにさかのぼって確認してください。
+2. 調査結果は1つのMarkdownファイルにまとめ、各主張のソースを引用してください。
+3. リポジトリがすでにそのようなメモを保存している場所に保存してください。既存の規約に合わせ、規約がなければ、適切な場所に保存し、どこに保存したかを明示してください。

@@ -1,15 +1,15 @@
 ---
 name: implement-matt-ryu
-description: "Implement a piece of work based on a spec or set of tickets."
+description: "仕様やチケットのセットに基づいて作業を実装する。"
 disable-model-invocation: true
 ---
 
-Implement the work described by the user in the spec or tickets.
+ユーザーが仕様やチケットで説明した作業を実装する。
 
-Use /tdd where possible, at pre-agreed seams.
+可能であれば、事前に合意したシームで `tdd-matt-ryu` を使う。
 
-Run typechecking regularly, single test files regularly, and the full test suite once at the end.
+型チェックを定期的に実行し、単体テストファイルを定期的に実行し、最後に完全なテストスイートを一度実行します。
 
-Once done, use /code-review to review the work.
+完了したら `code-review-matt-ryu` で作業を確認する。
 
-Commit your work to the current branch.
+作業を現在のブランチにコミットしてください。

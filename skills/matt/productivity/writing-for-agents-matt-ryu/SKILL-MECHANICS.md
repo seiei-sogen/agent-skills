@@ -1,22 +1,22 @@
-# Skill mechanics
+# スキルの仕組み
 
-The skill-specific branch of [`writing-for-agents`](SKILL.md): what changes when the document is a skill (frontmatter, the invocation choice, and router skills). Everything else about writing it is the universal reference in `SKILL.md`.
+[`writing-for-agents`](SKILL.md) のスキル固有の分岐: ドキュメントがスキルである場合に何が変わるか（前書き、呼び出しの選択、ルータースキル）。それ以外の作成に関するすべては `SKILL.md` の共通リファレンスです。
 
-## Invocation
+## 呼び出し
 
-Two choices, trading the two loads:
+2つの選択肢、2つのロードを交換する:
 
-- A **model-invoked** skill keeps a `description`, so the agent can fire it autonomously, and other skills can reach it. You can still type its name: model-invocation always _includes_ user reach; a description only ever adds agent discovery, never removes the human's. The description is the skill's top-level context pointer, forced to stay loaded at all times: permanent context load in exchange for discoverability. A model-invoked skill whose content is all reference is also one home for shared reference: another skill can invoke it, so reference needed by several skills lives in one place. Mechanics: omit `disable-model-invocation`, and write a model-facing description carrying the trigger branches (the pointer-writing rules in `SKILL.md` apply in full).
-- A **user-invoked** skill strips the description from the agent's reach: only the human typing its name can invoke it, and no other skill can. Zero context load, but it spends cognitive load: you are the index that must remember it exists. Mechanics: set `disable-model-invocation: true`; the `description` becomes human-facing: a one-line summary, trigger lists stripped.
+- **モデル呼び出し**スキルは `description` を保持するので、エージェントはそれを自律的に発動でき、他のスキルもそれにアクセスできます。名前を入力することも可能です：モデル呼び出しには常にユーザーによる到達が含まれます；説明は常にエージェントの発見を追加するだけで、人間の到達を削除することはありません。説明はスキルの最上位コンテキストポインタであり、常時ロード状態に維持されます： discoverability と引き換えに恒久的なコンテキストロードです。内容がすべて参照であるモデル呼び出しスキルは、共有参照のもうひとつの拠点でもあります：別のスキルがそれを呼び出せるので、複数のスキルが必要とする参照は一箇所に集められます。仕組み：`disable-model-invocation` は省略し、トリガーブランチを持つモデル向けの説明を書きます（`SKILL.md` のポインタ書き込みルールは完全に適用されます）。
+- ユーザーが呼び出すスキルは、エージェントのリーチから説明を取り除きます：その名前を入力する人間だけがそれを呼び出すことができ、他のスキルは呼び出せません。コンテキスト負荷はゼロですが、認知的負荷を消費します：それが存在することを覚えているのはあなたです。メカニクス：`disable-model-invocation: true`を設定；`description`は人間向けになります：一行の概要、トリガーリストは削除されます。
 
-Pick model-invocation only when the agent must reach the skill on its own, or another skill must. If it only ever fires by hand, make it user-invoked and pay no context load.
+エージェントが自分自身でスキルに到達する必要がある場合、または別のスキルが必要な場合にのみ、モデル呼び出しを選択してください。手動でしか起動しない場合は、ユーザー呼び出しにして、コンテキストロードは気にしないでください。
 
-Shared reference that two user-invoked skills both need can live in neither: with no descriptions, neither can fire the other. Push it to a plain file outside the skill system: external reference any skill can point at.
+両方のユーザー呼び出しスキルが必要とする共有参照は、どちらにも置くことはできません。説明がなければ、どちらも他方を起動できません。スキルシステム外の単純なファイルに置いてください：どのスキルからも参照可能な外部参照にします。
 
-## Splitting by invocation
+## 呼び出しによる分割
 
-The invocation cut of splitting (the sequence cut lives in `SKILL.md`): split off a model-invoked skill when you have a distinct leading word that should trigger it on its own (a trigger word you actually use in your prompts), or another skill must reach it. You pay context load for the new always-loaded description, so that independent reach has to be worth it.
+分割の呼び出しカット（シーケンスカットは`SKILL.md`にあります）：明確な先行する単語があり、その単語だけで起動すべきモデル呼び出しスキルを分けるか（プロンプトで実際に使うトリガー単語）、または別のスキルがそれに到達する必要があります。新しい常に読み込まれる説明のためにコンテキスト負荷を支払うので、その独立した到達はそれだけの価値がある必要があります。
 
-## Router skills
+## ルータースキル
 
-When user-invoked skills multiply past what you can remember, that piled-up cognitive load is cured by a **router skill**: one user-invoked skill that names the others and when to reach for each, so the human has one skill to remember instead of many. It can only hint, never fire them: user-invoked skills have no description, so nothing but the human can reach them.
+ユーザーが呼び出すスキルが覚えきれないほど増えたとき、その積み重なった認知負荷を解消するのが**ルータースキル**です：他のスキルとそれを使うタイミングを名前で示す、1つのユーザー呼び出しスキルのことで、人間は多くのスキルを覚える代わりに1つのスキルだけを覚えればよくなります。ルータースキルはヒントを出すことしかできず、スキルを実行することはできません：ユーザー呼び出しスキルには説明がなく、人間以外にはアクセスできないのです。

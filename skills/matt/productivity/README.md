@@ -1,20 +1,20 @@
-# Productivity
+# 生産性
 
-General workflow tools, not code-specific.
+一般的なワークフローツール、コード固有ではありません。
 
-## User-invoked
+## ユーザー起動型
 
-Reachable only when you type them (Claude Code: `disable-model-invocation: true`; Codex: `policy.allow_implicit_invocation: false` in `agents/openai.yaml`).
+入力したときのみアクセス可能（Claudeコード: `disable-model-invocation: true`; Codex: `policy.allow_implicit_invocation: false` in `agents/openai.yaml`）。
 
-- **[grill-me](./grill-me/SKILL.md)**: Get relentlessly interviewed about a plan or design until every branch of the design tree is resolved.
-- **[handoff](./handoff/SKILL.md)**: Compact the current conversation into a handoff document so another agent can continue the work.
-- **[teach](./teach/SKILL.md)**: Teach the user a new skill or concept over multiple sessions, using the current directory as a stateful teaching workspace.
-- **[to-questionnaire](./to-questionnaire/SKILL.md)**: Turn a decision you can't answer alone into a Markdown questionnaire for the one person who can (filled in async, or together over a meeting).
-- **[wait-what](./wait-what/SKILL.md)**: Fire this the moment a message doesn't land. The agent re-pitches it with the context you're missing, in plain English, using your `CONTEXT.md` vocabulary.
+- **[grill-me-matt-ryu](./grill-me-matt-ryu/SKILL.md)**: 計画や設計について徹底的にインタビューされ、設計ツリーのすべての枝が解決されるまで質問される。
+- **[handoff-matt-ryu](./handoff-matt-ryu/SKILL.md)**: 現在の会話をコンパクトな引き継ぎ文書にまとめ、別のエージェントが作業を続けられるようにする。
+- **[teach-matt-ryu](./teach-matt-ryu/SKILL.md)**: 現在のディレクトリを状態を保持する教育用ワークスペースとして使用し、ユーザーに複数回のセッションを通じて新しいスキルまたは概念を教えます。
+- **[to-questionnaire-matt-ryu](./to-questionnaire-matt-ryu/SKILL.md)**: 自分一人では答えられない決定を、その答えを知っている唯一の人のためのMarkdownアンケートに変換します（非同期で記入するか、会議で一緒に行います）。
+- **[wait-what-matt-ryu](./wait-what-matt-ryu/SKILL.md)**: メッセージが届かない瞬間にこれを発動してください。そのエージェントは、あなたが欠けているコンテキストを、あなたの`CONTEXT.md`の語彙を使って、平易な英語で再提示します。
 
-## Model-invoked
+## モデル起動
 
-Model- or user-reachable (rich trigger phrasing so the model can reach for them).
+モデルまたはユーザーが到達可能（モデルが参照できるように豊富なトリガーフレーズ）。
 
-- **[grilling](./grilling/SKILL.md)**: Interview the user relentlessly about a plan, decision, or idea until every branch of the design tree is resolved.
-- **[writing-for-agents](./writing-for-agents/SKILL.md)**: Writing documents for agents: skills, AGENTS.md/CLAUDE.md, and any doc an agent reaches by a pointer.
+- **[grilling-matt-ryu](./grilling-matt-ryu/SKILL.md)**: 計画、決定、またはアイデアについて、デザインツリーのすべての枝が解決されるまで、ユーザーに徹底的にインタビューする。
+- **[writing-for-agents-matt-ryu](./writing-for-agents-matt-ryu/SKILL.md)**: エージェント向けのドキュメント作成：スキル、AGENTS.md/CLAUDE.md、およびエージェントがポインタを通じてアクセスする任意のドキュメント。

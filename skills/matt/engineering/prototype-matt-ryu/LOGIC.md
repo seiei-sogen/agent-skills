@@ -1,67 +1,67 @@
-# Logic Prototype
+# ロジックプロトタイプ
 
-A single, self-contained HTML file (a **shareable demo**) that lets anyone drive a state model by clicking buttons. Use this when the question is about **business logic, state transitions, or data shape**: the kind of thing that looks reasonable on paper but only feels wrong once you push it through real cases.
+1つの自己完結型HTMLファイル（**共有可能なデモ**）で、ボタンをクリックすることで誰でも状態モデルを操作できます。質問が**ビジネスロジック、状態遷移、またはデータの形**に関する場合に使用してください：紙の上では合理的に見えるのに、実際のケースで実行すると違和感を覚えるような種類のものです。
 
-Because it's one file with nothing to install, you can hand it to a non-developer (a designer, a PM, a domain expert) and let them feel the model for themselves. So it speaks their language, not the code's.
+インストールする必要のない1つのファイルなので、それを非開発者（デザイナー、プロジェクトマネージャー、ドメインの専門家など）に渡して、モデルを自分で体験させることができます。つまり、コードではなく、彼らの言語で伝わるのです。
 
-## When this is the right shape
+## この形が適切な場合
 
-- "I'm not sure if this state machine handles the edge case where X then Y."
-- "Does this data model actually let me represent the case where..."
-- "I want to feel out what the API should look like before writing it."
-- Anything where someone wants to **press buttons and watch state change**.
+- 「このステートマシンが、Xの後にYが起こる場合の例外を扱っているかどうかわかりません。」
+- 「このデータモデルで、…の場合を実際に表現できるのでしょうか。」
+- 「APIを実装する前に、APIがどのようなものになるかを感触として知りたい。」
+- 誰かが**ボタンを押して状態の変化を見たい**場合。
 
-If the question is "what should this look like," this is the wrong branch. Use [UI.md](UI.md).
+もし質問が「これはどのようなものにすべきか」というものであれば、これは間違ったブランチです。[UI.md](UI.md)を使用してください。
 
-## Process
+## プロセス
 
-### 1. State the question
+### 1. 質問を明確にする
 
-Before writing code, write down what state model and what question you're prototyping. One paragraph, at the top of the demo (in a visible intro, not just a comment). A logic prototype that answers the wrong question is pure waste, so make the question explicit so it can be checked later, whether the user is watching now or returning to it AFK.
+コードを書く前に、どの状態モデルとどの質問をプロトタイプ化しているのかを書き下ろしてください。デモの冒頭に1段落で（コメントだけでなく、見える形で導入部分に）書きます。間違った質問に答える論理プロトタイプは全く無駄なので、後でユーザーが今見ている場合でも席を離れて戻ってきた場合でも確認できるように、質問を明確にしてください。
 
-### 2. Isolate the logic in a portable module
+### 2. 論理をポータブルなモジュールに分離する
 
-Put the actual logic (the bit that's answering the question) in a single `<script>` block written as a small, pure module that could be lifted out and dropped into the real codebase later. The page around it is throwaway; this module isn't.
+実際のロジック（質問に答えている部分）は、単一の`<script>`ブロックに入れ、小さく純粋なモジュールとして書き、後で本物のコードベースに持ち込めるようにしてください。周りのページは捨てても構いません；このモジュールは違います。
 
-The right shape depends on the question:
+正しい形は質問に依存します:
 
-- **A pure reducer**: `(state, action) => state`. Good when actions are discrete events and state is a single value.
-- **A state machine**: explicit states and transitions. Good when "which actions are even legal right now" is part of the question.
-- **A small set of pure functions** over a plain data type. Good when there's no implicit current state, just transformations.
-- **A class or module with a clear method surface** when the logic genuinely owns ongoing internal state.
+- **純粋なリデューサ**: `(state, action) => state`。アクションが離散的なイベントであり、状態が単一の値である場合に適しています。
+- **ステートマシン**: 明示的な状態と遷移。現在どのアクションが合法かが問題の一部である場合に適しています。
+- **単純なデータ型に対する少数の純粋関数**。暗黙の現在の状態がなく、単に変換だけがある場合に適しています。
+- **明確なメソッド・サーフェスを持つクラスまたはモジュール**。ロジックが実際に継続的な内部状態を管理している場合に適しています。
 
-Pick whichever shape best fits the question being asked, *not* whichever is easiest to wire to a page. Keep it pure: no DOM, no `document`, no button handlers reaching inside it. The page calls into it; nothing flows the other direction. This is what makes the prototype useful past its own lifetime: once the question's answered, the validated reducer / machine / function set lifts into the real module on its own.
+質問に最も合う形を選んでください。ページに接続しやすい形を選んではいけません。純粋に保ちましょう：DOMも`document`もボタンハンドラが内部に届くこともなく。ページはそこに呼びかけます；逆方向に流れることはありません。これがプロトタイプをその寿命を超えて有用にするものです：質問に答えが出たら、検証済みのリデューサー／マシン／関数セットは自動的に本物のモジュールに移行します。
 
-### 3. Build the shareable HTML file
+### 3. 共有可能なHTMLファイルを作成する
 
-One file, plain HTML/CSS/JS: no framework, no bundler, no server, everything inline so it opens by double-click and survives being emailed around. Anyone should be able to run it by opening it.
+1つのファイル、プレーンなHTML/CSS/JS: フレームワークなし、バンドラーなし、サーバーなし、すべてインラインで記述されているので、ダブルクリックで開け、メールで送信しても問題なし。誰でもそのファイルを開くだけで実行できるようにする。
 
-Write it for a non-developer. Every label is in **domain language**, not code: buttons and state read like the business, not the reducer. Explain in plain words what's happening.
+開発者でない人向けに書いてください。すべてのラベルは**ドメイン言語**で、コードではありません：ボタンや状態はビジネスの言葉で読み取れ、リデューサーの言葉ではありません。何が起こっているかを平易な言葉で説明してください。
 
-Lay it out with a clean hierarchy, top to bottom:
+きれいな階層構造で上から下へ配置してください：
 
-1. **Title and one-line explanation** of what this demo lets you explore (the question from step 1).
-2. **Current state**: the full relevant state, rendered as a readable panel (labelled fields, not a raw JSON dump), re-rendered after every click so the change is visible. Where it helps a non-developer follow, call out what just changed.
-3. **Free-play buttons**: one button per action, always available, so anyone can poke at the model in any order. Each click dispatches its action and re-renders the state.
-4. **Guided walkthroughs**: a set of **scenarios**, one per tab. Each tab holds a short plain-language description of the scenario (the situation it sets up and what to watch for) and underneath it, the ordered **buttons to press** for that scenario. Each step is a real button: clicking it performs that action and moves to the next step. Starting a walkthrough resets to a known initial state so the scenario runs the same way every time.
+1. **タイトルとこのデモで探求できることの一行説明**（ステップ1の質問）。
+2. **現在の状態**：関連する全ての状態を表示可能なパネルとして（ラベル付きフィールドとして、JSONの生データではなく）表示し、クリックのたびに再描画して変更が確認できるようにします。非開発者が理解しやすい場合は、何が変わったかを明示してください。
+3. **フリープレイボタン**：各アクションごとに1つのボタンがあり、常に利用可能です。誰でも任意の順序でモデルを触ることができます。クリックするたびに対応するアクションが実行され、状態が再描画されます。
+4. **ガイド付きウォークスルー**：各タブに1つずつの**シナリオ**のセット。各タブにはシナリオの短い平易な説明（設定される状況や注意すべき点）があり、その下にそのシナリオで押すべき順序付けられた**ボタン**が表示されています。各ステップは実際のボタンであり、クリックするとそのアクションが実行され、次のステップに進みます。ウォークスルーを開始すると既知の初期状態にリセットされるため、シナリオは毎回同じ方法で実行されます。
 
-Choose scenarios that demonstrate the awkward cases, the ones hard to reason about on paper: the happy path, a tricky edge case, an attempt at something that should be illegal.
+紙の上で考えるのが難しい、不自然なケースを示すシナリオを選んでください：順調に進む場合、厄介なエッジケース、違法であるはずのことを試みる場合です。
 
-Keep it beautiful but restrained: clean typography, generous spacing, one accent colour. No animations, no gimmicks: nothing that competes with the state and the buttons.
+美しくしかし控えめに保つこと：清潔なタイポグラフィ、十分な余白、1つのアクセントカラー。アニメーションやトリックはなし：状態やボタンと競合するものは何もありません。
 
-### 4. Hand it over
+### 4. 渡して
 
-Send them the file, or open it for them. They'll click through the walkthroughs and free-play whenever they get to it; the interesting moments are when they say "wait, that shouldn't be possible" or "huh, I assumed X would be different"; those are the bugs in the _idea_, which is the whole point. If they want new actions or a new scenario, add them. Prototypes evolve.
+そのファイルを彼らに送るか、あるいは彼らのために開いてあげてください。彼らは手順ガイドや自由プレイを、自分たちのタイミングで進めます。面白い瞬間は、彼らが「待って、それは可能なはずがない」とか「え、Xは違うと思ってた」と言うときです。それらはアイデア上のバグで、それが全体のポイントです。もし彼らが新しいアクションや新しいシナリオを求めるなら、それを追加してください。プロトタイプは進化します。
 
-### 5. Capture the answer and the prototype
+### 5. 回答とプロトタイプをキャプチャする
 
-Once the prototype has answered its question, capture the answer, then capture the prototype the way the [SKILL](SKILL.md) describes. The logic-specific mapping: the validated reducer / machine / function set lifts into the real module (the decision, absorbed); the HTML shell rides along to the throwaway branch that keeps the prototype as a primary source, and being one self-contained file, it stays trivially re-runnable there.
+プロトタイプが質問に答えたら、その答えを記録し、次に[SKILL](SKILL.md)が説明する方法でプロトタイプを記録します。論理特有のマッピング：検証済みのリデューサー／マシン／関数セットは実際のモジュール（意思決定、吸収済み）に持ち上げられます；HTMLシェルは、プロトタイプを主要なソースとして保持する使い捨てブランチに沿って移動し、自己完結型のファイルであるため、そこでは簡単に再実行可能なままです。
 
-## Anti-patterns
+## アンチパターン
 
-- **Don't add tests.** A prototype that needs tests is no longer a prototype.
-- **Don't wire it to the real database.** Use in-memory state unless the question is specifically about persistence.
-- **Don't generalise.** No "what if we wanted to support X later." The prototype answers one question.
-- **Don't blur the logic and the page together.** If the pure module references the DOM, `document`, or button handlers, it's no longer liftable. Keep the page as a thin shell over a pure module.
-- **Don't reach for a framework, bundler, or server.** One file the recipient double-clicks; a React app or a dev server defeats "shareable".
-- **Don't ship the HTML shell into production.** The page is optimised for being clicked through by hand. The logic module behind it is the bit worth keeping.
+- **テストを追加しない。** テストが必要なプロトタイプはもはやプロトタイプではない。
+- **実際のデータベースに接続しない。** 質問が永続性に関するものでない限り、インメモリの状態を使用する。
+- **一般化しない。** 「後でXをサポートしたい場合はどうするか」と考えない。プロトタイプは1つの質問に答えるものです。
+- **ロジックとページを一緒にぼかさないでください。** 純粋なモジュールがDOM、`document`、またはボタンハンドラを参照すると、それはもはや持ち上げ可能ではありません。ページは純粋なモジュールの上に薄いシェルとして保ってください。
+- **フレームワーク、バンドラー、サーバーに手を伸ばさないでください。** 受信者がダブルクリックするだけの1つのファイル；Reactアプリや開発サーバーでは「共有可能」が台無しになります。
+- **HTMLシェルを本番環境に出荷しないでください。** このページは手動でクリックして操作することに最適化されています。保持する価値があるのは、その背後にあるロジックモジュールです。

@@ -1,10 +1,10 @@
-# ADR Format
+# ADRフォーマット
 
-ADRs live in `docs/adr/` and use sequential numbering: `0001-slug.md`, `0002-slug.md`, etc.
+ADRは`docs/adr/`に存在し、連番を使用します: `0001-slug.md`、`0002-slug.md`、など。
 
-Create the `docs/adr/` directory lazily: only when the first ADR is needed.
+`docs/adr/`ディレクトリは必要になった最初のADRのときにのみ遅延作成します。
 
-## Template
+## テンプレート
 
 ```md
 # {Short title of the decision}
@@ -12,36 +12,36 @@ Create the `docs/adr/` directory lazily: only when the first ADR is needed.
 {1-3 sentences: what's the context, what did we decide, and why.}
 ```
 
-That's it. An ADR can be a single paragraph. The value is in recording *that* a decision was made and *why*, not in filling out sections.
+それで終わりです。ADRは1つの段落でも構いません。重要なのは、意思決定が行われたこととその理由を記録することであり、セクションを埋めることではありません。
 
-## Optional sections
+## オプションのセクション
 
-Only include these when they add genuine value. Most ADRs won't need them.
+これらは本当に価値がある場合にのみ含めます。ほとんどのADRでは必要ありません。
 
-- **Status** frontmatter (`proposed | accepted | deprecated | superseded by ADR-NNNN`): useful when decisions are revisited
-- **Considered Options**: only when the rejected alternatives are worth remembering
-- **Consequences**: only when non-obvious downstream effects need to be called out
+- **ステータス** フロントマター (`proposed | accepted | deprecated | superseded by ADR-NNNN`)：意思決定を見直す際に役立ちます
+- **検討したオプション**：拒否された選択肢を覚えておく価値がある場合のみ
+- **結果**: 明らかでない下流の影響を指摘する必要がある場合のみ
 
-## Numbering
+## 番号付け
 
-Scan `docs/adr/` for the highest existing number and increment by one.
+既存の最大番号を求めるために`docs/adr/`をスキャンし、1つ増やす。
 
-## When to offer an ADR
+## ADRを提供するタイミング
 
-All three of these must be true:
+以下の3つすべてが真である必要があります:
 
-1. **Hard to reverse**: the cost of changing your mind later is meaningful
-2. **Surprising without context**: a future reader will look at the code and wonder "why on earth did they do it this way?"
-3. **The result of a real trade-off**: there were genuine alternatives and you picked one for specific reasons
+1. **逆転が難しい**: 後で考えを変えるコストが意味のあるものである
+2. **文脈なしで驚かせる**: 将来の読者はコードを見て「なぜ彼らはこんなやり方をしたのか？」と疑問に思うでしょう
+3. **実際のトレードオフの結果**: 本当に選択肢があり、あなたは特定の理由で1つを選びました
 
-If a decision is easy to reverse, skip it: you'll just reverse it. If it's not surprising, nobody will wonder why. If there was no real alternative, there's nothing to record beyond "we did the obvious thing."
+もし決定を簡単に覆せるなら、それは飛ばしてください：結局覆すことになるだけです。もしそれが驚くべきことでなければ、誰もなぜそうしたのか不思議に思いません。もし実際に選択肢がなかった場合、「私たちは当然のことをした」と記録する以外に何もありません。
 
-### What qualifies
+### 何が記録に値するか
 
-- **Architectural shape.** "We're using a monorepo." "The write model is event-sourced, the read model is projected into Postgres."
-- **Integration patterns between contexts.** "Ordering and Billing communicate via domain events, not synchronous HTTP."
-- **Technology choices that carry lock-in.** Database, message bus, auth provider, deployment target. Not every library: just the ones that would take a quarter to swap out.
-- **Boundary and scope decisions.** "Customer data is owned by the Customer context; other contexts reference it by ID only." The explicit no-s are as valuable as the yes-s.
-- **Deliberate deviations from the obvious path.** "We're using manual SQL instead of an ORM because X." Anything where a reasonable reader would assume the opposite. These stop the next engineer from "fixing" something that was deliberate.
-- **Constraints not visible in the code.** "We can't use AWS because of compliance requirements." "Response times must be under 200ms because of the partner API contract."
-- **Rejected alternatives when the rejection is non-obvious.** If you considered GraphQL and picked REST for subtle reasons, record it; otherwise someone will suggest GraphQL again in six months.
+- **アーキテクチャの形状。** 「私たちはモノレポを使っています。」 「書き込みモデルはイベントソースされており、読み取りモデルはPostgresに投影されています。」
+- **コンテキスト間の統合パターン。** 「注文」と「請求」は、同期的なHTTPではなく、ドメインイベントを通じて通信します。
+- **ロックインを伴う技術の選択。** データベース、メッセージバス、認証プロバイダー、デプロイ先。すべてのライブラリではなく、置き換えるのに四半期かかるものだけ。
+- **境界と範囲の決定。** 「顧客データは顧客コンテキストが所有し、他のコンテキストはIDによってのみ参照する。」 明確な「NO」も「YES」と同じくらい価値がある。
+- **明白な道から意図的に外れること。** 「Xの理由でORMではなく手動のSQLを使っています。」というようなもの。常識的な読者が逆だと考えるようなこと。これにより、次のエンジニアが意図的なものを「修正」してしまうのを防ぎます。
+- **コード上では見えない制約。** 「コンプライアンス要件のため、AWS は使用できません。」 「パートナー API 契約のため、レスポンスタイムは 200ms 以下である必要があります。」
+- **却下された代替案（却下理由が明確でない場合）。** GraphQL を検討して微妙な理由で REST を選んだ場合は記録してください。さもないと、6 ヶ月後に再び誰かが GraphQL を提案するでしょう。

@@ -1,35 +1,35 @@
 ---
 name: codebase-design-matt-ryu
-description: Shared vocabulary for designing deep modules. Use when the user wants to design or improve a module's interface, find deepening opportunities, decide where a seam goes, make code more testable or AI-navigable, or when another skill needs the deep-module vocabulary.
+description: 深いモジュールを設計するための共有語彙。ユーザーがモジュールのインターフェースを設計または改善したいとき、深める機会を見つけたいとき、シームの位置を決めたいとき、コードをよりテスト可能またはAIがナビゲートしやすいものにしたいとき、または他のスキルが深いモジュールの語彙を必要とするときに使用します。
 ---
 
-# Codebase Design
+# コードベース設計
 
-Design **deep modules**: a lot of behaviour behind a small interface, placed at a clean seam, testable through that interface. Use this language and these principles wherever code is being designed or restructured. The aim is leverage for callers, locality for maintainers, and testability for everyone.
+**深いモジュール** を設計する：小さなインターフェースの背後に多くの振る舞いを持たせ、綺麗な継ぎ目に配置し、そのインターフェースを通じてテスト可能にする。コードが設計される場所や再構築される場所では、常にこの言語とこれらの原則を使用する。目的は、呼び出し側へのレバレッジ、保守者への局所性、そして全員に対するテスト可能性である。
 
-## Glossary
+## 用語集
 
-Use these terms exactly: don't substitute "component," "service," "API," or "boundary." Consistent language is the whole point.
+以下の用語を正確に使い、「component」「service」「API」「boundary」で代用しないでください。用語を統一することが重要です。
 
-**Module**: anything with an interface and an implementation. Deliberately scale-agnostic: a function, class, package, or tier-spanning slice. _Avoid_: unit, component, service.
+**Module**: インターフェイスと実装を持つもの。意図的にスケールに依存しない: 関数、クラス、パッケージ、または層をまたぐスライス。_避けるべき用語_: unit、component、service。
 
-**Interface**: everything a caller must know to use the module correctly: the type signature, but also invariants, ordering constraints, error modes, required configuration, and performance characteristics. _Avoid_: API, signature (too narrow, they refer only to the type-level surface).
+**インターフェース**：呼び出し側がモジュールを正しく使うために知っておくべきすべてのこと：型シグネチャだけでなく、不変条件、順序の制約、エラーのモード、必要な設定、および性能特性。_避けるべき言葉_：API、シグネチャ（あまりに狭く、型レベルの表面にしか言及していない）。
 
-**Implementation**: what's inside a module, its body of code. Distinct from **Adapter**: a thing can be a small adapter with a large implementation (a Postgres repo) or a large adapter with a small implementation (an in-memory fake). Reach for "adapter" when the seam is the topic; "implementation" otherwise.
+**実装**: モジュールの内部、そのコード本体。**アダプター**とは異なる: あるものは大きな実装を持つ小さなアダプター（Postgresリポジトリ）であったり、小さな実装の大きなアダプター（インメモリのフェイク）であったりする。継ぎ目が話題のときは「アダプター」を用い、それ以外の場合は「実装」を用いる。
 
-**Depth**: leverage at the interface. The amount of behaviour a caller (or test) can exercise per unit of interface they have to learn. A module is **deep** when a large amount of behaviour sits behind a small interface, **shallow** when the interface is nearly as complex as the implementation.
+**深さ**: インターフェースでのレバレッジ。呼び出し元（またはテスト）が学ぶ必要のある単位のインターフェースごとに行使できる振る舞いの量。モジュールは、小さなインターフェースの背後に大きな振る舞いがある場合は**深い**、インターフェースが実装とほぼ同じくらい複雑な場合は**浅い**。
 
-**Seam** _(Michael Feathers)_: a place where you can alter behaviour without editing in that place; the *location* at which a module's interface lives. Where to put the seam is its own design decision, distinct from what goes behind it. _Avoid_: boundary (overloaded with DDD's bounded context).
+**シーム** _(マイケル・フェザーズ)_: その場所を編集せずに振る舞いを変えることができる場所。モジュールのインターフェースが存在する*位置*。シームをどこに置くかは、その背後で何が行われるかとは別の設計上の決定である。_避けるべき_: 境界（DDDのバウンデッドコンテキストで過負荷になっている）
 
-**Adapter**: a concrete thing that satisfies an interface at a seam. Describes *role* (what slot it fills), not substance (what's inside).
+**アダプター**: シームでインターフェースを満たす具体的なものである。*役割*（どのスロットを埋めるか）を記述し、実体（中身が何か）は記述しない。
 
-**Leverage**: what callers get from depth. More capability per unit of interface they learn. One implementation pays back across N call sites and M tests.
+**レバレッジ**: 呼び出し元が深さから得るもの。彼らが学ぶインターフェース単位ごとの能力が増える。一つの実装がN個の呼び出し箇所とM個のテストにわたって還元される。
 
-**Locality**: what maintainers get from depth. Change, bugs, knowledge, and verification concentrate in one place rather than spreading across callers. Fix once, fixed everywhere.
+**ローカリティ（Locality）**: メンテナが深く関わることで得られるもの。変更、バグ、知識、検証が呼び出し元に分散するのではなく、一つの場所に集約される。修正は一度で、全てに反映される。
 
-## Deep vs shallow
+## 深いモジュール vs 浅いモジュール
 
-**Deep module** = small interface + lots of implementation:
+**深いモジュール（Deep module）** = 小さいインターフェース + 多くの実装
 
 ```
 ┌─────────────────────┐
@@ -41,7 +41,7 @@ Use these terms exactly: don't substitute "component," "service," "API," or "bou
 └─────────────────────┘
 ```
 
-**Shallow module** = large interface + little implementation (avoid):
+**浅いモジュール（Shallow module）** = 大きいインターフェース + 少ない実装（避けるべき）
 
 ```
 ┌─────────────────────────────────┐
@@ -51,24 +51,24 @@ Use these terms exactly: don't substitute "component," "service," "API," or "bou
 └─────────────────────────────────┘
 ```
 
-When designing an interface, ask:
+インターフェースを設計する際に問うべきこと：
 
-- Can I reduce the number of methods?
-- Can I simplify the parameters?
-- Can I hide more complexity inside?
+- メソッドの数を減らすことはできるか？
+- パラメータを簡略化できますか？
+- もっと複雑さを内部に隠せますか？
 
-## Principles
+## 原則
 
-- **Depth is a property of the interface, not the implementation.** A deep module can be internally composed of small, mockable, swappable parts; they just aren't part of the interface. A module can have **internal seams** (private to its implementation, used by its own tests) as well as the **external seam** at its interface.
-- **The deletion test.** Imagine deleting the module. If complexity vanishes, it was a pass-through. If complexity reappears across N callers, it was earning its keep.
-- **The interface is the test surface.** Callers and tests cross the same seam. If you want to test *past* the interface, the module is probably the wrong shape.
-- **One adapter means a hypothetical seam. Two adapters means a real one.** Don't introduce a seam unless something actually varies across it.
+- **深さは実装ではなく、インターフェースの特性である。** 深いモジュールは内部的には小さく、モック可能で、入れ替え可能な部分で構成されているかもしれないが、それらはインターフェースの一部ではない。モジュールは、**内部的な継ぎ目**（実装に対してプライベートで、自身のテストで使用される）や、インターフェース上の**外部的な継ぎ目**を持つことができる。
+- **削除テスト。** モジュールを削除することを想像してください。複雑さが消える場合、それは単なる通過点でした。複雑さがN人の呼び出し元にまた現れる場合、それはその価値を提供していたことになります。
+- **インターフェースはテストの表面です。** 呼び出し元とテストは同じ継ぎ目を横切ります。インターフェースを越えてテストしたい場合、そのモジュールの形はおそらく間違っているでしょう。
+- **1つのアダプターは仮想のシームを意味する。2つのアダプターは実際のシームを意味する。** 実際に何かがそのシームを越えて変化しない限り、シームを導入してはいけない。
 
-## Designing for testability
+## テスト容易性のための設計
 
-Good interfaces make testing natural:
+良いインターフェースはテストを自然にする：
 
-1. **Accept dependencies, don't create them.**
+1. **依存関係を受け入れ、作成しない。**
 
    ```typescript
    // Testable
@@ -80,7 +80,7 @@ Good interfaces make testing natural:
    }
    ```
 
-2. **Return results, don't produce side effects.**
+2. **結果を返し、副作用を生じさせない。**
 
    ```typescript
    // Testable
@@ -92,23 +92,23 @@ Good interfaces make testing natural:
    }
    ```
 
-3. **Small surface area.** Fewer methods = fewer tests needed. Fewer params = simpler test setup.
+3. **表面積を小さくする。** メソッドが少ないほど必要なテストは少なくなる。パラメータが少ないほどテストの設定は簡単になる。
 
-## Relationships
+## 関係
 
-- A **Module** has exactly one **Interface** (the surface it presents to callers and tests).
-- **Depth** is a property of a **Module**, measured against its **Interface**.
-- A **Seam** is where a **Module**'s **Interface** lives.
-- An **Adapter** sits at a **Seam** and satisfies the **Interface**.
-- **Depth** produces **Leverage** for callers and **Locality** for maintainers.
+- **モジュール** は正確に1つの **インターフェース**（呼び出し元やテストに提示する表面）を持ちます。
+- **深さ** は **モジュール** の特性であり、その **インターフェース** に対して測定されます。
+- **シーム** は **モジュール** の **インターフェース** が存在する場所です。
+- **アダプター** は **シーム** に配置され、**インターフェース** を満たします。
+- **深さ** は呼び出し元に **レバレッジ** を、保守担当者に **局所性** をもたらします。
 
-## Rejected framings
+## 拒否されたフレーミング
 
-- **Depth as ratio of implementation-lines to interface-lines** (Ousterhout): rewards padding the implementation. We use depth-as-leverage instead.
-- **"Interface" as the TypeScript `interface` keyword or a class's public methods**: too narrow: interface here includes every fact a caller must know.
-- **"Boundary"**: overloaded with DDD's bounded context. Say **seam** or **interface**.
+- **実装行数とインターフェース行数の比率としての深さ**（Ousterhout）：実装を膨らませることを奨励する。代わりに我々は深さをレバレッジとして使う。
+- **「インターフェース」とはTypeScriptの`interface`キーワードやクラスのパブリックメソッド**：狭すぎる。ここでのインターフェースは呼び出し側が知る必要のあるすべての事実を含む。
+- **「境界」**：DDDのバウンデッドコンテキストと混同されやすい。**シーム**または**インターフェース**と言う。
 
-## Going deeper
+## さらに深く
 
-- **Deepening a cluster given its dependencies**, see [DEEPENING.md](DEEPENING.md): dependency categories, seam discipline, and replace-don't-layer testing.
-- **Exploring alternative interfaces**, see [DESIGN-IT-TWICE.md](DESIGN-IT-TWICE.md): spin up parallel sub-agents to design the interface several radically different ways, then compare on depth, locality, and seam placement.
+- **依存関係が与えられたクラスターの深堀り**、詳細は [DEEPENING.md](DEEPENING.md): 依存関係のカテゴリ、シームの規律、レイヤー化せずに置き換えるテスト を参照してください。
+- **代替インターフェースの探索**、詳細は [DESIGN-IT-TWICE.md](DESIGN-IT-TWICE.md): 並列サブエージェントを立ち上げ、インターフェースを複数の根本的に異なる方法で設計し、その後深さ、局所性、シームの配置で比較します。

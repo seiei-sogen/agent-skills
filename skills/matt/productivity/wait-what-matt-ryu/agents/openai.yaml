@@ -1,5 +1,5 @@
 interface:
-  display_name: "Wait What"
-  short_description: "Re-pitch that: simpler, with the context I'm missing"
+  display_name: "ちょっと待って"
+  short_description: "もう一度説明してください：私が欠けている文脈も含めて、もっと簡単に"
 policy:
   allow_implicit_invocation: false

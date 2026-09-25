@@ -1,14 +1,14 @@
 ---
 name: resolving-merge-conflicts-matt-ryu
-description: "Use when you need to resolve an in-progress git merge/rebase conflict."
+description: "進行中の git マージ／リベースのコンフリクトを解決する必要があるときに使用してください。"
 ---
 
-1. **See the current state** of the merge/rebase. Check git history, and the conflicting files.
+1. マージ／リベースの**現在の状態を確認**してください。git の履歴やコンフリクトしているファイルを確認してください。
 
-2. **Find the primary sources** for each conflict. Understand deeply why each change was made, and what the original intent was. Read the commit messages, check the PRs, check original issues/tickets.
+2. **各競合の一次情報を見つける**。各変更がなぜ行われたのか、元の意図は何だったのかを深く理解する。コミットメッセージを読み、PRを確認し、元のイシュー/チケットを確認する。
 
-3. **Resolve each hunk.** Preserve both intents where possible. Where incompatible, pick the one matching the merge's stated goal and note the trade-off. Do **not** invent new behaviour. Always resolve; never `--abort`.
+3. **各ハンクを解決してください。** 可能な限り両方の意図を維持してください。互換性がない場合は、マージの明示された目標に合致するものを選び、トレードオフを記録してください。**新しい動作を作り出してはいけません**。常に解決し、決して`--abort`を行わないでください。
 
-4. Discover the project's **automated checks** and run them, typically typecheck, then tests, then format. Fix anything the merge broke.
+4. プロジェクトの**自動チェック**を見つけて実行してください。通常は型チェック、次にテスト、最後にフォーマットです。マージで壊れたものがあれば修正してください。
 
-5. **Finish the merge/rebase.** Stage everything and commit. If rebasing, continue the rebase process until all commits are rebased.
+5. **マージ／リベースを完了してください。** すべてをステージしてコミットします。リベース中の場合、すべてのコミットがリベースされるまでリベースプロセスを続けます。

@@ -1,7 +1,7 @@
 ---
 name: grill-with-docs-matt-ryu
-description: A relentless interview to sharpen a plan or design, which also creates docs (ADR's and glossary) as we go.
+description: 計画や設計を洗練させるための容赦ないインタビューで、同時にドキュメント（ADRや用語集）も作成します。
 disable-model-invocation: true
 ---
 
-Call the Skill tool twice, for "grilling" and "domain-modeling".
+Skill ツールで `grilling-matt-ryu` と `domain-modeling-matt-ryu` をそれぞれ呼び出す。

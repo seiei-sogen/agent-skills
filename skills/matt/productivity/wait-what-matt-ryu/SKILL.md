@@ -1,7 +1,7 @@
 ---
 name: wait-what-matt-ryu
-description: "Stop. That last message did not land: re-pitch it."
+description: "止まれ。直前の説明が伝わらなかったので、言い直してください。"
 disable-model-invocation: true
 ---
 
-Wait, I don't understand where you've got to here. Re-pitch that: give me a little bit of context, talk in ASD-STE100 Simplified Technical English, and use the ubiquitous language from `CONTEXT.md` (follow `CONTEXT-MAP.md` to the right one if the repo has more than one).
+ちょっと待って、ここまでの話が理解できなくなりました。その内容をもう一度説明してください：少し文脈を教えて、ASD-STE100 簡易技術英語で話し、`CONTEXT.md` のユビキタス言語を使ってください（リポジトリに複数ある場合は正しいものを使うには `CONTEXT-MAP.md` に従ってください）。

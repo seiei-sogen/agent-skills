@@ -1,55 +1,55 @@
-# Phase boundaries
+# フェーズの境界
 
-A **phase** is a chunk of work inside a session: the grilling, the implementation, the QA. The definition is fuzzy on purpose: a phase ends when you think *"ok, we're done with that"*.
+**フェーズ**とはセッション内の作業の塊のことです：グリル、実装、QAなどです。その定義はあえて曖昧にされています：フェーズは「よし、これで終わったな」と思ったときに終わります。
 
-The **phase boundary** is the gap between two phases, and it is the only place this decision belongs. Mid-phase there is no decision to make: continue, or split the work that's left into subagents. Compacting mid-phase makes the agent lose the thread.
+**相境界**とは、二つの相の間の隙間であり、決定が属する唯一の場所です。相の途中では決定を下す必要はありません：作業を続けるか、残りの作業をサブエージェントに分割するかです。相の途中で圧縮すると、エージェントはスレッドを失います。
 
-## The five options
+## 五つのオプション
 
-| Option       | What it does                                                    |
+| オプション | その機能 |
 | ------------ | --------------------------------------------------------------- |
-| **Continue** | Stay in the session. No context switch at all.                    |
-| **`/clear`** | Empty the context window and start from nothing.                  |
-| **`/handoff`** | Write a portable markdown file and seed a session anywhere with it. |
-| **Subagent** | Send the task to its own context window and get a report back.     |
-| **`/compact`** | Compress this context and seed a fresh session with the summary.  |
+| **続ける** | セッションに留まる。コンテキストの切り替えは一切行わない。                    |
+| **`/clear`** | コンテキストウィンドウを空にして、何もない状態から始める。                  |
+| **`/handoff-matt-ryu`** | ポータブルなMarkdownファイルを書き、それを使ってどこでもセッションを開始する。 |
+| **サブエージェント** | タスクを自身のコンテキストウィンドウに送信し、報告を受け取る。     |
+| **`/compact`** | この文脈を圧縮し、要約で新しいセッションを開始してください。  |
 
-## The tree
+## 木
 
-Work top to bottom at the boundary. The first **yes** wins.
+境界で上から下へ作業します。最初の **はい** が勝ちます。
 
-**1. Can you continue in this session?** Two things make the answer yes: the next phase needs this phase as a **primary source**, or you have enough [smart zone](https://www.aihero.dev/ai-coding-dictionary/smart-zone) left (~150k tokens) for the next phase to fit. Grilling → implementation is the standard yes: the implementation wants the reasoning verbatim, not a summary of it. Continue costs nothing and loses nothing, so rule it out before anything else.
+**1. このセッションを継続できますか？**　答えが「はい」となる理由は二つあります：次のフェーズがこのフェーズを**一次情報源**として必要とする場合、または次のフェーズが収まるだけの十分な[smart zone](https://www.aihero.dev/ai-coding-dictionary/smart-zone)（約15万トークン）]が残っている場合です。壁打ち → 実装は標準的な「はい」です：実装は要約ではなく、推論を逐語的に求めます。継続することで何も失わず、何も費用がかからないため、他のことを考える前に除外しないでください。
 
-**2. Is the context irrelevant to what comes next?** Is everything in this session (the exploration, the decisions, the dead ends) disposable? If so, **`/clear`**. It is the cheapest move on the board: it takes no time and hands back the whole window. `/clear` also isn't terminal: the old session stays resumable.
+**2. 次に来るものに文脈は無関係ですか？** このセッションのすべて（探索、決定、行き止まり）は使い捨てですか？ もしそうなら、**`/clear`**。これは盤上で最も安価な手です：時間はかからず、ウィンドウ全体を元に戻します。`/clear`も終端ではありません：古いセッションは再開可能なままです。
 
-The cost of getting this wrong is one-way. Clear a *relevant* context and you lose the **why** behind what you built, and no amount of reading the diff back gets it returned.
+これを間違えると、損失は一方通行です。*関連する*コンテキストをクリアすると、あなたが構築したものの背後にある**理由**を失い、差分を読み返しても元には戻りません。
 
-**3. Do you need to hand off?** `/handoff` is narrow. You need it only when you are:
+**3. 引き継ぐ必要がありますか？** `/handoff-matt-ryu`は狭いものです。必要になるのは以下の場合だけです：
 
-- swapping to a **new harness** (Claude → Codex),
-- moving to a **new directory** or repo,
-- sending the work to a **colleague**,
-- or forking a side task you found **mid-phase** without derailing what you're doing.
+- **新しいハーネス**に切り替えるとき（Claude → Codex）
+- **新しいディレクトリ**やリポジトリに移動するとき
+- 作業を**同僚に送る**とき
+- または進行中の作業を脱線させずに、**途中段階**で見つけた副次的なタスクを分岐させること。
 
-That list is the whole clause. What `/handoff` buys is **portability**: a file that travels. If nothing is travelling, you don't need it.
+そのリストが全体の条項です。`/handoff-matt-ryu`が購入するのは**携帯性**です：移動できるファイルです。何も移動していなければ、それは必要ありません。
 
-**4. Can the task be done AFK?** Is it scoped tightly enough to run with you away from the keyboard, no steering? Then send it to a **subagent** and leave this session untouched. Automated review is the standard case: the agent reads the diff and reports, and you aren't needed while it does.
+**4. タスクはAFKで実行できますか？** キーボードから離れても、操作なしで実行できるほどに範囲が限定されていますか？ それならば、それを**サブエージェント**に送信し、このセッションには手をつけないでください。自動レビューが標準的なケースです：エージェントが差分を読み取り、報告します。その間、あなたは必要ありません。
 
-**5. Otherwise, `/compact`.** Relevant context, same harness, same directory, and you need to stay in the loop: this is where the tree lands, and it lands here often. Pass it an instruction (`/compact we're going to QA this area`) so the summary keeps what the next phase needs.
+**5. それ以外の場合、`/compact`。** 関連する文脈、同じハーネス、同じディレクトリ、そしてループ内に留まる必要があります：ここがツリーが着地する場所であり、頻繁にここに着地します。次のフェーズが必要とする内容を要約に保持するために、指示（`/compact we're going to QA this area`）を渡してください。
 
-`/compact` is the **default, not the first reach**. It sits at the bottom because the four questions above it are all cheaper or more precise. The failure mode when people start here is a fresh session that is confidently wrong about a decision the summary flattened.
+`/compact`は**デフォルトであり、最初の選択肢ではありません**。その下に位置するのは、上の4つの質問がすべてより安価であったり、より正確であるためです。人々がここから始めると失敗するケースは、サマリーが平坦化した決定について自信満々に間違っている新しいセッションです。
 
-## Primary and secondary sources
+## 一次資料と二次資料
 
-Every move except **Continue** turns a **primary source** into a **secondary source**: the session as it happened, replaced by a summary of it. The trade is always the same shape:
+**「続行」**以外のすべての動きは、**一次資料**を**二次資料**に変える：起こったままのセッションが、その要約に置き換えられる。取引は常に同じ形をしている：
 
-| Source                            | Information | Noise | Room to move |
+| ソース                            | 情報量      | ノイズ | 動く余地 |
 | --------------------------------- | ----------- | ----- | ------------ |
-| Primary (Continue)                | Full        | Lots  | Little       |
-| Secondary (`/compact`, `/handoff`) | Lossy       | Less  | Lots         |
+| 一次（続行）                        | 完全        | 多い   | 少ない     |
+| 二次 (`/compact`, `/handoff-matt-ryu`) | ロスあり       | 少なめ  | 多め         |
 
-This is why question 1 comes first. You only pay the lossiness when staying costs more than it saves.
+これが質問1が最初に来る理由です。滞在費が節約できる額よりも高くつく場合にのみ、ロスを支払います。
 
-## These are judgement calls
+## これらは判断による決定です
 
-The questions are not objective: each has taste in it, and the same boundary can go two ways on two days. The value is in asking them **in order**, at the boundary rather than in the middle of the work.
+その質問は客観的ではありません：それぞれに好みが含まれており、同じ境界でも二日間で二つの方向に進むことがあります。価値は、作業の途中ではなく境界で**順番に**質問することにあります。

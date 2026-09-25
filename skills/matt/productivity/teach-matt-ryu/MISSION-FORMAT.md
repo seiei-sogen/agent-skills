@@ -1,8 +1,8 @@
-# MISSION.md Format
+# MISSION.md フォーマット
 
-`MISSION.md` lives at the workspace root. It captures the _reason_ the user is learning this topic. Every teaching decision (what to teach next, which resources to surface, which exercises to design) should trace back to this document.
+`MISSION.md` はワークスペースのルートにあります。これは、ユーザーがこのトピックを学んでいる _理由_ を記録します。すべての教育上の決定（次に何を教えるか、どのリソースを提示するか、どの演習を作成するか）は、このドキュメントに遡って説明できる必要があります。
 
-## Template
+## テンプレート
 
 ```md
 # Mission: {Topic}
@@ -22,10 +22,10 @@
 - {Adjacent topics the user explicitly does not want to chase right now, protecting the zone of proximal development}
 ```
 
-## Rules
+## ルール
 
-- **One mission per workspace.** If the user wants to learn two unrelated things, that is two workspaces.
-- **Concrete over abstract.** "Run a half marathon by October" beats "get fitter." "Ship a Rust CLI to my team" beats "learn Rust."
-- **Push back on vagueness.** If the user cannot articulate why, interview them before writing anything. A bad mission is worse than no mission.
-- **Revise when reality shifts.** Missions change. When the user's goal moves, update this file: don't leave a stale mission steering future sessions.
-- **Keep it short.** If `MISSION.md` runs past a screen, it has stopped being a compass and started being a plan.
+- **ワークスペースごとに一つのミッション。** ユーザーが二つの無関係なことを学びたい場合、それは二つのワークスペースになります。
+- **抽象より具体。** 「10月までにハーフマラソンを完走する」は「体を鍛える」より具体的です。「RustのCLIをチームに提供する」は「Rustを学ぶ」より具体的です。
+- **曖昧さを突き返す。** ユーザーが理由を明確に言えない場合は、何かを書く前にインタビューしてください。悪いミッションは、ミッションがないよりも悪いです。
+- **現実が変わったら修正する。** ミッションは変わる。ユーザーの目標が移動したら、このファイルを更新すること：古いミッションを残して将来のセッションを導くことはしない。
+- **短く保つ。** `MISSION.md`が画面を越えて進む場合、それはコンパスでなくなり、計画になったということ。

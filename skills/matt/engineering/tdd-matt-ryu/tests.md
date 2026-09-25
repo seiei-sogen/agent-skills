@@ -1,8 +1,8 @@
-# Good and Bad Tests
+# 良いテストと悪いテスト
 
-## Good Tests
+## 良いテスト
 
-**Integration-style**: Test through real interfaces, not mocks of internal parts.
+**統合スタイル**: 内部部分のモックではなく、実際のインターフェースを通してテストする。
 
 ```typescript
 // GOOD: Tests observable behavior
@@ -14,17 +14,17 @@ test("user can checkout with valid cart", async () => {
 });
 ```
 
-Characteristics:
+特徴:
 
-- Tests behavior users/callers care about
-- Uses public API only
-- Survives internal refactors
-- Describes WHAT, not HOW
-- One logical assertion per test
+- ユーザーや呼び出し元が関心を持つ挙動をテストする
+- 公開APIのみを使用する
+- 内部リファクタに耐える
+- HOWではなくWHATを記述する
+- テストごとに一つの論理的なアサーション
 
-## Bad Tests
+## 悪いテスト
 
-**Implementation-detail tests**: Coupled to internal structure.
+**実装の詳細に依存するテスト**: 内部構造に結びついている。
 
 ```typescript
 // BAD: Tests implementation details
@@ -35,14 +35,14 @@ test("checkout calls paymentService.process", async () => {
 });
 ```
 
-Red flags:
+警告サイン:
 
-- Mocking internal collaborators
-- Testing private methods
-- Asserting on call counts/order
-- Test breaks when refactoring without behavior change
-- Test name describes HOW not WHAT
-- Verifying through external means instead of interface
+- 内部の共同作業者をモックする
+- プライベートメソッドをテストする
+- 呼び出し回数／順序の検証
+- 振る舞いを変えずにリファクタリングするとテストが壊れる
+- テスト名が何をするかではなく、どのようにするかを説明している
+- インターフェイスではなく外部手段で検証する
 
 ```typescript
 // BAD: Bypasses interface to verify
@@ -60,7 +60,7 @@ test("createUser makes user retrievable", async () => {
 });
 ```
 
-**Tautological tests**: Expected value restates the implementation, so the test passes by construction.
+**同語反復的なテスト**：期待値が実装を再述しているため、テストは作成上自動的にパスする。
 
 ```typescript
 // BAD: Expected value is recomputed the way the code computes it

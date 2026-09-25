@@ -1,116 +1,116 @@
 ---
 name: setup-matt-pocock-skills-matt-ryu
-description: "Configure this repo for the engineering skills: set up its issue tracker, triage label vocabulary, and domain doc layout. Run once before first use of the other engineering skills."
+description: "このリポジトリをエンジニアリングスキル用に設定します：イシュートラッカーの設定、トリアージラベルの語彙、ドメインドキュメントのレイアウトの設定。その他のエンジニアリングスキルを初めて使用する前に一度実行してください。"
 disable-model-invocation: true
 ---
 
-# Setup Matt Pocock's Skills
+# Matt Pocock のスキルを設定します。
 
-Scaffold the per-repo configuration that the engineering skills assume:
+エンジニアリングスキルが前提とするリポジトリごとの設定をスキャフォールドする：
 
-- **Issue tracker**: where issues live (GitHub by default; local markdown is also supported out of the box)
-- **Triage labels**: the strings used for the five canonical triage roles
-- **Domain docs**: where `CONTEXT.md` and ADRs live, and the consumer rules for reading them
+- **課題トラッカー**：課題が存在する場所（デフォルトはGitHub; ローカルのMarkdownも標準でサポート）
+- **トリアージラベル**：5つの標準的なトリアージ役割に使用される文字列
+- **ドメインドキュメント**：`CONTEXT.md`とADRが存在する場所、およびそれらを読むための利用者ルール
 
-This is a prompt-driven skill, not a deterministic script. Explore, present what you found, confirm with the user, then write.
+これはプロンプト駆動のスキルであり、決定論的なスクリプトではありません。探索し、見つけたものを提示し、ユーザーに確認し、その後に書きます。
 
-## Process
+## プロセス
 
-### 1. Explore
+### 1. 探索
 
-Look at the current repo to understand its starting state. Read whatever exists; don't assume:
+現在のリポジトリを見て、その開始状態を理解します。存在するものをすべて読み、以下を前提としないでください:
 
-- `git remote -v` and `.git/config`: is this a GitHub repo? Which one?
-- `AGENTS.md` and `CLAUDE.md` at the repo root: does either exist? Is there already an `## Agent skills` section in either?
-- `CONTEXT.md` and `CONTEXT-MAP.md` at the repo root
-- `docs/adr/` and any `src/*/docs/adr/` directories
-- `docs/agents/`: does this skill's prior output already exist?
-- `.scratch/`: a sign that a local-markdown issue tracker convention is already in use
-- Is the `triage` skill installed? (a `triage` skill folder alongside this one, or `triage` in your available skills.) This decides whether Section B runs at all.
-- Monorepo signals: a `pnpm-workspace.yaml`, a `workspaces` field in `package.json`, or a populated `packages/*` with its own `src/`. These are present only in a genuinely large multi-package repo; their absence means single-context, which is almost every repo.
+- `git remote -v` および `.git/config`: これはGitHubのリポジトリですか？どちらでしょうか？
+- リポジトリのルートにある`AGENTS.md`と`CLAUDE.md`：どちらかは存在しますか？どちらかにすでに`## Agent skills`のセクションはありますか？
+- リポジトリのルートにある`CONTEXT.md`と`CONTEXT-MAP.md`
+- `docs/adr/`および任意の`src/*/docs/adr/`ディレクトリ
+- `docs/agents/`：このスキルの以前の出力はすでに存在しますか？
+- `.scratch/`：ローカルMarkdown問題追跡規約がすでに使用されている兆候
+- `triage` スキルはインストールされていますか？（このフォルダの横に `triage` スキルフォルダがあるか、または使用可能なスキルに `triage` があるか。）これは、セクション B が実行されるかどうかを決定します。
+- モノレポの信号：`package.json`内の`pnpm-workspace.yaml`、`workspaces`フィールド、または独自の`src/`を持つ`packages/*`。これらは本当に大規模なマルチパッケージリポジトリにのみ存在し、不在の場合はシングルコンテキスト、つまりほとんどのリポジトリを意味します。
 
-### 2. Present findings and ask
+### 2. 所見を提示して質問する
 
-Summarise what's present and what's missing. Then take the sections in order. One section, one answer, then the next.
+存在するものと欠けているものを要約します。次に、各セクションを順番に取り上げます。1つのセクション、1つの回答、そして次のセクションへ進みます。
 
-Lead each section with the recommended answer so the user can accept it in a word. Give a one-line explainer only when the choice genuinely branches; skip the section entirely when exploration already settled it (Section B when `triage` isn't installed, Section C when there's no monorepo).
+**各セクションは推奨される回答で始めて、ユーザーが一語で受け入れられるようにしてください。選択肢が実際に分岐する場合にのみ一行の説明を追加してください。探索ですでに決まっている場合はセクション全体を省略します（`triage` がインストールされていない場合はセクション B、モノレポがない場合はセクション C）。
 
-**Section A: Issue tracker.**
+**セクション A: イシュートラッカー。**
 
-> Explainer: The "issue tracker" is where issues live for this repo. Skills like `to-tickets`, `triage`, and `to-spec` read from and write to it. They need to know whether to call `gh issue create`, write a markdown file under `.scratch/`, or follow some other workflow you describe. Pick the place you actually track work for this repo.
+> 解説: 「イシュートラッカー」は、このリポジトリの問題が管理される場所です。`to-tickets`、`triage`、`to-spec`のようなスキルは、ここから読み取り、書き込みを行います。これらのスキルは、`gh issue create`を呼び出すべきか、`.scratch/`の下にマークダウンファイルを書き込むべきか、またはあなたが説明する他のワークフローに従うべきかを知る必要があります。このリポジトリで実際に作業を追跡する場所を選んでください。
 
-Default posture: these skills were designed for GitHub. If a `git remote` points at GitHub, propose that. If a `git remote` points at GitLab (`gitlab.com` or a self-hosted host), propose GitLab. Otherwise (or if the user prefers), offer:
+デフォルトの姿勢: これらのスキルはGitHub用に設計されています。もし`git remote`がGitHubを指している場合は、それを提案してください。もし`git remote`がGitLab（`gitlab.com`または自分でホストしているもの）を指している場合は、GitLabを提案してください。それ以外の場合（またはユーザーが希望する場合）は、次を提供します:
 
-- **GitHub**: issues live in the repo's GitHub Issues (uses the `gh` CLI)
-- **GitLab**: issues live in the repo's GitLab Issues (uses the [`glab`](https://gitlab.com/gitlab-org/cli) CLI)
-- **Local markdown**: issues live as files under `.scratch/<feature>/` in this repo (good for solo projects or repos without a remote)
-- **Other** (Jira, Linear, etc.): ask the user to describe the workflow in one paragraph; the skill will record it as freeform prose
+- **GitHub**: イシューはリポジトリのGitHub Issuesに存在します（`gh` CLIを使用）
+- **GitLab**: イシューはリポジトリのGitLab Issuesに存在します（[`glab`](https://gitlab.com/gitlab-org/cli) CLIを使用）
+- **ローカルマークダウン**: このリポジトリ内の `.scratch/<feature>/` 下のファイルとして問題が存在します（個人プロジェクトやリモートのないリポジトリに適しています）
+- **その他**（Jira、Linear など）: ユーザーにワークフローを1段落で説明してもらいます。スキルはそれを自由形式の文章として記録します
 
-Record the choice in `docs/agents/issue-tracker.md`. The GitHub and GitLab templates carry a "PRs as a request surface" flag, defaulted **off**. Leave it off and don't raise it: a user who wants external PRs in the triage queue can flip the flag in the file later.
+`docs/agents/issue-tracker.md` に選択を記録します。GitHub および GitLab のテンプレートには「PR をリクエストのサーフェスとして扱う」フラグがあり、デフォルトは **オフ** です。オフのままにしておき、立てないでください：トリアージキューに外部 PR を希望するユーザーは、後でファイル内のフラグを切り替えることができます。
 
-**Section B: Triage label vocabulary.** Skip this section entirely if the `triage` skill isn't installed (exploration told you), since an uninstalled skill needs no labels.
+**セクションB: トリアージラベルの語彙。** `triage`スキルがインストールされていない場合（探索で確認済み）、このセクションは完全にスキップしてください。インストールされていないスキルにはラベルは必要ありません。
 
-If it is installed, ask exactly one question:
+インストールされている場合、正確に1つだけ質問してください：
 
-> Do you want to keep the default triage labels? (recommended: **yes**)
+> デフォルトのトリアージラベルを保持しますか？（推奨: **はい**）
 
-The defaults are the five canonical roles, each label string equal to its name: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. On **yes**, write them as-is. Only if the user says no, usually because their tracker already uses other names (e.g. `bug:triage` for `needs-triage`), collect the overrides so `triage` applies existing labels instead of creating duplicates.
+デフォルトは5つの正典的な役割で、それぞれのラベル文字列は名前と同じです：`needs-triage`、`needs-info`、`ready-for-agent`、`ready-for-human`、`wontfix`。**はい**の場合は、そのまま書きます。ユーザーがいいえと言った場合のみ、通常はトラッカーですでに他の名前を使用している場合（例：`needs-triage`の代わりに`bug:triage`を使用している場合）、重複を作成せずに`triage`が既存のラベルを適用するようにオーバーライドを収集します。
 
-**Section C: Domain docs.** Default to **single-context** (one `CONTEXT.md` + `docs/adr/` at the repo root). This fits almost every repo; write it without asking.
+**セクションC: ドメイン文書**。デフォルトは**シングルコンテキスト**（リポジトリのルートに `CONTEXT.md` + `docs/adr/` が1つずつ）。ほとんどのリポジトリに適合するので、確認せずに書く。
 
-Offer **multi-context** (a root `CONTEXT-MAP.md` pointing to per-context `CONTEXT.md` files) only when exploration found monorepo signals. Then confirm which layout they want.
+**マルチコンテキスト**（ルート `CONTEXT-MAP.md` がコンテキストごとの `CONTEXT.md` ファイルを指す）は、探索でモノレポの兆候が見つかった場合のみ提供。その後、どのレイアウトを希望するか確認する。
 
-### 3. Confirm and edit
+### 3. 確認と編集
 
-Show the user a draft of:
+ユーザーに下書きを表示:
 
-- The `## Agent skills` block to add to whichever of `CLAUDE.md` / `AGENTS.md` is being edited (see step 4 for selection rules)
-- The contents of `docs/agents/issue-tracker.md`, `docs/agents/domain.md`, and `docs/agents/triage-labels.md` (the last only when `triage` is installed)
+- `CLAUDE.md` / `AGENTS.md` のいずれか編集している方に追加する `## Agent skills` ブロック（選択ルールはステップ4を参照）
+- `docs/agents/issue-tracker.md`、`docs/agents/domain.md`、および `docs/agents/triage-labels.md` の内容（`triage` がインストールされている場合のみ最後のもの）
 
-Let them edit before writing.
+書き込む前に編集させる。
 
-### 4. Write
+### 4. 書き込む
 
-**Pick the file to edit:**
+**編集するファイルを選択:**
 
-- If `CLAUDE.md` exists, edit it.
-- Else if `AGENTS.md` exists, edit it.
-- If neither exists, ask the user which one to create; don't pick for them.
+- `CLAUDE.md` が存在する場合は、それを編集する。
+- 存在しない場合、`AGENTS.md` が存在する場合は、それを編集する。
+- どちらも存在しない場合は、どちらを作成するかユーザーに尋ねてください。ユーザーの代わりに選択しないでください。
 
-Never create `AGENTS.md` when `CLAUDE.md` already exists (or vice versa); always edit the one that's already there.
+`CLAUDE.md`が既に存在する場合に`AGENTS.md`を作成してはいけません（その逆も同様です）。常に既に存在するものを編集してください。
 
-If an `## Agent skills` block already exists in the chosen file, update its contents in-place rather than appending a duplicate. Don't overwrite user edits to the surrounding sections.
+選択したファイルに`## Agent skills`ブロックが既に存在する場合は、重複を追加するのではなく、その内容をその場で更新してください。周囲のセクションのユーザーによる編集を上書きしないでください。
 
-The block:
+ブロック:
 
 ```markdown
 ## Agent skills
 
 ### Issue tracker
 
-[one-line summary of where issues are tracked]. See `docs/agents/issue-tracker.md`.
+[課題トラッカーの場所を1行で説明]。`docs/agents/issue-tracker.md` を参照。
 
 ### Triage labels
 
-[one-line summary of the label vocabulary]. See `docs/agents/triage-labels.md`.
+[トリアージラベルの使い方を1行で説明]。`docs/agents/triage-labels.md` を参照。
 
 ### Domain docs
 
-[one-line summary of layout: "single-context" or "multi-context"]. See `docs/agents/domain.md`.
+[文書の配置が「単一コンテキスト」か「複数コンテキスト」かを1行で説明]。`docs/agents/domain.md` を参照。
 ```
 
-Include the `### Triage labels` sub-block, and write `docs/agents/triage-labels.md`, only when `triage` is installed and Section B ran. When it isn't, both are omitted.
+`### Triage labels`のサブブロックを含め、`triage`がインストールされ、セクションBが実行された場合にのみ`docs/agents/triage-labels.md`を書きます。それが行われない場合、両方とも省略されます。
 
-Then write the docs files using the seed templates in this skill folder as a starting point:
+次に、このスキルフォルダ内のシードテンプレートを出発点として使用し、ドキュメントファイルを書きます:
 
-- [issue-tracker-github.md](./issue-tracker-github.md): GitHub issue tracker
-- [issue-tracker-gitlab.md](./issue-tracker-gitlab.md): GitLab issue tracker
-- [issue-tracker-local.md](./issue-tracker-local.md): local-markdown issue tracker
-- [triage-labels.md](./triage-labels.md): label mapping (only if `triage` is installed)
-- [domain.md](./domain.md): domain doc consumer rules + layout
+- [issue-tracker-github.md](./issue-tracker-github.md): GitHubの課題トラッカー
+- [issue-tracker-gitlab.md](./issue-tracker-gitlab.md): GitLabの課題トラッカー
+- [issue-tracker-local.md](./issue-tracker-local.md): ローカルマークダウン用の課題トラッカー
+- [triage-labels.md](./triage-labels.md): ラベルマッピング（`triage` がインストールされている場合のみ）
+- [domain.md](./domain.md): ドメインドキュメント利用者ルール + レイアウト
 
-For "other" issue trackers, write `docs/agents/issue-tracker.md` from scratch using the user's description.
+「その他」の課題トラッカーについては、ユーザーの説明に基づいて `docs/agents/issue-tracker.md` を一から作成してください。
 
-### 5. Done
+### 5. 完了
 
-Tell the user the setup is complete and which engineering skills will now read from these files. Mention they can edit `docs/agents/*.md` directly later; re-running this skill is only necessary if they want to switch issue trackers or restart from scratch.
+ユーザーにセットアップが完了したことと、どのエンジニアリングスキルがこれらのファイルを読み取るかを伝えてください。後で`docs/agents/*.md`を直接編集できることも伝えましょう。問題追跡ツールを変更するか最初からやり直す場合にのみ、このスキルを再実行する必要があります。

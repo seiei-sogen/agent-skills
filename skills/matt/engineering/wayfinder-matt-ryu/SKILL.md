@@ -1,128 +1,130 @@
 ---
 name: wayfinder-matt-ryu
-description: Plan a huge chunk of work (more than one agent session can hold) as a shared map of decision tickets on your issue tracker, and resolve them one at a time until the way to the destination is clear.
+description: 作業の大部分（1回のエージェントセッションで処理できる量を超えるもの）を、あなたの課題トラッカー上の意思決定チケットの共有マップとして計画し、目的地への道が明確になるまで、それらを一つずつ解決していきます。
 disable-model-invocation: true
 ---
 
-A loose idea has arrived, too big for one agent session, and wrapped in fog: the way from here to the **destination** isn't visible yet. Wayfinding is about finding that way, not charging at the destination. This skill charts the way as a **shared map** on the repo's issue tracker, then works its **decision tickets** (questions whose resolution is a decision, not slices of a build to execute) one at a time until the route is clear.
+漠然としたアイデアがあり、1回のエージェントセッションでは扱いきれず、ここから**目的地**までの道もまだ見えていない。まず道筋を見つけるのであって、目的地へ突き進むのではない。このスキルは、その道をリポジトリの課題トラッカー上の**共有マップ**として記録し、次にその**意思決定チケット**（解決が意思決定であって、実行すべきビルドのスライスではない質問）を一つずつ処理して、ルートが明確になるまで進める。
 
-The destination varies per effort, and naming it is the first act of charting: it shapes every ticket. It might be a spec to hand off and iterate on, a decision to lock before planning starts, or a change made in place like a data-structure migration. The map is domain-agnostic: engineering work, course content, whatever fits the shape.
+目的地は取り組みごとに異なります。最初に目的地を定めることで、すべてのチケットの方向が決まります。目的地は、他者に引き継いで実装してもらう仕様、計画前に確定すべき判断、あるいはデータ構造の移行のようにその場で行う変更かもしれません。マップは分野を問いません。エンジニアリング作業でもコースの内容でも、この形に合うものに使えます。
 
-## Plan, don't do
+## 計画して、行動するな
 
-Wayfinder is **planning** by default: each ticket resolves a decision, and the map is done when the way is clear, with nothing left to decide before someone goes and does the thing. The pull to just do the work is usually the signal you've reached the edge of the map and it's time to hand off. An effort can override this in its **Notes**, carrying execution into the map itself, but absent that, produce decisions, not deliverables.
+Wayfinderは原則として**計画**を立てます。各チケットで意思決定を終え、実行前に決めるべきことがなくなって道筋が明確になったら、マップは完成です。作業そのものに着手したくなったら、マップの終点に達して引き継ぐ時期かもしれません。取り組みの**Notes**で実行も対象に指定した場合を除き、成果物ではなく意思決定を生み出してください。
 
-## Refer by name
+## 名前で参照する
 
-Every map and ticket is an issue, so it has a **name**: its title. In everything the human reads (narration, the map's Decisions-so-far), refer to it by that name, never by a bare id, number, or slug. A wall of `#42, #43, #44` is illegible; names read at a glance. The id and URL don't vanish; a name wraps its link, but they ride _inside_ the name, never stand in for it.
+マップと各チケットはそれぞれ1つの課題であり、**名前**（タイトル）を持っています。人が読むすべてのもの（説明文やマップの「Decisions so far」）では、その名前で参照し、単なるID、番号、スラッグで呼ばないでください。`#42, #43, #44`の羅列は読みにくく、名前なら一目で内容が分かります。IDやURLは残し、名前をリンクの表示文に使ってください。
 
-## The Map
+## マップ
 
-The map is a single issue on this repo's issue tracker, labelled `wayfinder:map`, the canonical artifact. Its tickets are child issues of the map.
+このマップは、このリポジトリのイシュートラッカーの単一のイシューであり、ラベルは `wayfinder:map`、標準的なアーティファクトです。そのチケットはマップの子イシューです。
 
-The map is an **index**, not a store. It lists the decisions made and points at the tickets that hold their detail; a decision lives in exactly one place, its ticket, so the map never restates it, only gists it and links.
+マップは**インデックス**であり、ストアではありません。マップは行われた決定を一覧にし、その詳細を保持しているチケットを指し示します。決定は正確に1つの場所、つまりそのチケットに存在するため、マップはそれを再記述することはなく、要点をまとめてリンクするだけです。
 
-**Where the map, its child tickets, blocking, and frontier queries physically live is tracker-specific.** The issue tracker should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`. Consult the tracker doc's "Wayfinding operations" section for how _this_ repo expresses them. If no tracker has been provided, default to the local-markdown tracker.
+**マップ、その子チケット、ブロッキング、フロンティアクエリが物理的にどこに存在するかは、トラッカー固有です。** 問題トラッカーはあなたに提供されているはずです。もし提供されていなければ、ユーザーに`/setup-matt-pocock-skills-matt-ryu`を実行するように伝えてください。「Wayfinding operations」のセクションを参照して、このリポジトリがどのようにそれらを表現しているか確認してください。トラッカーが提供されていない場合は、ローカルマークダウントラッカーをデフォルトとして使用してください。
 
-### The map body
+### マップ本体
 
-The whole map at low resolution, loaded once per session. Open tickets are **not** listed: they are open child issues, found by query.
+低解像度の全体マップは、セッションごとに一度読み込まれます。未解決のチケットは**リストに含まれません**：それらはクエリによって見つかったオープンの子課題です。
 
 ```markdown
 ## Destination
 
-<what reaching the end of this map looks like: the spec, decision, or change this effort is finding its way to. One or two lines; every session orients to it before choosing a ticket.>
+<このマップの到達点となる仕様、意思決定、変更を1〜2行で記す。各セッションでチケットを選ぶ前に確認する>
 
 ## Notes
 
-<domain; skills every session should consult; standing preferences for this effort>
+<対象ドメイン、毎回参照するスキル、この作業で継続して守る方針>
 
 ## Decisions so far
 
-<!-- the index: one line per closed ticket, enough to judge relevance, then zoom the link for the detail the ticket holds -->
+<!-- 解決済みチケットを1件1行で記す。関連性が判断できる要約を載せ、詳細はリンク先で確認する -->
 
-- [<closed ticket title>](link): <one-line gist of the answer>
+- [<解決済みチケットの件名>](link): <回答の要点を1行で記す>
 
 ## Not yet specified
 
-<!-- see "Fog of war": in-scope fog you can't ticket yet; graduates as the frontier advances -->
+<!-- 「Fog of war」を参照。対象範囲内だがまだチケット化できない不明点。調査が進んだらチケット化する -->
 
 ## Out of scope
 
-<!-- see "Out of scope": work ruled beyond the destination; closed, never graduates -->
+<!-- 「Out of scope」を参照。到達点の範囲外と判断した作業。ここでは扱わない -->
 ```
 
-### Tickets
+### チケット
 
-Each ticket is a **child issue** of the map; the tracker's issue id is its identity. Its body is the question, sized to one 100K token agent session:
+各チケットはマップの**子課題**です。トラッカーの課題IDがその識別子となります。本体は質問であり、100Kトークンのエージェントセッションに合わせてサイズが調整されています。
 
 ```markdown
 ## Question
 
-<the decision or investigation this ticket resolves>
+<このチケットで確定する意思決定または調査結果>
 ```
 
-Each ticket carries a `wayfinder:<type>` label, one of `research`, `prototype`, `grilling`, `task` (see [Ticket Types](#ticket-types)).
+各チケットには`wayfinder:<type>`ラベルが付いており、そのうちの`research`、`prototype`、`grilling`、`task`のいずれかです（[チケットの種類](#ticket-types)参照）。
 
-A session **claims** a ticket by assigning it to the dev driving the map, **first**, before any work, so concurrent sessions skip it. That assignee _is_ the claim: an open, unassigned ticket is unclaimed.
+セッションは、作業を始める前にまずマップを操作する開発者にチケットを割り当てることでチケットを**クレーム**します。そのため、同時進行のセッションはそのチケットをスキップします。その割り当てられた開発者が_クレーム_であり、オープンで割り当てられていないチケットは未クレームです。
 
-Blocking uses the tracker's **native** dependency relationship: essential because it renders the frontier _visually_ in the tracker's own UI, so the human sees what's takeable without opening the map. Only a tracker that lacks native blocking falls back to a body convention. A ticket is **unblocked** when every ticket blocking it is closed; the **frontier** is the open, unblocked, unclaimed children, the edge of the known.
+ブロッキングはトラッカーの**ネイティブ**な依存関係を利用します。これは重要で、トラッカー自身のUI上でフロンティアを_視覚的に_表示するため、人間は地図を開かなくても取得可能なものが分かります。ネイティブなブロッキングを持たないトラッカーのみが、ボディの規約にフォールバックします。チケットは、それをブロックするすべてのチケットがクローズされたときに**ブロック解除**されます。**フロンティア**は、開かれていてブロックされておらず、未請求の子チケット、すなわち既知の境界です。
 
-The answer isn't part of the body; it's recorded on resolution (see [Work through the map](#work-through-the-map)). Assets created while resolving a ticket are linked from the issue, not pasted in.
+答えは本文の一部ではなく、解決策に記録されています（[地図に沿って進める](#work-through-the-map) を参照）。チケットを解決している間に作成された資産は、貼り付けられるのではなく、問題からリンクされます。
 
-## Ticket Types
+<a id="ticket-types"></a>
+## チケットの種類
 
-Every ticket is either **HITL** (human in the loop, worked _with_ a human who speaks for themselves) or **AFK**, driven by the agent alone. A HITL ticket only resolves through that live exchange; the agent never stands in for the human's side of it (a grilling agent that answers its own questions has broken this).
+すべてのチケットは、**HITL**（ヒューマン・イン・ザ・ループ、自分の言葉で話す人間と協力して作業されたもの）か、**AFK**（エージェント単独で処理されたもの）のいずれかです。HITLチケットは、そのライブのやり取りを通じてのみ解決されます；エージェントが人間側の役割を代わって行うことはありません（自分の質問に自分で答えるエージェントはこれを破っています）。
 
-- **Research** (AFK): Reading documentation, third-party APIs, or local resources like knowledge bases to surface a fact a decision waits on. Resolved by a subagent that calls the Skill tool with "research". Use when knowledge outside the current working directory is required.
-- **Prototype** (HITL): Raise the fidelity of the discussion by making a cheap, rough, concrete artifact to react to (an outline, a rough take, a stub, or UI/logic code) by calling the Skill tool with "prototype". Links the prototype as an asset. Use when "how should it look" or "how should it behave" is the key question.
-- **Grilling** (HITL): Conversation. The default case. Always call the Skill tool twice, for "grilling" and "domain-modeling".
-- **Task** (HITL or AFK): Manual work that must happen before a _decision_ can be made: nothing to decide, prototype, or research, but the discussion is blocked until it's done. Signing up for a service so its API can be judged, provisioning access, moving data so its shape can be seen. This is the one type that _does_ rather than decides, and it earns its place by unblocking a decision, not by delivering the destination. The agent drives it alone where it can (AFK); otherwise it hands the human a precise checklist (HITL). Resolved when the work is done; the answer records what was done and any resulting facts (credentials location, new URLs, row counts) later tickets depend on.
+- **リサーチ**（AFK）：決定を待っている事実を明らかにするために、ドキュメント、サードパーティのAPI、またはナレッジベースのようなローカルリソースを読むこと。`research-matt-ryu`と共にSkillツールを呼び出すサブエージェントによって解決される。現在の作業ディレクトリ外の知識が必要な場合に使用する。
+- **プロトタイプ**（HITL）：スキルツールで`prototype-matt-ryu`を呼び出して、反応するための安価で粗い具体的な成果物（アウトライン、ラフ案、スタブ、UI/ロジックコードなど）を作ることで、議論の精度を上げます。プロトタイプをアセットとしてリンクします。「どのように見えるべきか」や「どのように振る舞うべきか」が主要な質問である場合に使用します。
+- **グリル**（HITL）：会話。デフォルトのケース。`grilling-matt-ryu`と`domain-modeling-matt-ryu`のために、常にスキルツールを二回呼び出します。
+- **タスク**（HITL または AFK）：_意思決定_を行う前に実施しなければならない手作業：決定することはなく、プロトタイプや調査でもないが、それが完了するまで議論は進められない。サービスにサインアップしてそのAPIを評価できるようにする、アクセスを用意する、データを移動してその形状を確認する。これは決定ではなく行動するタイプであり、目的地を提供することでではなく、意思決定を妨げないことで役割を果たす。エージェントは可能な場合は単独で実施する（AFK）；そうでなければ、人間に正確なチェックリストを渡す（HITL）。作業が完了した時点で解決とされ、回答には実施内容とその結果得られた事実（認証情報の場所、新しいURL、行数など）を記録する。後続のチケットはこれに依存する。
 
-## Fog of war
+## 戦争の霧
 
-The map is _deliberately_ incomplete: don't chart what you can't yet see. Beyond the live tickets lies the **fog of war**: the dim view of decisions and investigations you can tell are coming but can't yet pin down, because they hang on questions still open. Resolving a ticket clears the fog ahead of it, graduating whatever's now specifiable into fresh tickets, one at a time, until the way to the destination is clear and no tickets remain.
+この地図は意図的に不完全です：まだ見えないものを図にしないでください。ライブチケットの先には**戦争の霧**が広がっています：来ることが分かっているけれどもまだ確定できない決定や調査のぼんやりとした見え方です。それらはまだ解かれていない質問にかかっています。チケットを解決すると、その前方の霧が晴れ、今指定可能なものが新しいチケットとして一つずつ生成され、目的地への道が明確になり、残りのチケットがなくなるまで続きます。
 
-The map's **Not yet specified** section is where that dim view is written down: the suspected question, the area to revisit later. It's the undiscovered frontier _toward_ the destination: everything here is in scope, just not sharp enough to ticket. Write as loosely or as fully as the view allows; it doubles as a signpost for collaborators reading where the effort is headed.
+地図の**Not yet specified**セクションには、まだ輪郭しか見えない疑問や、後で再訪すべき領域を書き留めます。これは目的地に向かう未発見のフロンティアです：ここにあるすべては範囲内ですが、まだチケット化するほど明確ではありません。今見えている範囲で、自由に詳しく書き留めてください；これは、努力の方向を読む協力者のための道しるべとしても機能します。
 
-**Fog or ticket?** The test is whether you can state the question precisely now, _not_ whether you can answer it now.
+**フォグかチケットか？** テストは、今その質問を正確に述べられるかどうかであって、今それに答えられるかどうかではありません。
 
-- **Ticket when** the question is already sharp, even if it's blocked and you can't act on it yet.
-- **Not yet specified when** you can't yet phrase it that sharply. Don't pre-slice the fog into ticket-sized pieces: it's coarser than a ticket, and one patch may graduate into several tickets, or none, once the frontier reaches it.
+- **チケットは**質問がすでに明確になっている場合で、たとえ行動できなくてもです。
+- **Not yet specified に置くのは**質問をまだ明確に表現できない場合。その霧をチケットサイズにあらかじめ切り分けないでください：それはチケットよりも粗く、フロンティアがそれに到達すると、1つのパッチが複数のチケットに分かれることもあれば、全くチケットにならないこともあります。
 
-**Not yet specified** excludes what's already decided (Decisions so far), what's already a live ticket, and what's out of scope (the next section).
+**まだ指定されていない** には、すでに決定されたもの（これまでの決定）、すでに存在するライブチケット、および範囲外のもの（次のセクション）は含まれません。
 
-## Out of scope
+## 範囲外
 
-Fog only ever gathers _toward_ the destination. The destination fixes the scope, so work beyond it is **out of scope**: it isn't fog, and it doesn't belong in **Not yet specified**. It gets its own **Out of scope** section on the map: work you've consciously ruled out of _this_ effort. Scope, not sharpness, lands it here.
+霧は常に目的地に向かって集まるだけです。目的地が範囲を決めるので、それを超える作業は**範囲外**です：それは霧ではなく、**Not yet specified**に属しません。それには地図上で独自の**範囲外**セクションがあり、この作業から意図的に除外した作業が記載されます。ここに置くかどうかは、明確さではなく対象範囲で決まります。
 
-Out-of-scope work never graduates (the frontier stops at the destination), so it returns only if the destination is redrawn, and then as a fresh effort, not a resumption.
+範囲外の作業はチケットに昇格しません（フロンティアは目的地で止まります）。目的地を設定し直す場合も、以前の作業の再開ではなく新たな取り組みとして扱います。
 
-Ruling something out of scope is a scoping act, not a step on the route. When a ticket that already exists turns out to sit past the destination (mis-scoped in while charting, or exposed by a resolution), **close it** (a closed ticket is unambiguously off the frontier) and leave one line in the **Out of scope** section: the gist plus why it's out of scope, linking the closed ticket. It stays out of **Decisions so far**, which records the route actually walked; a scope boundary isn't a step on it.
+あるものを範囲外と判断することはスコーピング行為であり、ルートの一歩ではありません。既に存在するチケットが目的地を超えていることが判明した場合（チャート作成時に誤ってスコープに入れた場合、または解決によって明らかになった場合）、**それをクローズ**してください（クローズされたチケットは明確にフロンティア外です）そして**Out of scope**セクションには1行だけ残します：要点と、それが範囲外である理由、クローズされたチケットへのリンクです。それは**Decisions so far**には含まれません。こちらは実際に歩んだルートを記録するものであり、スコープの境界はその一歩ではありません。
 
-## Invocation
+## 呼び出し
 
-Two modes. Either way, **never resolve more than one ticket per session**, with the exception of research tickets.
+二つのモードがあります。いずれの場合も、**1セッションで解決するチケットは1件まで**。ただし、リサーチチケットを除きます。
 
-### Chart the map
+### 地図を描く
 
-User invokes with a loose idea.
+ユーザーは漠然としたアイデアで呼び出します。
 
-1. **Name the destination.** Call the Skill tool twice, for "grilling" and "domain-modeling", to pin down what this map is finding its way to: the spec, decision, or change. The destination fixes the scope, so it's settled first.
-2. **Map the frontier.** Grill again, **breadth-first** this time: fan out across the whole space rather than deep on any one thread, surfacing the open decisions and the first steps takeable now. **If this surfaces no fog** (the way to the destination is already clear, the whole journey small enough for one session), you don't need a map. Stop and ask the user how they'd like to proceed.
-3. **Create the map** (label `wayfinder:map`): Destination and Notes filled in, Decisions-so-far empty, the fog sketched into **Not yet specified**.
-4. **Create the tickets you can specify now** as child issues of the map, then wire blocking edges in a **second pass** (issues need ids before they can reference each other). Wiring sorts them into the frontier and the blocked; everything you can't yet specify stays in the fog: the **Not yet specified** section.
-5. **Fire the research subagents.** For each `research` ticket you just created, spin up a subagent that calls the Skill tool with "research" to resolve it in parallel, capturing its findings on a throwaway `research/<name>` branch with a context pointer from the ticket.
-6. Stop: charting is one session's work; it hand-resolves nothing.
+1. **目的地の名前を付けます。** `grilling-matt-ryu`と`domain-modeling-matt-ryu`のためにスキルツールを2回呼び出して、この地図が目指すもの—仕様、決定、または変更—を特定します。目的地は範囲を決めるので、最初に決定されます。
+2. **フロンティアをマッピングする。** もう一度詳しく調べる、今回は**幅優先**で：特定のスレッドに深く潜るのではなく、空間全体に広がり、未決の問題や今すぐ踏み出せる最初のステップを明らかにする。**もしこれで霧が見えなくなるなら**（目的地への道がすでに明確で、旅全体を一度のセッションで把握できる場合）、地図は必要ない。立ち止まり、ユーザーにどのように進めたいか尋ねる。
+3. **地図を作成する**（ラベル `wayfinder:map`）：目的地とメモは記入済み、これまでの決定事項は空白、霧は**未指定**としてスケッチ済み。
+4. **今指定できるチケットを作成**し、マップの子課題として設定します。その後、**二回目の処理**でブロッキングの関係を接続します（課題が互いを参照するにはIDが必要です）。接続すると、課題はフロンティアとブロック済みに仕分けられます。まだ指定できないものは霧の中に残ります：**未指定**セクションです。
+5. **調査用サブエージェントを起動する。** 作成した `research` チケットごとに、`research-matt-ryu` を使って並行して解決するサブエージェントを起動する。調査結果は使い捨ての `research/<name>` ブランチに記録し、チケットから参照する。
+6. やめて:記録は一度のセッションの仕事です。手作業で解決するものではありません。
 
-### Work through the map
+<a id="work-through-the-map"></a>
+### 地図に沿って進める
 
-User invokes with a map (URL or number). A ticket is **optional**: without one, you pick the next decision, not the user.
+ユーザーはマップ（URLまたは番号）で呼び出します。チケットは**任意**です：チケットがない場合、次の決定を行うのはユーザーではなくあなたです。
 
-1. Load the **map**: the low-res view, not every ticket body.
-2. Choose the ticket. If the user named one, use it. Otherwise take the first frontier ticket in order. **Claim it**: assign it to yourself before any work.
-3. Resolve it. **Zoom as needed**: fetch the full body of any related or closed ticket on demand; call the Skill tool for whichever skills the `## Notes` block names. If in doubt, call the Skill tool twice, for "grilling" and "domain-modeling".
-4. Record the resolution: post the answer as a **resolution comment**, **close** the issue, and **append a context pointer** to the map's Decisions-so-far.
-5. Add newly-surfaced tickets (create-then-wire); graduate any fog the answer has made specifiable, clearing each graduated patch from **Not yet specified** so it lives only as its new ticket. If the answer reveals that a ticket (this one or another) sits beyond the destination, **rule it out of scope** rather than resolving it on the route. If the decision invalidates other parts of the map, update or delete those tickets.
+1. **マップ**を読み込みます：チケットの本文すべてではなく、低解像度のビューです。
+2. チケットを選択します。ユーザーが名前を指定した場合はそれを使用します。そうでない場合は、順序通りに最初のフロンティアチケットを取ります。**クレーム**します：作業を始める前に自分に割り当てます。
+3. それを解決してください。**必要に応じてズーム**: 関連する、またはクローズされたチケットの全文を随時取得します; `## Notes`ブロックが示すスキルについては、Skillツールを呼び出します。迷った場合は、`grilling-matt-ryu`と`domain-modeling-matt-ryu`の両方についてSkillツールを2回呼び出してください。
+4. 解決内容を記録します: 回答を**解決コメント**として投稿し、問題を**クローズ**し、マップのDecisions-so-farに**コンテキストポインター**を追加します。
+5. 新たに出現したチケットを追加する（生成してから接続する）；回答が具体化された曖昧さをすべて明確にし、各具体化されたパッチを **未指定** からクリアして、新しいチケットとしてのみ存在させる。もし回答があるチケット（このチケットまたは他のチケット）が目的地を超えて存在することを明らかにした場合、それをルート上で解決するのではなく、**範囲外として扱う**。決定がマップの他の部分を無効にする場合、それらのチケットを更新または削除する。
 
-The user may run unblocked tickets in parallel, so expect other sessions to be editing the tracker concurrently.
+ユーザーはブロックされていないチケットを並行して実行できるため、他のセッションが同時にトラッカーを編集していることを想定してください。

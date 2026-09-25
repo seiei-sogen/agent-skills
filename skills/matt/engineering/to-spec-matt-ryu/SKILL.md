@@ -1,75 +1,75 @@
 ---
 name: to-spec-matt-ryu
-description: "Turn the current conversation into a spec and publish it to the project issue tracker: no interview, just synthesis of what you've already discussed."
+description: "現在の会話を仕様書に変換し、プロジェクトの課題トラッカーに公開してください：インタビューは不要で、すでに議論した内容の統合だけです。"
 disable-model-invocation: true
 ---
 
-This skill takes the current conversation context and codebase understanding and produces a spec. Do NOT interview the user; just synthesize what you already know.
+このスキルは、現在の会話の文脈とコードベースの理解をもとに仕様を作成します。ユーザーにインタビューしてはいけません。すでに知っていることを合成するだけです。
 
-The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`.
+問題トラッカーとトリアージラベルの語彙はあなたに提供されているはずです。もし提供されていなければ、ユーザーに`/setup-matt-pocock-skills-matt-ryu`を実行するように伝えてください。
 
-## Process
+## プロセス
 
-1. Explore the repo to understand the current state of the codebase, if you haven't already. Use the project's domain glossary vocabulary throughout the spec, and respect any ADRs in the area you're touching.
+1. もしまだであれば、リポジトリを探索してコードベースの現在の状況を理解してください。仕様書全体でプロジェクトのドメイン用語集の語彙を使用し、関わるエリアのADRを尊重してください。
 
-2. Sketch out the seams at which you're going to test the feature. Existing seams should be preferred to new ones. Use the highest seam possible. If new seams are needed, propose them at the highest point you can. The fewer seams across the codebase, the better - the ideal number is one.
+2. 機能をテストするためのシームを概略的に描き出します。既存のシームを新しいものより優先してください。可能な限り高い位置のシームを使用してください。新しいシームが必要な場合は、可能な限り高い位置に提案してください。コードベース全体のシームは少ないほど良く、理想的な数は1つです。
 
-Check with the user that these seams match their expectations.
+これらのシームがユーザーの期待に合っているか確認してください。
 
-3. Write the spec using the template below, then publish it to the project issue tracker. Apply the `ready-for-agent` triage label - no need for additional triage.
+3. 以下のテンプレートを使って仕様を書き、その後プロジェクトの課題トラッカーに公開してください。`ready-for-agent`のトリアージラベルを適用してください - 追加のトリアージは不要です。
 
 <spec-template>
 
-## Problem Statement
+## 問題の記述
 
-The problem that the user is facing, from the user's perspective.
+ユーザーが直面している問題、ユーザーの視点から。
 
-## Solution
+## 解決策
 
-The solution to the problem, from the user's perspective.
+その問題に対する解決策、ユーザーの視点から。
 
-## User Stories
+## ユーザーストーリー
 
-A LONG, numbered list of user stories. Each user story should be in the format of:
+長く、番号付きのユーザーストーリーのリスト。各ユーザーストーリーは以下の形式である必要があります:
 
-1. As an <actor>, I want a <feature>, so that <benefit>
+1. <actor>として、<feature>が欲しい、そうすれば<benefit>.
 
 <user-story-example>
-1. As a mobile bank customer, I want to see balance on my accounts, so that I can make better informed decisions about my spending
+1. モバイル銀行の顧客として、口座の残高を確認したい、そうすれば支出に関するより良い判断ができる
 </user-story-example>
 
-This list of user stories should be extremely extensive and cover all aspects of the feature.
+このユーザーストーリーのリストは非常に広範であり、機能のすべての側面を網羅する必要があります。
 
-## Implementation Decisions
+## 実装の決定事項
 
-A list of implementation decisions that were made. This can include:
+実施された実装の決定事項の一覧。これには次が含まれることがあります:
 
-- The modules that will be built/modified
-- The interfaces of those modules that will be modified
-- Technical clarifications from the developer
-- Architectural decisions
-- Schema changes
-- API contracts
-- Specific interactions
+- 作成または変更されるモジュール
+- 変更されるモジュールのインターフェース
+- 開発者による技術的な明確化
+- アーキテクチャに関する決定
+- スキーマの変更
+- API契約
+- 特定のインタラクション
 
-Do NOT include specific file paths or code snippets. They may end up being outdated very quickly.
+特定のファイルパスやコードスニペットを含めないでください。それらはすぐに古くなる可能性があります。
 
-Exception: if a prototype produced a snippet that encodes a decision more precisely than prose can (state machine, reducer, schema, type shape), inline it within the relevant decision and note briefly that it came from a prototype. Trim to the decision-rich parts, not a working demo, just the important bits.
+例外：プロトタイプが、プローズよりも正確に意思決定をエンコードするスニペット（ステートマシン、リデューサー、スキーマ、型の形状）を生成した場合、それを関連する意思決定の中にインラインで挿入し、簡単にプロトタイプからのものであることを記してください。動作するデモではなく、意思決定に富む部分だけに絞って重要な部分のみを残してください。
 
-## Testing Decisions
+## テストの決定
 
-A list of testing decisions that were made. Include:
+下されたテストの決定の一覧。含めること:
 
-- A description of what makes a good test (only test external behavior, not implementation details)
-- Which modules will be tested
-- Prior art for the tests (i.e. similar types of tests in the codebase)
+- 良いテストを作るための説明（実装の詳細ではなく、外部の振る舞いのみをテストする）
+- どのモジュールがテストされるか
+- テストの先行例（すなわちコードベース内の類似のテスト）
 
-## Out of Scope
+## 対象外
 
-A description of the things that are out of scope for this spec.
+この仕様の対象外である事項の説明
 
-## Further Notes
+## 追加の注意事項
 
-Any further notes about the feature.
+機能に関するその他の注意事項
 
 </spec-template>

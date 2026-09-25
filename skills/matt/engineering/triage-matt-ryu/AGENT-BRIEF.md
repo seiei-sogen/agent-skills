@@ -1,42 +1,42 @@
-# Writing Agent Briefs
+# エージェントブリーフの作成
 
-An agent brief is a structured comment posted on a GitHub issue or PR when it moves to `ready-for-agent`. It is the authoritative specification that an AFK agent will work from. The original body and discussion are context: the agent brief is the contract.
+エージェントブリーフとは、GitHubのイシューまたはPRが`ready-for-agent`に移動したときに投稿される構造化されたコメントです。これは、AFKエージェントが作業する際の権威ある仕様です。元の本文と議論はコンテキストとして扱われます：エージェントブリーフが契約です。
 
-The brief states **what the agent should do**, which stretches to both surfaces: for an issue, that's building the change from nothing; for a PR, it's what's left to do *to the existing diff*: finish it, close gaps, address review points. Same principles either way; the PR example below shows the difference.
+ブリーフには**エージェントが何をすべきか**が記載されており、両方の面に及びます：問題の場合、それは何もないところから変更を作り上げることです；PRの場合、それは*既存の差分に対して*残っている作業です：完了させる、ギャップを埋める、レビューの指摘に対応する。どちらの場合も原則は同じです；以下のPRの例がその違いを示しています。
 
-## Principles
+## 原則
 
-### Durability over precision
+### 正確さよりも耐久性
 
-The issue may sit in `ready-for-agent` for days or weeks. The codebase will change in the meantime. Write the brief so it stays useful even as files are renamed, moved, or refactored.
+この問題は`ready-for-agent`の中で数日から数週間残ることがあります。その間にコードベースは変更されます。ファイルが名前変更、移動、またはリファクタリングされても役立つようにブリーフを書いてください。
 
-- **Do** describe interfaces, types, and behavioral contracts
-- **Do** name specific types, function signatures, or config shapes that the agent should look for or modify
-- **Don't** reference file paths: they go stale
-- **Don't** reference line numbers
-- **Don't** assume the current implementation structure will remain the same
+- **すべきこと** インターフェース、型、挙動の契約を説明する
+- **すべきこと** エージェントが探すべき、または変更すべき特定の型、関数シグネチャ、設定の形を名前で示す
+- **してはいけないこと** ファイルパスを参照しない: 時間が経つと古くなります
+- **行番号を**参照しないでください
+- **現在の実装構造が**そのまま維持されると仮定しないでください
 
-### Behavioral, not procedural
+### 手順的ではなく、振る舞いに関するものです
 
-Describe **what** the system should do, not **how** to implement it. The agent will explore the codebase fresh and make its own implementation decisions.
+システムが**何をするべきか**を説明し、**どのように実装するか**は説明しないでください。エージェントはコードベースを新たに探索し、自分自身で実装方法を決定します。
 
-- **Good:** "The `SkillConfig` type should accept an optional `schedule` field of type `CronExpression`"
-- **Bad:** "Open src/types/skill.ts and add a schedule field on line 42"
-- **Good:** "When a user runs `/triage` with no arguments, they should see a summary of issues needing attention"
-- **Bad:** "Add a switch statement in the main handler function"
+- **良い例:** "`SkillConfig`型は、`CronExpression`型のオプションの`schedule`フィールドを受け入れるべきです"
+- **悪い例:** 「src/types/skill.ts を開き、42行目に schedule フィールドを追加する」
+- **良い例:** 「ユーザーが引数なしで `/triage-matt-ryu` を実行したとき、注意が必要な問題の概要が表示されるべきである」
+- **悪い例:** 「メインハンドラ関数に switch 文を追加する」
 
-### Complete acceptance criteria
+### 受け入れ基準を完全にする
 
-The agent needs to know when it's done. Every agent brief must have concrete, testable acceptance criteria. Each criterion should be independently verifiable.
+エージェントは、作業が完了した時を認識する必要があります。すべてのエージェントブリーフには具体的でテスト可能な受け入れ基準が必要です。各基準は独立して検証可能であるべきです。
 
-- **Good:** "Running `gh issue list --label needs-triage` returns issues that have been through initial classification"
-- **Bad:** "Triage should work correctly"
+- **良い例:** 「`gh issue list --label needs-triage`を実行すると、初期分類を経た問題が返される」
+- **悪い例:** 「トリアージが正しく機能するべき」
 
-### Explicit scope boundaries
+### 明確な範囲の境界
 
-State what is out of scope. This prevents the agent from gold-plating or making assumptions about adjacent features.
+範囲外のものを明示してください。これにより、エージェントが過剰に作り込んだり、隣接する機能について推測したりするのを防げます。
 
-## Template
+## テンプレート
 
 ```markdown
 ## Agent Brief
@@ -67,9 +67,9 @@ Be specific about edge cases and error conditions.
 - Adjacent feature that might seem related but is separate
 ```
 
-## Examples
+## 例
 
-### Good agent brief (bug)
+### 良いエージェントブリーフ（バグ）
 
 ```markdown
 ## Agent Brief
@@ -104,7 +104,7 @@ and append "..." to indicate truncation.
 - Multi-line description support
 ```
 
-### Good agent brief (enhancement)
+### 良いエージェントブリーフ（機能追加）
 
 ```markdown
 ## Agent Brief
@@ -145,9 +145,9 @@ checked for matches.
 - Bug reports (only enhancement rejections go to `.out-of-scope/`)
 ```
 
-### Good agent brief (PR)
+### 良いエージェントブリーフ（プルリクエスト）
 
-For a PR, "Current behavior" describes the state of the diff, and the brief asks the agent to finish or fix it rather than build from scratch.
+プルリクエストの場合、「現在の動作」は差分の状態を示し、ブリーフはエージェントに最初から作るのではなく、完成させるまたは修正するよう依頼します。
 
 ```markdown
 ## Agent Brief
@@ -182,7 +182,7 @@ is untouched when the flag is absent.
 - Changing the JSON shape of the success payload the PR already defined
 ```
 
-### Bad agent brief
+### 悪いエージェントブリーフ
 
 ```markdown
 ## Agent Brief
@@ -198,10 +198,10 @@ The function around line 150 has the issue.
 - src/types.ts (line 42)
 ```
 
-This is bad because:
-- No category
-- Vague description ("the triage thing is broken")
-- References file paths and line numbers that will go stale
-- No acceptance criteria
-- No scope boundaries
-- No description of current vs desired behavior
+これは悪い理由:
+- カテゴリなし
+- あいまいな説明（「トリアージの仕組みが壊れている」）
+- 古くなる参照ファイルパスと行番号
+- 受け入れ基準なし
+- スコープの境界なし
+- 現行の動作と希望する動作の説明なし

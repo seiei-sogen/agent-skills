@@ -1,138 +1,138 @@
 ---
 name: diagnosing-bugs-matt-ryu
-description: Diagnosis loop for hard bugs and performance regressions. Use when the user says "diagnose"/"debug this", or reports something broken/throwing/failing/slow.
+description: ハードバグやパフォーマンスの後退のための診断ループ。「診断する」「これをデバッグする」とユーザーが言ったとき、または何かが壊れている/エラーを出している/失敗している/遅いと報告されたときに使用します。
 ---
 
-# Diagnosing Bugs
+# バグの診断
 
-A discipline for hard bugs. Skip phases only when explicitly justified.
+ハードバグのための手法。明示的に正当化されている場合のみフェーズをスキップします。
 
-When exploring the codebase, read `CONTEXT.md` (if it exists) to get a clear mental model of the relevant modules, and check ADRs in the area you're touching.
+コードベースを調べるときは、関連するモジュールの明確なメンタルモデルを得るために `CONTEXT.md`（存在する場合）を読み、触れているエリアの ADR を確認してください。
 
-## Redact
+## 機密情報を伏せる
 
-This skill has you show commands, outputs and captured artifacts. **Redact every secret first**: write `<REDACTED>` in its place. Build loops against env vars, so the credential stays in the environment rather than in what you show. Captured artifacts carry auth headers: quote only the lines that carry the signal.
+このスキルではコマンド、出力、取得したアーティファクトを表示する。**機密情報は表示前に必ず伏せる。** 該当箇所を `<REDACTED>` に置き換える。再現コマンドでは認証情報を環境変数に保持し、表示内容へ含めない。取得したアーティファクトには認証ヘッダーが含まれ得るため、診断に必要な行だけを引用する。
 
-If the redacted output is not enough to diagnose the bug, say so and ask the user.
+伏せた後の出力だけでは診断できない場合は、その旨を伝えてユーザーに確認する。
 
-## Phase 1: Build a feedback loop
+## フェーズ1：フィードバックループを作る
 
-**This is the skill.** Everything else is mechanical. If you have a **tight** pass/fail signal for the bug (one that goes red on _this_ bug), you will find the cause; bisection, hypothesis-testing, and instrumentation all just consume it. If you don't have one, no amount of staring at code will save you.
+**これがスキルです。** 他のすべては機械的なものです。もしバグに対して**明確な**合否のシグナル（_この_バグで赤になるもの）を持っていれば、原因を特定できるでしょう。二分探索、仮説検証、計測はすべてそれを消費するだけです。もしシグナルを持っていなければ、どれだけコードを見つめても助けにはなりません。
 
-Spend disproportionate effort here. **Be aggressive. Be creative. Refuse to give up.**
+ここで不釣り合いな努力を費やしてください。**積極的に。創造的に。諦めないでください。**
 
-### Ways to construct one, in roughly this order
+### おおよそこの順序で構築する方法
 
-1. **Failing test** at whatever seam reaches the bug: unit, integration, e2e.
-2. **Curl / HTTP script** against a running dev server.
-3. **CLI invocation** with a fixture input, diffing stdout against a known-good snapshot.
-4. **Headless browser script** (Playwright / Puppeteer) that drives the UI and asserts on DOM/console/network.
-5. **Replay a captured trace.** Save a real network request / payload / event log to disk; replay it through the code path in isolation.
-6. **Throwaway harness.** Spin up a minimal subset of the system (one service, mocked deps) that exercises the bug code path with a single function call.
-7. **Property / fuzz loop.** If the bug is "sometimes wrong output", run 1000 random inputs and look for the failure mode.
-8. **Bisection harness.** If the bug appeared between two known states (commit, dataset, version), automate "boot at state X, check, repeat" so you can `git bisect run` it.
-9. **Differential loop.** Run the same input through old-version vs new-version (or two configs) and diff outputs.
-10. **HITL bash script.** Last resort. If a human must click, drive _them_ with `scripts/hitl-loop.template.sh` so the loop is still structured. Captured output feeds back to you.
+1. **バグに達するシームでテストに失敗する**: ユニット、統合、エンドツーエンド。
+2. 実行中の開発サーバーに対する **Curl / HTTP スクリプト**。
+3. フィクスチャ入力での **CLI 呼び出し**、標準出力を既知の良いスナップショットと比較。
+4. **ヘッドレスブラウザスクリプト**（Playwright / Puppeteer）でUIを操作し、DOM／コンソール／ネットワークをアサートします。
+5. **キャプチャしたトレースを再生する。** 実際のネットワークリクエスト／ペイロード／イベントログをディスクに保存し、コード経路を通して単独で再生します。
+6. **使い捨てハーネス。** バグのコード経路を単一の関数呼び出しで実行するために、システムの最小限のサブセット（1つのサービス、モックされた依存関係）を立ち上げます。
+7. **プロパティ / ファズループ。** バグが「時々間違った出力」をする場合、1000個のランダムな入力を実行して、失敗モードを探します。
+8. **二分探索ハーネス。** バグが二つの既知の状態（コミット、データセット、バージョン）の間で発生した場合、「状態Xで起動、チェック、繰り返す」を自動化して、`git bisect run`できるようにします。
+9. **差分ループ。** 同じ入力を旧バージョンと新バージョン（または二つの設定）で実行し、出力を比較します。
+10. **HITL bashスクリプト。** 最終手段。もし人間がクリックする必要がある場合、`scripts/hitl-loop.template.sh`で彼らを操作して、ループの構造を保つ。キャプチャされた出力はあなたにフィードバックされる。
 
-Build the right feedback loop, and the bug is 90% fixed.
+正しいフィードバックループを作れば、バグは90%修正される。
 
-### Tighten the loop
+### ループを引き締める
 
-Treat the loop as a product. Once you have _a_ loop, **tighten** it:
+ループを製品として扱う。一度ループを作ったら、**引き締める**:
 
-- Can I make it faster? (Cache setup, skip unrelated init, narrow the test scope.)
-- Can I make the signal sharper? (Assert on the specific symptom, not "didn't crash".)
-- Can I make it more deterministic? (Pin time, seed RNG, isolate filesystem, freeze network.)
+- もっと速くできるか？（キャッシュ設定、無関係な初期化をスキップ、テスト範囲を狭める）
+- 信号をより鋭くすることはできますか？（「クラッシュしなかった」ではなく、特定の症状に対してアサートしてください。）
+- より決定論的にすることはできますか？（時間を固定し、RNGのシードを指定し、ファイルシステムを隔離し、ネットワークを停止する。）
 
-A 30-second flaky loop is barely better than no loop; a 2-second deterministic one is tight, a debugging superpower.
+30秒の不安定なループはループがないのとほとんど変わりません；2秒の決定論的なループはタイトで、デバッグの超能力です。
 
-### Non-deterministic bugs
+### 非決定論的なバグ
 
-The goal is not a clean repro but a **higher reproduction rate**. Loop the trigger 100×, parallelise, add stress, narrow timing windows, inject sleeps. A 50%-flake bug is debuggable; 1% is not, so keep raising the rate until it's debuggable.
+目標はクリーンな再現ではなく、**より高い再現率**です。トリガーを100回ループし、並列化し、ストレスを加え、タイミングウィンドウを狭め、スリープを挿入します。再現率が50％の不具合はデバッグ可能ですが、1％では不可能なので、デバッグ可能になるまで再現率を上げ続けます。
 
-### When you genuinely cannot build a loop
+### ループを本当に作れない場合
 
-Stop and say so explicitly. List what you tried. Ask the user for: (a) access to whatever environment reproduces it, (b) a redacted captured artifact (HAR file, log dump, core dump, screen recording with timestamps), or (c) permission to add temporary production instrumentation. Do **not** proceed to hypothesise without a loop.
+立ち止まって、明確にそう言ってください。試したことをリストしてください。ユーザーに次のことを尋ねてください：(a) 問題を再現する環境へのアクセス、(b) 匿名化された取得済みアーティファクト（HARファイル、ログダンプ、コアダンプ、タイムスタンプ付き画面録画）、または (c) 一時的な本番環境計測を追加する許可。ループなしで仮説を立てて進めてはいけません。
 
-### Completion criterion: a tight loop that goes red
+### 完了基準：赤くなるきついループ
 
-Phase 1 is done when the loop is **tight** and **red-capable**: you can name **one command** (a script path, a test invocation, a curl) that you have **already run at least once** (show the invocation and its output, redacted), and that is:
+フェーズ1はループが**タイト**で**赤対応可能**になったときに完了します：**1つのコマンド**（スクリプトのパス、テスト実行、curl）を指定できます。それは、**少なくとも1回はすでに実行したことがある**ものであり（呼び出しと出力を表示、必要に応じて編集済み）、次のものです:
 
-- [ ] **Red-capable**: it drives the actual bug code path and asserts the **user's exact symptom**, so it can go red on this bug and green once fixed. Not "runs without erroring"; it must be able to _catch this specific bug_.
-- [ ] **Deterministic**: same verdict every run (flaky bugs: a pinned, high reproduction rate, per above).
-- [ ] **Fast**: seconds, not minutes.
-- [ ] **Agent-runnable**: you can run it unattended; a human in the loop only via `scripts/hitl-loop.template.sh`.
+- [ ] **Red-capable（赤表示可能）**: 実際のバグのコード経路を実行し、**ユーザーの正確な症状**をアサートするため、このバグでは赤になり、修正後は緑になる。単に「エラーなく実行できる」ではなく、_この特定のバグを捕捉できる_ 必要がある。
+- [ ] **Deterministic（決定論的）**: 実行ごとに同じ判定（不安定なバグ：上記のように固定され、高い再現率）。
+- [ ] **Fast（高速）**: 分単位ではなく、秒単位。
+- [ ] **エージェント実行可能**: 人間は `scripts/hitl-loop.template.sh` を通じてのみ介入可能で、無人で実行できます。
 
-If you catch yourself reading code to build a theory before this command exists, **stop: jumping straight to a hypothesis is the exact failure this skill prevents.** No red-capable command, no Phase 2.
+このコマンドが存在する前に理論を立てるためにコードを読んでいることに気付いたら、**止まってください: 仮説に飛びつくことは、このスキルが防ぐ正確な失敗です。** 赤容量対応コマンドなしでは、フェーズ2はありません。
 
-## Phase 2: Reproduce + minimise
+## フェーズ2: 再現 + 最小化
 
-Run the loop. Watch it go red as the bug appears.
+ループを実行してください。バグが現れると赤くなるのを見守ります。
 
-Confirm:
+確認:
 
-- [ ] The loop produces the failure mode the **user** described, not a different failure that happens to be nearby. Wrong bug = wrong fix.
-- [ ] The failure is reproducible across multiple runs (or, for non-deterministic bugs, reproducible at a high enough rate to debug against).
-- [ ] You have captured the exact symptom (error message, wrong output, slow timing) so later phases can verify the fix actually addresses it.
+- [ ] ループは、**ユーザー**が説明した故障モードを生成し、近くでたまたま起こる別の故障ではありません。間違ったバグ = 間違った修正。
+- [ ] 故障は複数回の実行で再現可能である（または、非決定的なバグの場合は、デバッグできる十分な頻度で再現可能である）。
+- [ ] 正確な症状（エラーメッセージ、間違った出力、遅いタイミング）をキャプチャしました。後の段階で修正が実際にそれに対処しているかを確認できます。
 
-### Minimise
+### 最小化
 
-Once it's red, shrink the repro to the **smallest scenario that still goes red**. Cut inputs, callers, config, data, and steps **one at a time**, re-running the loop after each cut, and keep only what's load-bearing for the failure.
+赤になったら、再現ケースを**まだ赤になる最小のシナリオ**まで縮小します。入力、呼び出し元、設定、データ、および手順を**一度に一つずつ削減**し、各削減後にループを再実行し、失敗に必要な部分だけを残します。
 
-Why bother: a minimal repro shrinks the hypothesis space in Phase 3 (fewer moving parts left to suspect) and becomes the clean regression test in Phase 5.
+なぜ手間をかけるのか：最小限の再現例はフェーズ3で仮説空間を縮小させる（疑わしい要素が少なくなる）と同時に、フェーズ5でクリーンなリグレッションテストになる。
 
-Done when **every remaining element is load-bearing**: removing any one of them makes the loop go green.
+**残っているすべての要素が荷重を支えている**と確認できたら完了：どれか1つを取り除くとループがグリーンになる。
 
-Do not proceed until you have reproduced **and** minimised.
+再現と最小化を行うまで先に進まないこと。
 
-## Phase 3: Hypothesise
+## フェーズ3：仮説を立てる
 
-Generate **3–5 ranked hypotheses** before testing any of them. Single-hypothesis generation anchors on the first plausible idea.
+テストを行う前に、**3～5の仮説をランク付けして生成**してください。単一仮説の生成は、最初に考えられる妥当なアイデアに基づきます。
 
-Each hypothesis must be **falsifiable**: state the prediction it makes.
+各仮説は**反証可能**である必要があります：その仮説が導く予測を示してください。
 
-> Format: "If <X> is the cause, then <changing Y> will make the bug disappear / <changing Z> will make it worse."
+> 形式：「もし<X>が原因であれば、<Yを変えると>バグは消える / <Zを変えると>バグは悪化する」
 
-If you cannot state the prediction, the hypothesis is a vibe: discard or sharpen it.
+予測を示せない場合、その仮説はあいまいな印象にすぎません：破棄するか、明確化してください。
 
-**Show the ranked list to the user before testing.** They often have domain knowledge that re-ranks instantly ("we just deployed a change to #3"), or know hypotheses they've already ruled out. Cheap checkpoint, big time saver. Don't block on it; proceed with your ranking if the user is AFK.
+**テスト前にユーザーにランク付けされたリストを表示する。** 彼らはしばしばドメイン知識を持っており、すぐに再ランク付けすることがある（「#3 に変更を配置したばかり」など）、またはすでに除外した仮説を知っている場合がある。安価なチェックポイントで、大幅な時間節約になる。これにこだわらず、ユーザーが不在の場合でもランク付けを進めること。
 
-## Phase 4: Instrument
+## フェーズ4：計装
 
-Each probe must map to a specific prediction from Phase 3. **Change one variable at a time.**
+各プローブはフェーズ3の特定の予測に対応する必要があります。**一度に一つの変数だけを変更してください。**
 
-Tool preference:
+ツールの推奨:
 
-1. **Debugger / REPL inspection** if the env supports it. One breakpoint beats ten logs.
-2. **Targeted logs** at the boundaries that distinguish hypotheses.
-3. Never "log everything and grep".
+1. 環境がサポートしていれば、**デバッガー / REPLによる検査**。1つのブレークポイントは10個のログに勝ります。
+2. 仮説を区別する境界での**対象を絞ったログ**。
+3. 「すべてをログに出してgrepする」ことは絶対にしないでください。
 
-**Tag every debug log** with a unique prefix, e.g. `[DEBUG-a4f2]`. Cleanup at the end becomes a single grep. Untagged logs survive; tagged logs die.
+**すべてのデバッグログにタグを付ける** ユニークな接頭辞を使用する、例：`[DEBUG-a4f2]`。最後のクリーンアップは単一のgrepになる。タグのないログは残り、タグ付きログは削除される。
 
-**Perf branch.** For performance regressions, logs are usually wrong. Instead: establish a baseline measurement (timing harness, `performance.now()`, profiler, query plan), then bisect. Measure first, fix second.
+**パフォーマンスブランチ。** パフォーマンスリグレッションの場合、ログは通常間違っている。代わりに、ベースライン測定を確立する（タイミングハーネス、`performance.now()`、プロファイラ、クエリプラン）、その後バイセクトを行う。まず測定し、次に修正する。
 
-## Phase 5: Fix + regression test
+## フェーズ5: 修正 + リグレッションテスト
 
-Write the regression test **before the fix**, but only if there is a **correct seam** for it.
+修正前に回帰テストを書きますが、**正しいシーム**がある場合に限ります。
 
-A correct seam is one where the test exercises the **real bug pattern** as it occurs at the call site. If the only available seam is too shallow (single-caller test when the bug needs multiple callers, unit test that can't replicate the chain that triggered the bug), a regression test there gives false confidence.
+正しいシームとは、テストが呼び出し箇所で実際に発生する**本当のバグパターン**を検証する場合のことです。利用可能なシームが浅すぎる場合（バグには複数の呼び出し元が必要なのに単一呼び出し元のテストしかない場合、バグを引き起こしたチェーンを再現できない単体テストなど）、そこで行うリグレッションテストは誤った安心感を与えてしまいます。
 
-**If no correct seam exists, that itself is the finding.** Note it. The codebase architecture is preventing the bug from being locked down. Flag this for the next phase.
+**正しいシームが存在しない場合、それ自体が発見です。** メモしておきましょう。コードベースのアーキテクチャがバグの特定を妨げています。次のフェーズでこれをフラグとしてマークしてください。
 
-If a correct seam exists:
+正しいシームが存在する場合：
 
-1. Turn the minimised repro into a failing test at that seam.
-2. Watch it fail.
-3. Apply the fix.
-4. Watch it pass.
-5. Re-run the Phase 1 feedback loop against the original (un-minimised) scenario.
+1. 最小化された再現手順をそのシームにおける失敗するテストに変換します。
+2. 失敗するのを確認します。
+3. 修正を適用します。
+4. 成功するのを確認します。
+5. 元の（最小化されていない）シナリオに対してフェーズ1のフィードバックループを再実行します。
 
-## Phase 6: Cleanup
+## フェーズ6：クリーンアップ
 
-Required before declaring done:
+完了を宣言する前に必要なこと:
 
-- [ ] Original repro no longer reproduces (re-run the Phase 1 loop)
-- [ ] Regression test passes (or absence of seam is documented)
-- [ ] All `[DEBUG-...]` instrumentation removed (`grep` the prefix)
-- [ ] Throwaway prototypes deleted (or moved to a clearly-marked debug location)
-- [ ] The hypothesis that turned out correct is stated in the commit / PR message, so the next debugger learns
+- [ ] 元の再現手順がもはや再現しないこと（フェーズ1のループを再実行）
+- [ ] 回帰テストが合格すること（または接合部分が存在しないことが文書化されている）
+- [ ] すべての`[DEBUG-...]`計測ツールを削除（`grep`接頭辞）
+- [ ] 廃棄予定のプロトタイプを削除（または明確にマークされたデバッグ用場所に移動）
+- [ ] 正しかった仮説はコミット/PRメッセージに記載されているので、次のデバッガーが学ぶことができます

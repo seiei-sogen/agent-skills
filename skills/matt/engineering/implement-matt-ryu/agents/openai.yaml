@@ -1,5 +1,5 @@
 interface:
-  display_name: "Implement"
-  short_description: "Build work from a spec or tickets"
+  display_name: "実装する"
+  short_description: "仕様書やチケットから作業を構築する"
 policy:
   allow_implicit_invocation: false

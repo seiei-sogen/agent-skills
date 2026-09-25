@@ -1,5 +1,5 @@
 interface:
-  display_name: "Wayfinder"
-  short_description: "Map a large effort as decision tickets"
+  display_name: "ウェイファインダー"
+  short_description: "大きな作業を意思決定チケットとしてマッピングする"
 policy:
   allow_implicit_invocation: false

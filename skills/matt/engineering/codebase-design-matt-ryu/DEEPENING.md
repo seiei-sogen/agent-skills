@@ -1,37 +1,37 @@
-# Deepening
+# 深める
 
-How to deepen a cluster of shallow modules safely, given its dependencies. Assumes the vocabulary in [SKILL.md](SKILL.md): **module**, **interface**, **seam**, **adapter**.
+依存関係を考慮して、浅いモジュールのクラスターを安全に深める方法。[SKILL.md](SKILL.md): **モジュール**、**インターフェース**、**シーム**、**アダプター**] の語彙を前提とします。
 
-## Dependency categories
+## 依存関係のカテゴリ
 
-When assessing a candidate for deepening, classify its dependencies. The category determines how the deepened module is tested across its seam.
+候補者を深掘りする際には、その依存関係を分類してください。カテゴリは、深掘りされたモジュールがその継ぎ目に沿ってどのようにテストされるかを決定します。
 
-### 1. In-process
+### 1. 処理中
 
-Pure computation, in-memory state, no I/O. Always deepenable: merge the modules and test through the new interface directly. No adapter needed.
+純粋な計算、インメモリ状態、入出力なし。常に深く可能：モジュールを統合し、新しいインターフェースを通じて直接テストします。アダプターは不要です。
 
-### 2. Local-substitutable
+### 2. ローカル置換可能
 
-Dependencies that have local test stand-ins (PGLite for Postgres, in-memory filesystem). Deepenable if the stand-in exists. The deepened module is tested with the stand-in running in the test suite. The seam is internal; no port at the module's external interface.
+ローカルのテスト代替（Postgres用のPGLite、インメモリファイルシステム）を持つ依存関係。代替が存在する場合にディープ化可能。ディープ化されたモジュールは、テストスイートで代替が動作している状態でテストされる。継ぎ目は内部的であり、モジュールの外部インターフェースにはポートはない。
 
-### 3. Remote but owned (Ports & Adapters)
+### 3. リモートだが所有されている（ポート＆アダプタ）
 
-Your own services across a network boundary (microservices, internal APIs). Define a **port** (interface) at the seam. The deep module owns the logic; the transport is injected as an **adapter**. Tests use an in-memory adapter. Production uses an HTTP/gRPC/queue adapter.
+ネットワークの境界（マイクロサービス、内部API）にわたる自身のサービス。境界に**ポート**（インターフェース）を定義する。深いモジュールがロジックを所有し、トランスポートは**アダプター**として注入される。テストではメモリ内アダプターを使用する。本番ではHTTP/gRPC/キューアダプターを使用する。
 
-Recommendation shape: *"Define a port at the seam, implement an HTTP adapter for production and an in-memory adapter for testing, so the logic sits in one deep module even though it's deployed across a network."*
+推奨の形状: *「シームでポートを定義し、運用環境にはHTTPアダプターを、テストにはインメモリアダプターを実装することで、ロジックはネットワーク全体に展開されていても一つの深いモジュールに存在するようにする。」*
 
-### 4. True external (Mock)
+### 4. 真の外部（モック）
 
-Third-party services (Stripe, Twilio, etc.) you don't control. The deepened module takes the external dependency as an injected port; tests provide a mock adapter.
+制御できないサードパーティサービス（Stripe、Twilio など）。深いモジュールは外部依存を注入されたポートとして受け取り、テストではモックアダプターを提供する。
 
-## Seam discipline
+## シームの規律
 
-- **One adapter means a hypothetical seam. Two adapters means a real one.** Don't introduce a port unless at least two adapters are justified (typically production + test). A single-adapter seam is just indirection.
-- **Internal seams vs external seams.** A deep module can have internal seams (private to its implementation, used by its own tests) as well as the external seam at its interface. Don't expose internal seams through the interface just because tests use them.
+- **アダプターが1つの場合は仮想的なシームを意味し、アダプターが2つの場合は実際のシームを意味します。** 少なくとも2つのアダプターが正当化されない限り、ポートを導入しないでください（通常は本番用＋テスト用）。アダプターが1つだけのシームは単なる間接化に過ぎません。
+- **内部シームと外部シーム。** 深いモジュールは、内部シーム（実装に対してプライベートで、自身のテストで使用される）と、インターフェース上の外部シームの両方を持つことができます。テストで使用するからといって、内部シームをインターフェースを通じて公開しないでください。
 
-## Testing strategy: replace, don't layer
+## テスト戦略: レイヤーを重ねるのではなく、置き換える
 
-- Old unit tests on shallow modules become waste once tests at the deepened module's interface exist; delete them.
-- Write new tests at the deepened module's interface. The **interface is the test surface**.
-- Tests assert on observable outcomes through the interface, not internal state.
-- Tests should survive internal refactors, since they describe behaviour, not implementation. If a test has to change when the implementation changes, it's testing past the interface.
+- 浅いモジュールに対する古いユニットテストは、深いモジュールのインターフェースでテストが存在する場合、無駄になるので削除してください。
+- 深いモジュールのインターフェースで新しいテストを書いてください。**インターフェースがテストの表面です**。
+- テストは、内部状態ではなく、インターフェースを通じて観測可能な結果に対してアサートします。
+- テストは内部のリファクタリングに耐えるべきです。なぜなら、テストは実装ではなく動作を記述するからです。実装が変わったときにテストも変更しなければならない場合、それはインターフェースを超えてテストしていることになります。

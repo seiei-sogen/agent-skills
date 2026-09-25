@@ -1,7 +1,7 @@
 ---
 name: grill-me-matt-ryu
-description: A relentless interview to sharpen a plan or design.
+description: 計画やデザインを磨くための徹底的なインタビュー。
 disable-model-invocation: true
 ---
 
-Call the Skill tool with "grilling".
+Skill ツールで `grilling-matt-ryu` を呼び出す。

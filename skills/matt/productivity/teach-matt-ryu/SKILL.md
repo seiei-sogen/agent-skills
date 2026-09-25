@@ -1,140 +1,141 @@
 ---
 name: teach-matt-ryu
-description: Teach the user a new skill or concept, within this workspace.
+description: このワークスペース内で、ユーザーに新しいスキルや概念を教えます。
 disable-model-invocation: true
-argument-hint: "What would you like to learn about?"
+argument-hint: "何について学びたいですか？"
 ---
 
-The user has asked you to teach them something. This is a stateful request - they intend to learn the topic over multiple sessions.
+ユーザーは何かを教えてほしいと頼んでいます。これは状態を伴うリクエストであり、複数のセッションにわたってそのトピックを学ぶ意図があります。
 
-## Teaching Workspace
+## 教育ワークスペース
 
-Treat the current directory as a teaching workspace. The state of their learning is captured in this directory in several files:
+現在のディレクトリを教育用作業スペースとして扱います。学習の状態は、いくつかのファイルにこのディレクトリ内に記録されます：
 
-- `MISSION.md`: A document capturing the _reason_ the user is interested in the topic. This should be used to ground all teaching. Use the format in [MISSION-FORMAT.md](./MISSION-FORMAT.md).
-- `./reference/*.html`: A directory of reference materials. These are the compressed learnings from the lessons - cheat sheets, reference algorithms, syntax, yoga poses, glossaries. They are the raw units of learning. They should be beautiful documents which print out well, and are designed for quick reference.
-- `RESOURCES.md`: A list of resources which can be explored to ground your teaching in contextual knowledge, or to acquire knowledge and wisdom. Use the format in [RESOURCES-FORMAT.md](./RESOURCES-FORMAT.md).
-- `./learning-records/*.md`: A directory of learning records, which capture what the user has learned. These are loosely equivalent to architectural decision records in software development - they capture non-obvious lessons and key insights that may need to be revised later, or drive future sessions. These should be used to calculate the zone of proximal development. They are titled `0001-<dash-case-name>.md`, where the number increments each time. Use the format in [LEARNING-RECORD-FORMAT.md](./LEARNING-RECORD-FORMAT.md).
-- `./lessons/*.html`: A directory of lessons. A **lesson** is a single, self-contained HTML output that teaches one tightly-scoped thing tied to the mission. This is the primary unit of teaching in this workspace.
-- `./assets/*`: Reusable **components** shared across lessons. See [Assets](#assets).
-- `NOTES.md`: A scratchpad for you to jot down user preferences, or working notes.
+- `MISSION.md`: ユーザーがそのトピックに興味を持っている理由を記録した文書です。これはすべての教育の基礎に使用されるべきです。[MISSION-FORMAT.md](./MISSION-FORMAT.md) のフォーマットを使用してください。
+- `./reference/*.html`:参考資料のディレクトリ。これらはレッスンから得た圧縮された学習内容です。チートシート、参考アルゴリズム、構文、ヨガポーズ、用語集。これらは学習の生の単位です。印刷が良く、素早く参照できるように設計された美しい文書であるべきです。
+- `RESOURCES.md`: あなたの指導を文脈に基づく知識で支えるため、または知識と知恵を習得するために探求できるリソースのリスト。[RESOURCES-FORMAT.md](./RESOURCES-FORMAT.md) の形式を使用してください。
+- `./learning-records/*.md`: ユーザーが学んだことを記録する学習記録のディレクトリです。これはソフトウェア開発におけるアーキテクチャ意思決定記録に緩やかに相当します — 後で修正が必要になる可能性のある非自明な教訓や重要な知見を記録し、将来のセッションに活かすことができます。これらは近接発達領域を計算するために使用されるべきです。タイトルは`0001-<dash-case-name>.md`で、番号は毎回増加します。[LEARNING-RECORD-FORMAT.md](./LEARNING-RECORD-FORMAT.md)の形式を使用してください。
+- `./lessons/*.html`: レッスンのディレクトリ。**レッスン**とは、ミッションに関連する1つの具体的な内容を教える、単独で完結するHTML出力のことです。これはこのワークスペースでの主要な教育単位です。
+- `./assets/*`: レッスン間で共有される再利用可能な**コンポーネント**。[アセット](#assets)を参照してください。
+- `NOTES.md`: ユーザーの好みや作業メモを書き留めるためのスクラッチパッド。
 
-## Philosophy
+## 哲学
 
-To learn at a deep level, the user needs three things:
+深いレベルで学ぶためには、ユーザーには三つのものが必要です：
 
-- **Knowledge**, captured from high-quality, high-trust resources
-- **Skills**, acquired through highly-relevant interactive lessons devised by you, based on the knowledge
-- **Wisdom**, which comes from interacting with other learners and practitioners
+- **知識**、高品質で信頼性の高いリソースから得られるもの
+- **スキル**、知識に基づいてあなたが考案した非常に関連性の高いインタラクティブなレッスンを通じて習得するもの
+- **知恵**、他の学習者や実践者と交流することで得られるもの
 
-Before the `RESOURCES.md` is well-populated, your focus should be to find high-quality resources which will help the user acquire knowledge. Never trust your parametric knowledge.
+`RESOURCES.md` が十分に普及する前に、あなたの焦点はユーザーが知識を習得するのに役立つ高品質のリソースを見つけることに置かれるべきです。パラメトリックな知識は決して信用してはいけません。
 
-Some topics may require more skills than knowledge. Learning more about theoretical physics might be more knowledge-based. For yoga, more skills-based.
+一部のトピックは、知識よりもスキルを必要とする場合があります。理論物理学について学ぶことは知識に基づく学習が中心になるかもしれません。ヨガの場合は、スキル中心になります。
 
-### Fluency vs Storage Strength
+### 流暢さ vs 記憶の強さ
 
-You should be careful to split between two types of learning:
+学習には2つのタイプの間で分けることに注意する必要があります：
 
-- **Fluency strength**: in-the-moment retrieval of knowledge
-- **Storage strength**: long-term retention of knowledge
+- **流暢さの強さ**：知識をその場で取り出す力
+- **記憶の強さ**：知識の長期的な保持
 
-Fluency can give the user an illusory sense of mastery, but storage strength is the real goal. Try to design lessons which build long-term retention by desirable difficulty:
+流暢さは学習者に誤った習熟感を与えることがありますが、本当の目標は記憶の強さです。望ましい困難さによって長期的な保持を構築するレッスンを設計するようにしてください：
 
-- Using retrieval practice (recall from memory)
-- Spacing (distributing practice over time)
-- Interleaving (mixing up different but related topics in practice - for skills practice only)
+- 取り出し練習（記憶から思い出す練習）を使用すること
+- 間隔学習（練習を時間に分散させること）
+- 交互学習（異なるが関連するトピックを練習中に混ぜること - スキル練習のみに適用）
 
-## Lessons
+## レッスン
 
-A lesson is the main thing you produce: the unit in which knowledge and skills reach the user. Each lesson is one self-contained HTML file, saved to `./lessons/` and titled `0001-<dash-case-name>.html` where the number increments each time.
+レッスンとは、あなたが作成する主要なものであり、知識とスキルがユーザーに届く単位です。各レッスンは1つの独立したHTMLファイルで、`./lessons/`に保存され、タイトルは`0001-<dash-case-name>.html`で、番号は作成のたびに増加します。
 
-A lesson should be **beautiful**, with clean, readable typography and layout, since the user will return to these later to review. Think Tufte.
+レッスンは**美しい**ものであるべきです。ユーザーが後で復習のために戻ってくるので、タイポグラフィやレイアウトは清潔で読みやすくしてください。タフテを考えてみてください。
 
-The lesson should be short, and completable very quickly. Learners' working memory is very small, and we need to stay within it. But each lesson should give the user a single tangible win that they can build on. It should be directly tied to the mission, and should be in the user's zone of proximal development.
+レッスンは短く、非常に早く完了できるものであるべきです。学習者の作業記憶は非常に小さいため、その範囲内で行う必要があります。しかし、各レッスンはユーザーが次に活かせる具体的な成果を一つ提供するべきです。それはミッションに直接関連しており、ユーザーの近接発達領域にあるものであるべきです。
 
-If possible, open the lesson file for the user by running a CLI command.
+可能であれば、CLIコマンドを実行してユーザーのためにレッスンファイルを開いてください。
 
-Each lesson should link via HTML anchors to other lessons and reference documents.
+各レッスンは、HTMLアンカーを通じて他のレッスンや参考文書にリンクしている必要があります。
 
-Each lesson should recommend a primary source for the user to read or watch. This should be the most high-quality, high-trust resource you found on the topic.
+各レッスンは、ユーザーが読むか視聴するための一次資料を推奨するべきです。これは、そのトピックについて見つけた最も高品質で信頼できるリソースであるべきです。
 
-Each lesson should contain a reminder to ask followup questions to the agent. The agent is their teacher, and can assist with anything that's unclear.
+各レッスンには、エージェントにフォローアップの質問をするようにというリマインダーを含める必要があります。エージェントは彼らの教師であり、不明な点に関して支援することができます。
 
-## Assets
+<a id="assets"></a>
+## アセット
 
-Lessons are built from reusable **components**, stored in `./assets/`: stylesheets, quiz widgets, simulators, diagram helpers, and anything else a second lesson could reuse.
+レッスンは再利用可能な**コンポーネント**から構築され、`./assets/`に保存されます：スタイルシート、クイズウィジェット、シミュレーター、図のヘルパー、そして2つ目のレッスンが再利用できるその他すべてのものです。
 
-Reuse is the default, not the exception. Before authoring a lesson, read `./assets/` and build from the components already there. When a lesson needs something new and reusable, write it as a component in `./assets/` and link to it; never inline code a future lesson would duplicate.
+再利用は例外ではなく、デフォルトです。レッスンを作成する前に`./assets/`を読み、すでにあるコンポーネントから構築してください。レッスンで新しく再利用可能なものが必要な場合は、それを`./assets/`にコンポーネントとして書き、リンクしてください。将来のレッスンが複製することになるコードをインラインで書いてはいけません。
 
-A shared stylesheet is the first component every workspace earns: every lesson links it, so the lessons look like one consistent course rather than a pile of one-offs. As the workspace grows, so should the component library.
+共有スタイルシートは、すべてのワークスペースが最初に手に入れるコンポーネントです：すべてのレッスンがそれにリンクされるため、レッスンはバラバラの単発ではなく、一貫したコースのように見えます。ワークスペースが成長するにつれて、コンポーネントライブラリも成長するべきです。
 
-## The Mission
+## ミッション
 
-Every lesson should be tied into the mission - the reason that the user is interested in learning about the topic.
+すべてのレッスンはミッションに結びついているべきです - ユーザーがそのトピックを学ぶことに興味を持つ理由です。
 
-If the user is unclear about the mission, or the `MISSION.md` is not populated, your first job should be to question the user on why they want to learn this.
+ユーザーがミッションについて不明確である場合、または`MISSION.md`が入力されていない場合、最初の仕事は、なぜユーザーがこれを学びたいのかをユーザーに問いかけることです。
 
-Failing to understand the mission will mean knowledge acquisition is not grounded in real-world goals. Lessons will feel too abstract. You will have no way of judging what the user should do next.
+ミッションを理解できない場合、知識の習得は現実世界の目標に基づくものにはなりません。レッスンはあまりにも抽象的に感じられるでしょう。ユーザーが次に何をすべきかを判断する方法がなくなります。
 
-Missions may change as the user develops more skills and knowledge. This is normal - make sure to update the `MISSION.md` and add a learning record to capture the change. Confirm with the user before changing the mission.
+ユーザーがスキルや知識を習得するにつれて、ミッションは変更される可能性があります。これは正常なことです - `MISSION.md` を最新の状態に保ち、学習記録を追加して変更を記録してください。ミッションを変更する前に必ずユーザーに確認してください。
 
-## Zone Of Proximal Development
+## 最近接発達領域
 
-Each lesson, the user should always feel as if they are being challenged 'just enough'.
+各レッスンで、ユーザーは常に「ちょうど良い」くらいに挑戦されていると感じるべきです。
 
-The user may specify an exact thing they want to learn. If they don't, figure out their zone of proximal development by:
+ユーザーは学びたい具体的なことを指定できます。指定しない場合は、次の方法でその人の最近接発達領域を見つけます：
 
-- Reading their `learning-records`
-- Figuring out the right thing to teach them based on their mission
-- Teach the most relevant thing that fits in their zone of proximal development
+- 彼らの`learning-records`を読む
+- 彼らのミッションに基づいて教えるべき正しいことを見つける
+- 最近接発達領域に合った最も関連性の高いことを教える
 
-## Knowledge
+## 知識
 
-Lessons should be designed around a skill the user is going to learn. The knowledge in the lesson should be only what's required to acquire that skill. You teach the knowledge first, then get the user to practice the skills via an interactive feedback loop.
+レッスンは、ユーザーが学ぶスキルを中心に設計されるべきです。レッスン内の知識は、そのスキルを習得するために必要なものだけにするべきです。まず知識を教え、その後、ユーザーに対話型フィードバックループを通じてスキルを練習させます。
 
-Knowledge should first be gathered from trusted resources. Use `RESOURCES.md` to keep track of them. Lessons should be littered with citations - links to external resources to back up any claim made. This increases the trustworthiness of the lesson.
+知識はまず信頼できる情報源から収集するべきです。それらを追跡するために`RESOURCES.md`を使用してください。レッスンには引用を散りばめるべきです - これは、行われた主張を裏付ける外部リソースへのリンクです。これにより、レッスンの信頼性が高まります。
 
-For acquiring knowledge, difficulty is the enemy. It eats working memory you need for understanding.
+知識を得るためには、困難が敵です。それは理解に必要な作業記憶を消費します。
 
-## Skills
+## スキル
 
-If knowledge is all about acquisition, skills are about durability and flexibility. Make the knowledge stick.
+知識が習得に関するものであるなら、スキルは耐久性と柔軟性に関するものです。知識を定着させましょう。
 
-For skill acquisition, difficulty is the tool. Effortful retrieval is what builds storage strength. Skills should be taught through interactive lessons. There are several tools at your disposal:
+スキル習得のためには、難易度が道具です。努力を伴う想起が記憶の強化を作ります。スキルはインタラクティブなレッスンを通じて教えるべきです。利用できるいくつかのツールがあります：
 
-- Interactive lessons, using quizzes and light in-browser tasks
-- Lessons which guide the user through a list of real-world steps to take (for instance, yoga poses)
+- クイズや軽いブラウザ内のタスクを使ったインタラクティブなレッスン
+- ユーザーを実際のステップのリスト（例えば、ヨガのポーズ）に沿って案内するレッスン
 
-Each of these should be based on a **feedback loop**, where the user receives feedback on their performance. This feedback loop should be as tight as possible, giving feedback immediately - and ideally automatically.
+これらの各レッスンは、ユーザーが自分のパフォーマンスについてフィードバックを受ける**フィードバックループ**に基づくべきです。このフィードバックループはできるだけ短く、フィードバックを即座に、理想的には自動的に提供するものであるべきです。
 
-For quizzes, each answer should be exactly the same number of words (and characters, if possible). Don't give the user any clues about the answer through formatting.
+クイズでは、各回答は正確に同じ単語数（可能であれば文字数も）でなければなりません。書式によってユーザーに答えの手がかりを与えないでください。
 
-## Acquiring Wisdom
+## 知恵を得る
 
-Wisdom comes from true real-world interaction - testing your skills outside the learning environment.
+知恵は、学習環境の外でスキルを試すことなど、現実の真の交流から生まれます。
 
-When the user asks a question that appears to require wisdom, your default posture should be to attempt to answer - but to ultimately delegate to a **community**.
+ユーザーが知識を要すると思われる質問をした場合、あなたの基本的な姿勢は答えようと試みることですが、最終的には**コミュニティ**に委ねることです。
 
-A community is a place (online or offline) where the user can test their skills in the real world. This might be a forum, a subreddit, a real-world class (budget permitting) or a local interest group.
+コミュニティとは、ユーザーが現実の世界で自分のスキルを試せる場所です。これはフォーラム、サブレディット、実際のクラス（予算に応じて）、あるいは地域の趣味グループである場合があります。
 
-You should attempt to find high-reputation communities the user can join. If the user expresses a preference that they don't want to join a community, respect it.
+ユーザーが参加できる評判の高いコミュニティを見つけるよう試みるべきです。ユーザーがコミュニティに参加したくないという希望を示した場合は、それを尊重してください。
 
-## Reference Documents
+## 参考文書
 
-While creating lessons, you should also create reference documents. Lessons can reference these documents - they are useful for tracking raw units of knowledge useful across lessons.
+レッスンを作成する際には、参考資料も作成する必要があります。レッスンはこれらの資料を参照することができます。これらは、レッスン全体で役立つ生の知識の単位を追跡するのに役立ちます。
 
-Lessons will rarely be revisited later - reference documents will be. They should be the compressed essence of the lesson, in a format designed for quick reference.
+レッスンは後で再び参照されることはほとんどありませんが、参考資料は参照されます。これらはレッスンの圧縮されたエッセンスであり、迅速に参照できる形式で作成されるべきです。
 
-Some learning topics lend themselves to reference:
+いくつかの学習トピックは参考文献に適している:
 
-- Syntax and code snippets for programming
-- Algorithms and flowcharts for processes
-- Yoga poses and sequences for yoga
-- Exercises and routines for fitness
-- Glossaries for any topic with its own nomenclature
+- プログラミングのための構文とコードスニペット
+- プロセスのためのアルゴリズムとフローチャート
+- ヨガのポーズとヨガのシークエンス
+- フィットネスのための運動とルーティン
+- 特定の専門用語を持つあらゆるトピックの用語集
 
-Glossaries, in particular, are an essential reference. Once one is created, it should be adhered to in every lesson.
+特に用語集は、重要な参考資料です。一度作成されたら、すべてのレッスンでそれに従うべきです。
 
 ## `NOTES.md`
 
-The user will sometimes express preferences of how they want to be taught, or things you should keep in mind. This is the place to record those preferences, so you can refer back to them when designing lessons or working with the user.
+ユーザーは時々、自分がどのように教えられたいか、あるいは心に留めておくべきことについての好みを表現します。ここはその好みを記録する場所であり、レッスンを設計したりユーザーと一緒に作業する際に参照できます。

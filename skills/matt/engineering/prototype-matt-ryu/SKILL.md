@@ -1,26 +1,26 @@
 ---
 name: prototype-matt-ryu
-description: Build a throwaway prototype to answer a design question. Use when the user wants to sanity-check whether a state model or logic feels right, or explore what a UI should look like.
+description: デザインの質問に答えるための使い捨てプロトタイプを作成します。ユーザーが状態モデルやロジックが適切かどうかを確認したいとき、またはUIの見た目を探索したいときに使用します。
 ---
 
-# Prototype
+# プロトタイプ
 
-A prototype is **throwaway code that answers a question**. The question decides the shape.
+プロトタイプとは、**質問に答えるための使い捨てコード**です。質問が形を決めます。
 
-## Pick a branch
+## ブランチを選択します
 
-Identify which question is being answered, using the user's prompt, the surrounding code, or by asking if the user is around:
+ユーザーのプロンプト、周囲のコード、またはユーザーに確認することで、どの質問に答えているのかを特定します:
 
-- **"Does this logic / state model feel right?"** → [LOGIC.md](LOGIC.md). Build a single shareable HTML file (free-play buttons plus tabbed guided walkthroughs) that pushes the state machine through cases that are hard to reason about on paper, and that a non-developer can drive.
-- **"What should this look like?"** → [UI.md](UI.md). Generate several radically different UI variations on a single route, switchable via a URL search param and a floating bottom bar.
+- **「この論理／状態モデルは正しく感じますか？」** → [LOGIC.md](LOGIC.md)。紙の上では理解しにくいケースを状態機械で進める、非開発者でも操作できる、タブ付きのガイド付きウォークスルーとフリープレイボタンを備えた、共有可能な単一HTMLファイルを構築する。
+- **「これはどのように見えるべきですか？」** → [UI.md](UI.md)。単一ルート上で複数の全く異なるUIバリエーションを生成し、URLの検索パラメータや下部のフローティングバーで切り替え可能にする。
 
-The two branches produce very different artifacts, so getting this wrong wastes the whole prototype. If the question is genuinely ambiguous and the user isn't reachable, default to whichever branch better matches the surrounding code (a backend module → logic; a page or component → UI) and state the assumption at the top of the prototype.
+二つのブランチは非常に異なる成果物を生成するため、これを間違えるとプロトタイプ全体が無駄になります。もし質問が本当に曖昧でユーザーに確認できない場合は、周囲のコードにより適したブランチをデフォルトとして選びます（バックエンドモジュール → ロジック、ページまたはコンポーネント → UI）、そしてその前提をプロトタイプの冒頭に記載してください。
 
-## Rules that apply to both
+## 両方に適用されるルール
 
-1. **Throwaway from day one, and clearly marked as such.** Locate the prototype code close to where it will actually be used (next to the module or page it's prototyping for) so context is obvious, but name it so a casual reader can see it's a prototype, not production. For throwaway UI routes, obey whatever routing convention the project already uses; don't invent a new top-level structure.
-2. **Trivial to run.** A UI prototype starts from one command in the project's task runner: `pnpm <name>`, `python <path>`, `bun <path>`, etc. A logic demo is a single HTML file the user double-clicks. Either way, no thinking required to start it.
-3. **No persistence by default.** State lives in memory. Persistence is the thing the prototype is _checking_, not something it should depend on. If the question explicitly involves a database, hit a scratch DB or a local file with a clear "PROTOTYPE, wipe me" name.
-4. **Skip the polish.** No tests, no error handling beyond what makes the prototype _runnable_, no abstractions. The point is to learn something fast.
-5. **Surface the state.** After every action (logic) or on every variant switch (UI), print or render the full relevant state so the user can see what changed.
-6. **Capture it when done.** Fold any validated decision into the real code, then capture the prototype itself as a **primary source**: commit it to a throwaway branch, out of main, and leave a context pointer to that branch on the implementation issue. Capture the answer too (the verdict and the question it settled) in the issue or a commit. The main branch keeps only the validated decision.
+1. **最初から使い捨てと明示する。** プロトタイプコードは、対象のモジュールやページの近くに置き、文脈を分かりやすくする。ただし、名前から本番用ではないと分かるようにする。使い捨ての UI ルートも既存のルーティング規約に従い、新しいトップレベル構造は作らない。
+2. **実行は簡単。** UIプロトタイプは、プロジェクトのタスクランナーの1つのコマンドから始まります：`pnpm <name>`、`python <path>`、`bun <path>`、など。ロジックデモは、ユーザーがダブルクリックする単一のHTMLファイルです。どちらの方法でも、開始するために考える必要はありません。
+3. **デフォルトでは永続化しない。** 状態はメモリ上に存在する。永続化はプロトタイプが _確認している_ ものであり、依存すべきものではない。もし質問が明確にデータベースを含む場合は、「PROTOTYPE, wipe me」という名前のスクラッチDBやローカルファイルを使用すること。
+4. **磨きをかけるのは後回し。** テストはなし、プロトタイプを_実行可能_にする以上のエラーハンドリングなし、抽象化なし。ポイントは何かを素早く学ぶことです。
+5. **状態を可視化する。** すべてのアクション（ロジック）後またはすべてのバリアント切り替え（UI）時に、関連する全ての状態を表示またはレンダリングして、何が変わったかをユーザーが見られるようにする。
+6. **完了したらキャプチャする**。検証済みの決定を実際のコードに統合し、その後プロトタイプ自体を**一次情報**としてキャプチャする：本流（メイン）とは別の使い捨てブランチにコミットし、そのブランチへのコンテキストポインタを実装課題に残す。答え（評決とそれを確定した質問）も課題やコミットにキャプチャする。メインブランチには検証済みの決定のみを残す。

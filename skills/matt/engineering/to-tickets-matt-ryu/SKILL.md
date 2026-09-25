@@ -1,105 +1,105 @@
 ---
 name: to-tickets-matt-ryu
-description: Break a plan, spec, or the current conversation into a set of tracer-bullet tickets, each declaring its blocking edges, published to the configured tracker (edges as text in one file per ticket locally, or native blocking links on a real tracker).
+description: 計画、仕様、または現在の会話を、一連のトレーサー・バレット・チケットに分解します。それぞれのチケットは、その依存関係を宣言し、設定されたトラッカーに公開します（エッジをテキストとしてチケットごとに1つのファイルにローカル保存するか、実際のトラッカー上でネイティブのブロッキングリンクとして保存します）。
 disable-model-invocation: true
 ---
 
-# To Tickets
+# チケットへ
 
-Break a plan, spec, or conversation into a set of **tickets**: tracer-bullet vertical slices, each declaring the tickets that **block** it.
+計画、仕様、または会話を**チケット**のセットに分解する：各チケットがそれを**ブロック**するチケットを宣言するトレーサーバレットの縦のスライス。
 
-The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`.
+問題トラッカーとトリアージラベルの語彙は、あなたに提供されているはずです。もし提供されていない場合は、ユーザーに `/setup-matt-pocock-skills-matt-ryu` を実行するように伝えてください。
 
-## Process
+## プロセス
 
-### 1. Gather context
+### 1. コンテキストを収集する
 
-Work from whatever is already in the conversation context. If the user passes a reference (a spec path, an issue number or URL) as an argument, fetch it and read its full body and comments.
+会話コンテキストにすでにあるものから作業します。ユーザーが引数として参照（仕様のパス、問題番号、またはURL）を渡した場合は、それを取得して本文とコメント全文を読みます。
 
-### 2. Explore the codebase (optional)
+### 2. コードベースを探索する（任意）
 
-If you have not already explored the codebase, do so to understand the current state of the code. Ticket titles and descriptions should use the project's domain glossary vocabulary, and respect ADRs in the area you're touching.
+もしまだコードベースを探索していない場合は、コードの現状を理解するために探索してください。チケットのタイトルや説明は、プロジェクトのドメイン用語集の語彙を使用し、触れている領域のADRに従う必要があります。
 
-Look for opportunities to prefactor the code to make the implementation easier. "Make the change easy, then make the easy change."
+実装を容易にするために、コードを事前にリファクタリングする機会を探してください。「まず変更を簡単にし、その後簡単な変更を行う。」
 
-### 3. Draft vertical slices
+### 3. 垂直スライスをドラフトする
 
-Break the work into **tracer bullet** tickets.
+作業を**トレーサーバレット**チケットに分割します。
 
 <vertical-slice-rules>
 
-- Each slice cuts a narrow but COMPLETE path through every layer (schema, API, UI, tests): vertical, NOT a horizontal slice of one layer
-- A completed slice is demoable or verifiable on its own
-- Each slice is sized to fit in a single fresh context window
-- Any prefactoring should be done first
+- 各スライスは、すべての層（スキーマ、API、UI、テスト）を通る狭いが完全なパスを切ります：垂直方向であり、1つの層の水平スライスではありません
+- 完了したスライスは、それ自体でデモ可能または検証可能である必要があります
+- 各スライスは、単一の新しいコンテキストウィンドウに収まるサイズで設定されます
+- 事前のリファクタリングは最初に行う必要があります
 
 </vertical-slice-rules>
 
-Give each ticket its **blocking edges**: the other tickets that must complete before it can start. A ticket with no blockers can start immediately.
+各チケットに**依存関係**を与えます：それが開始する前に完了しなければならない他のチケットです。ブロッカーがないチケットはすぐに開始できます。
 
-**Wide refactors are the exception to vertical slicing.** A **wide refactor** is one mechanical change (rename a column, retype a shared symbol) whose **blast radius** fans across the whole codebase, so a single edit breaks thousands of call sites at once and no vertical slice can land green. Don't force it into a tracer bullet; sequence it as **expand–contract**. First expand: add the new form beside the old so nothing breaks. Then migrate the call sites over in batches sized by blast radius (per package, per directory), each batch its own ticket blocked by the expand, keeping CI green batch to batch because the old form still exists. Finally contract: delete the old form once no caller remains, in a ticket blocked by every migrate batch. When even the batches can't stay green alone, keep the sequence but let them share an integration branch that all block a final integrate-and-verify ticket; green is promised only there.
+**ワイドリファクタリングはバーティカルスライスの例外です。** ワイドリファクタリングとは、1つの機械的な変更（列名の変更、共有シンボルの型変更など）がコードベース全体に影響を及ぼすものであり、単一の編集で何千もの呼び出し箇所が同時に壊れ、どのバーティカルスライスも緑状態にはならないものです。これをトレーサーバレットに無理に押し込むのではなく、**拡張–収束（expand–contract）** として順序を付けます。まず拡張: 新しい形を古い形の横に追加し、何も壊さないようにします。次に、呼び出し箇所を爆発範囲ごとに（パッケージ単位、ディレクトリ単位など）バッチで移行します。各バッチは独自のチケットとし、拡張によってブロックされ、古い形がまだ存在するためバッチごとにCIをグリーンに保ちます。最後に収束: 呼び出し元が残っていない古い形を削除し、各移行バッチによってブロックされたチケットで行います。たとえバッチ単位でも単独で緑を維持できない場合は、順序を維持しつつ、最終的な統合および検証チケットをブロックする統合ブランチを共有させます。緑の状態はその場所でのみ保証されます。
 
-### 4. Quiz the user
+### 4. ユーザーにクイズ形式で確認する
 
-Present the proposed breakdown as a numbered list. For each ticket, show:
+提案された分解を番号付きリストとして提示します。各チケットについて、以下を表示します:
 
-- **Title**: short descriptive name
-- **Blocked by**: which other tickets (if any) must complete first
-- **What it delivers**: the end-to-end behaviour this ticket makes work
+- **タイトル**: 短い説明名
+- **ブロックしているもの**: どの他のチケット（ある場合）が先に完了する必要があるか
+- **提供する内容**: このチケットによって動作するエンドツーエンドの振る舞い
 
-Ask the user:
+ユーザーに質問してください:
 
-- Does the granularity feel right? (too coarse / too fine)
-- Are the blocking edges correct: does each ticket only depend on tickets that genuinely gate it?
-- Should any tickets be merged or split further?
+- 粒度は適切ですか？（粗すぎる / 細かすぎる）
+- 依存関係は正しいですか：各チケットは本当にそれを制約するチケットのみに依存していますか？
+- どのチケットを結合またはさらに分割する必要がありますか？
 
-Iterate until the user approves the breakdown.
+ユーザーが分解を承認するまで繰り返します。
 
-### 5. Publish the tickets to the configured tracker
+### 5. チケットを設定されたトラッカーに公開します
 
-Publish the approved tickets. **How** depends on the tracker `/setup-matt-pocock-skills` configured; the tickets are the same either way, only the shape of the blocking edges changes:
+承認されたチケットを公開します。**方法は**、設定されたトラッカー `/setup-matt-pocock-skills-matt-ryu` によります。チケット自体はどちらの場合も同じで、ブロックする境界の形が変わるだけです:
 
-- **Local files** → write one file per ticket under `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01` in dependency order (blockers first). Each file's "Blocked by" lists the numbers/titles it depends on. Use the per-ticket file template below: one ticket per file, never a single combined file.
-- **A real issue tracker (GitHub, Linear, …)** → publish one issue per ticket in dependency order (blockers first) so each ticket's blocking edges can reference real identifiers. Use the platform's native blocking / sub-issue relationship where it has one; otherwise set each ticket's "Blocked by" to the blocking issues. Apply the `ready-for-agent` triage label unless instructed otherwise; the tickets are agent-grabbable by construction.
+- **ローカルファイル** → チケットごとに1つのファイルを`.scratch/<feature-slug>/issues/<NN>-<slug>.md`の下に作成し、依存順（ブロッカーを最初に）で`01`から番号を付けます。各ファイルの「ブロック元」には依存している番号/タイトルを記載します。以下のチケットごとのファイルテンプレートを使用してください：1ファイルにつき1チケット、1つにまとめたファイルは作らないでください。
+- **本物の課題トラッカー（GitHub、Linear、…）** → チケットごとに依存関係の順序で1件ずつ課題を公開する（ブロッカーを最初に）ことで、各チケットの依存関係が実際の識別子を参照できるようにする。プラットフォームにネイティブのブロッキング／サブ課題の関係がある場合はそれを使用し、ない場合は各チケットの「ブロックされている」にブロッキング課題を設定する。特に指示がない限り `ready-for-agent` のトリアージラベルを適用する；チケットは構造上エージェントが取得可能である。
 
-Work the **frontier**: any ticket whose blockers are all done. For a purely linear chain that means top to bottom.
+**フロンティア**で作業する：ブロッカーがすべて完了しているチケット。純粋に線形のチェーンであれば、上から下へ進めることを意味します。
 
-Do NOT close or modify any parent issue.
+親チケットを閉じたり変更したりしないでください。
 
 <local-ticket-template>
 
-# <NN>: <Ticket title>
+# <NN>: <チケットタイトル>
 
-**What to build:** the end-to-end behaviour this ticket makes work, from the user's perspective, not a layer-by-layer implementation list.
+**構築するもの:** このチケットが機能するようにする、ユーザー視点でのエンドツーエンドの振る舞い。レイヤーごとの実装リストではありません。
 
-**Blocked by:** the numbers/titles of the tickets that gate this one, or "None (can start immediately)".
+**ブロック元:** このチケットを妨げているチケットの番号/タイトル、または「なし（すぐに開始可能）」。
 
-**Status:** ready-for-agent
+**ステータス:** エージェント準備完了
 
-- [ ] Acceptance criterion 1
-- [ ] Acceptance criterion 2
+- [ ] 受け入れ基準 1
+- [ ] 受け入れ基準 2
 
 </local-ticket-template>
 
 <issue-template>
 
-## Parent
+## 親チケット
 
-A reference to the parent issue on the tracker (if the source was an existing issue, otherwise omit this section).
+トラッカー上の親チケットへの参照（元のチケットが既存の課題の場合、そうでなければこの部分は省略）。
 
-## What to build
+## 構築すべきもの
 
-The end-to-end behaviour this ticket makes work, from the user's perspective, not layer-by-layer implementation.
+このチケットが動作させるエンドツーエンドの挙動は、レイヤーごとの実装ではなく、ユーザーの視点からのものです。
 
-## Acceptance criteria
+## 受け入れ基準
 
-- [ ] Criterion 1
-- [ ] Criterion 2
+- [ ] 基準 1
+- [ ] 基準 2
 
-## Blocked by
+## ブロック元
 
-- A reference to each blocking ticket, or "None (can start immediately)".
+- 各ブロッキングチケットへの参照、または「なし（すぐに開始可能）」。
 
 </issue-template>
 
-In either form, avoid specific file paths or code snippets: they go stale fast. Exception: if a prototype produced a snippet that encodes a decision more precisely than prose can (state machine, reducer, schema, type shape), inline it and note briefly that it came from a prototype. Trim to the decision-rich parts, not a working demo, just the important bits.
+どちらの形式でも、特定のファイルパスやコードスニペットは避けてください。それらはすぐに古くなります。例外：もしプロトタイプが、文章よりも正確に意思決定を表現するスニペット（ステートマシン、リデューサー、スキーマ、型の形状など）を生成した場合は、それをインラインで載せ、プロトタイプからのものであることを簡単に記載してください。動作するデモではなく、意思決定に富む部分だけに絞ってください。重要な部分だけです。

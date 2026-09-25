@@ -1,15 +1,15 @@
 ---
 name: domain-modeling-matt-ryu
-description: Build and sharpen a project's domain model. Use when discussing codebase terminology, writing or editing a CONTEXT.md, or recording or editing an ADR.
+description: プロジェクトのドメインモデルを構築し、洗練させる。コードベースの用語について議論する際、CONTEXT.mdを作成または編集する際、またはADRを記録または編集する際に使用する。
 ---
 
-# Domain Modeling
+# ドメインモデリング
 
-Actively build and sharpen the project's domain model as you design. This is the *active* discipline: challenging terms, inventing edge-case scenarios, and writing the glossary and decisions down the moment they crystallise. (Merely *reading* `CONTEXT.md` for vocabulary is not this skill: that's a one-line habit any skill can do. This skill is for when you're changing the model, not just consuming it.)
+設計を行う際に、プロジェクトのドメインモデルを積極的に構築し、磨き上げてください。これは*能動的な*作業です：用語に挑戦し、極端なケースのシナリオを考え、用語集や意思決定を明確になった瞬間に書き留めることです。（単に語彙のために`CONTEXT.md`を*読む*ことは、このスキルではありません：それはどんなスキルでもできる一行の習慣です。このスキルはモデルを変えるときに必要であり、単に消費するだけのときには必要ありません。）
 
-## File structure
+## ファイル構造
 
-Most repos have a single context:
+ほとんどのリポジトリには単一のコンテキストがあります:
 
 ```
 /
@@ -21,7 +21,7 @@ Most repos have a single context:
 └── src/
 ```
 
-If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The map points to where each one lives:
+ルートに`CONTEXT-MAP.md`が存在する場合、リポジトリには複数のコンテキストがあります。マップはそれぞれの場所を示します:
 
 ```
 /
@@ -37,38 +37,38 @@ If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The ma
 │       └── docs/adr/
 ```
 
-Create files lazily: only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If no `docs/adr/` exists, create it when the first ADR is needed.
+ファイルは遅延作成: 書くものがあるときだけ作成します。`CONTEXT.md`が存在しない場合、最初の用語が解決されたときに作成します。`docs/adr/`が存在しない場合、最初のADRが必要になったときに作成します。
 
-## During the session
+## セッション中
 
-### Challenge against the glossary
+### 用語集に対して挑戦する
 
-When the user uses a term that conflicts with the existing language in `CONTEXT.md`, call it out immediately. "Your glossary defines 'cancellation' as X, but you seem to mean Y. Which is it?"
+ユーザーが`CONTEXT.md`の既存の言語と矛盾する用語を使用した場合、すぐに指摘してください。「あなたの用語集では 'cancellation' をXと定義していますが、あなたが意味しているのはYのようです。どちらですか？」
 
-### Sharpen fuzzy language
+### あいまいな言語を明確にする
 
-When the user uses vague or overloaded terms, propose a precise canonical term. "You're saying 'account': do you mean the Customer or the User? Those are different things."
+ユーザーが曖昧または過負荷の用語を使用した場合、正確な標準用語を提案してください。「あなたは 'account' と言っていますが、Customerのことですか、それともUserのことですか？それらは異なるものです。」
 
-### Discuss concrete scenarios
+### 具体的なシナリオについて議論する
 
-When domain relationships are being discussed, stress-test them with specific scenarios. Invent scenarios that probe edge cases and force the user to be precise about the boundaries between concepts.
+ドメインの関係について議論する際には、具体的なシナリオでそれらをストレステストしてください。エッジケースを探り、概念間の境界についてユーザーに正確に説明させるシナリオを考え出してください。
 
-### Cross-reference with code
+### コードと相互参照する
 
-When the user states how something works, check whether the code agrees. If you find a contradiction, surface it: "Your code cancels entire Orders, but you just said partial cancellation is possible. Which is right?"
+ユーザーが何かの動作について述べたとき、そのコードと一致しているか確認してください。矛盾が見つかった場合は表面化させます："あなたのコードは注文全体をキャンセルしますが、先ほど部分的なキャンセルが可能だと言いました。どちらが正しいですか？"
 
-### Update CONTEXT.md inline
+### CONTEXT.mdをインラインで更新してください。
 
-When a term is resolved, update `CONTEXT.md` right there. Don't batch these up: capture them as they happen. Use the format in [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
+用語が解決されたときは、`CONTEXT.md`をその場で更新してください。一括でまとめてはいけません：発生したその瞬間に記録してください。[CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md)の形式を使用してください。
 
-`CONTEXT.md` should be totally devoid of implementation details. Do not treat `CONTEXT.md` as a spec, a scratch pad, or a repository for implementation decisions. It is a glossary and nothing else.
+`CONTEXT.md` は実装の詳細を一切含まないようにするべきです。`CONTEXT.md` を仕様書、メモ、または実装上の決定を記録するリポジトリのように扱わないでください。それは用語集であり、それ以外のものではありません。
 
-### Offer ADRs sparingly
+### ADR は慎重に提供してください
 
-Only offer to create an ADR when all three are true:
+次の三つがすべて当てはまる場合にのみ ADR の作成を提案してください:
 
-1. **Hard to reverse**: the cost of changing your mind later is meaningful
-2. **Surprising without context**: a future reader will wonder "why did they do it this way?"
-3. **The result of a real trade-off**: there were genuine alternatives and you picked one for specific reasons
+1. **取り消しが難しい**: 後で考えを変えるコストが重要である場合
+2. **文脈なしでは驚くこと**: 将来の読者は「なぜこのようにしたのか？」と疑問に思うでしょう
+3. **実際のトレードオフの結果**: 本当に選択肢が存在し、特定の理由で1つを選んだ
 
-If any of the three is missing, skip the ADR. Use the format in [ADR-FORMAT.md](./ADR-FORMAT.md).
+もし3つのうちいずれかが欠けている場合は、ADRをスキップしてください。[ADR-FORMAT.md](./ADR-FORMAT.md) のフォーマットを使用してください。

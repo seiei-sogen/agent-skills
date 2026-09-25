@@ -1,90 +1,90 @@
 ---
 name: ask-matt-matt-ryu
-description: Ask which skill or flow fits your situation. A router over the skills in this repo.
+description: 自分の状況にどのスキルやフローが合うか尋ねてください。このリポジトリのスキルを整理するルーターです。
 disable-model-invocation: true
 ---
 
-# Ask Matt
+# マットに聞いてください。
 
-You don't remember every skill, so ask.
+すべてのスキルを覚えていないので、質問してください。
 
-A **flow** is a path through the skills. Most paths run along one **main flow**, and two **on-ramps** merge onto it. Everything else is standalone, or a vocabulary layer that runs underneath.
+**フロー**とは、スキルを通る経路のことです。ほとんどの経路は1つの**メインフロー**に沿って進み、2つの**オンランプ**がそれに合流します。それ以外はすべて独立しているか、下層で動作する語彙レイヤーです。
 
-## The main flow: idea → ship
+## メインフロー: アイデア → 完成品
 
-The route most work travels. You have an idea and want it built.
+ほとんどの作業が通るルートです。あなたにはアイデアがあり、それを形にしたいと考えています。
 
-1. **`/grill-with-docs`** sharpens the idea by interview. Start here whenever you are **working in a working directory**: it's stateful, retaining what it learns in `CONTEXT.md` and ADRs. (No working directory? Use `/grill-me` instead, covered under Standalone. Both run the same `/grilling` primitive; `grill-with-docs` is the one that leaves a paper trail, which makes it the better of the two whenever a repo is there to leave it in.)
-2. **Branch: can you settle every question in conversation?** If a question needs a runnable answer (state, business logic, a UI you have to see), detour through a prototype, bridged by **`/handoff`** in both directions (a prototype lives in its own directory, which is exactly what `/handoff` is for; see Phase boundaries):
-   - **`/handoff`** out, then open a fresh session against that file,
-   - **`/prototype`** to answer the question with throwaway code,
-   - **`/handoff`** back what you learned, and reference it from the original idea thread.
-3. **Branch: is this a multi-session build?**
-   - **Yes** → **`/to-spec`** (turn the thread into a spec), then **`/to-tickets`** to split it into tracer-bullet tickets, each declaring its **blocking edges**. On a local tracker that's one file per ticket under `.scratch/<feature>/issues/`, worked blockers-first by hand; on a real tracker the edges become native blocking links, so any ticket whose blockers are done can be grabbed: kick off **`/implement`** per ticket, **`/clear`ing context between each one**. Each ticket is self-contained, so the last one's context is disposable.
-   - **No** → **`/implement`** right here, in the same context window.
+1. **`/grill-with-docs-matt-ryu`** はインタビューによってアイデアを研ぎ澄まします。**作業ディレクトリで作業している**ときは、ここから始めてください：これは状態を保持し、`CONTEXT.md` や ADR で学んだことを保持します。（作業ディレクトリがない場合は、代わりにスタンドアロンでカバーされる `/grill-me-matt-ryu` を使用してください。どちらも同じ `/grilling-matt-ryu` プリミティブを実行します；`grill-with-docs` は作業記録を残すもので、リポジトリが存在してそれを残す場合は、この二つのうちより適しています。）
+2. **Branch: 会話の中のすべての質問に答えることができますか？** 質問が実行可能な回答（状態、ビジネスロジック、確認が必要なUI）を必要とする場合、プロトタイプを経由し、**`/handoff-matt-ryu`** で双方向に橋渡しします（プロトタイプは独自のディレクトリに存在し、これはまさに `/handoff-matt-ryu` が目的とするところです；フェーズ境界を参照してください）：
+   - **`/handoff-matt-ryu`** を出力し、そのファイルに対して新しいセッションを開きます、
+   - **`/prototype-matt-ryu`** 使い捨てコードで質問に答え、
+   - **`/handoff-matt-ryu`** 学んだことを返し、元のアイデアスレッドから参照してください。
+3. **ブランチ：これはマルチセッションビルドですか？**
+   - **はい** → **`/to-spec-matt-ryu`**（スレッドを仕様に変換する）、次に **`/to-tickets-matt-ryu`** でトレーサーバレットチケットに分割し、それぞれの **依存関係** を宣言する。ローカルトラッカーでは、`.scratch/<feature>/issues/` 以下でチケットごとに1ファイル作成し、手作業でブロッカーから先にに処理する。実際のトラッカーでは、これらのエッジはネイティブのブロッキングリンクになるので、ブロッカーが完了した任意のチケットを取得可能：各チケットごとに **`/implement-matt-ryu`** を開始し、**`/clear`で各チケット間のコンテキストを処理する**。各チケットは自己完結型のため、最後のチケットのコンテキストは破棄可能である。
+   - **いいえ** → **`/implement-matt-ryu`** ここで、同じコンテキストウィンドウ内で。
 
-   Either way, **`/implement`** builds each issue by driving **`/tdd`** internally (one red-green slice at a time), then closes out by running **`/code-review`**, a two-axis review (Standards + Spec) of the diff, before committing. Reach for **`/tdd`** on its own when you just want to build a concrete behaviour test-first without a full spec, and **`/code-review`** on its own whenever you want to review a branch or PR against a fixed point.
+   いずれにせよ、**`/implement-matt-ryu`** は各課題を、内部で **`/tdd-matt-ryu`** を駆動して構築します（一度に赤緑のスライスを1つずつ）、その後 **`/code-review-matt-ryu`** を実行して終了します。これは差分の二軸レビュー（標準 + 仕様）で、コミット前に行います。完全な仕様なしで具体的な振る舞いのテストを先に作りたい場合は、単独で **`/tdd-matt-ryu`** を使用し、ブランチやPRを固定点に対してレビューしたい場合は、単独で **`/code-review-matt-ryu`** を使用します。
 
-### Context hygiene
+### コンテキストの衛生
 
-Keep steps 1–3 in **one unbroken context window** (don't compact or clear until after `/to-tickets`) so the grilling, spec, and tickets all build on the same thinking. Each `/implement` then starts fresh, working from the ticket.
+ステップ1〜3は**一つの途切れないコンテキストウィンドウ**で保持してください（`/to-tickets-matt-ryu`の後まで圧縮やクリアをしないでください）。これにより、グリル、仕様、チケットがすべて同じ考えの上に構築されます。その後の各`/implement-matt-ryu`はチケットから新たに開始します。
 
-The limit on this is the **[smart zone](https://www.aihero.dev/ai-coding-dictionary/smart-zone)**: the window (~150k tokens on state-of-the-art models) within which the model still reasons sharply. If a session approaches it before `/to-tickets`, don't push on degraded; `/compact` at the nearest phase boundary and carry on (see Phase boundaries).
+これの制限は**[smart zone](https://www.aihero.dev/ai-coding-dictionary/smart-zone)**にあります：これは、モデルがまだ鋭く推論できるウィンドウ（最先端モデルで約150kトークン）です。セッションが`/to-tickets-matt-ryu`の前にこれに近づいた場合、劣化を押し進めないでください；`/compact`で最も近いフェーズ境界に移動し、続行してください（フェーズ境界を参照）。
 
-## On-ramps
+## 入口ランプ
 
-A starting situation that generates work, then merges onto the main flow.
+作業を生み出す初期の状況、その後メインフローに合流する。
 
-- **Bugs and requests piling up** → **`/triage`**. It moves issues through triage roles and produces agent-ready issues, which **`/implement`** later picks up.
+- **バグやリクエストが積み重なる** → **`/triage-matt-ryu`**。これは課題をトリアージの役割に流し、エージェント向けの課題を生成します。その後 **`/implement-matt-ryu`** がこれを引き継ぎます。
 
-  Triage is only for issues **you didn't create**: bug reports, incoming feature requests, anything that arrives raw. Tickets that `/to-tickets` produced are already agent-ready, so **don't triage them**.
+  トリアージは **あなたが作成していない** 課題のみに行います：バグ報告、受信した機能リクエスト、未加工で届いたものすべて。`/to-tickets-matt-ryu` が生成したチケットはすでにエージェント向けになっているため、**それらはトリアージしないでください**。
 
-- **Something's broken** → **`/diagnosing-bugs`**. For the hard ones: the bug that resists a first glance, the intermittent flake, the regression that crept in between two known-good states. It refuses to theorise until it has a **tight feedback loop** (one command that already goes red on *this* bug), then fixes with a regression test. Its post-mortem hands off to **`/improve-codebase-architecture`** when the real finding is that there's no good seam to lock the bug down.
+- **何かが壊れている** → **`/diagnosing-bugs-matt-ryu`**。難しいものの場合：一目見ただけでは分からないバグ、断続的に発生する不具合、既知の正常な状態の間に忍び込んだリグレッション。これらは、**緊密なフィードバックループ**（*この*バグで既に赤になるコマンド）を持つまで理論化を拒み、そしてリグレッションテストで修正する。その事後解析は、バグを確実に固定する良い手段が見つからなかった場合、実際の発見を **`/improve-codebase-architecture-matt-ryu`** に引き渡す。
 
-- **A huge, foggy effort: a greenfield project or a huge feature build, too big for one session** → **`/wayfinder`**, the most cognitively demanding flow here. When the way from here to the destination isn't visible yet, it charts a **shared map** of **decision tickets** on the issue tracker and resolves them one at a time, producing **decisions, not deliverables**, until the fog is pushed back and the way is clear. Where **`/grill-with-docs`** sharpens an idea you can hold in one session, wayfinder is for the idea you can't, and it's slower and denser, so save it for exactly that, never a well-scoped feature.
+- **巨大で霧のかかった努力：グリーンフィールドプロジェクトや、1回のセッションでは大きすぎる大規模機能の構築** → **`/wayfinder-matt-ryu`**、ここで最も認知的負荷の高いフローです。ここから目的地までの道筋がまだ見えていない場合、課題トラッカー上で**意思決定チケット**の**共有マップ**を作成し、それらを一つずつ解決していき、**成果物ではなく意思決定**を生み出します。霧が晴れて道が明確になるまで進めます。**`/grill-with-docs-matt-ryu`**が1回のセッションで保持できるアイデアを鋭くするのに対し、ウェイファインダーは保持できないアイデアのためのもので、より遅く、密度が高いため、まさにそのために使い、よく範囲が定義された機能には絶対に使わないでください。
 
-  When the map clears, **it hands off, it doesn't build**: merge onto the main flow at **`/to-spec`**, which collapses the map's linked decisions into a buildable plan, then `/to-tickets` and `/implement` as usual. Looping the map straight into `/implement` skips that collapse and throws the linked detail away, so go straight to `/implement` only when the effort turned out genuinely small.
+  マップがクリアされると、**それは引き渡すだけで、ビルドはしません**：マップのリンクされた決定をビルド可能な計画にまとめる **`/to-spec-matt-ryu`** でメインフローにマージし、その後は通常通り `/to-tickets-matt-ryu` と `/implement-matt-ryu` に進みます。マップを直接 `/implement-matt-ryu` にループさせると、そのまとめをスキップしてリンクされた詳細が捨てられるので、作業が本当に小さい場合のみ `/implement-matt-ryu` に直接進んでください。
 
-## Codebase health
+## コードベースの健康
 
-Not feature work, just upkeep.
+機能の作業ではなく、単なる維持です。
 
-- **`/improve-codebase-architecture`** runs whenever you have a spare moment to keep the codebase good for agents to operate in. It surfaces **deepening opportunities**; picking one _generates an idea_ you can take into the main flow at `/grill-with-docs`. It's the survey that finds the candidates; **`/codebase-design`** (below) is the bench you design the chosen one on.
+- **`/improve-codebase-architecture-matt-ryu`** は、エージェントが作業するためのコードベースを良好に保つために、空き時間があるときに実行されます。これは **モジュールを深くできる箇所** を表面化させます；1つを選ぶと _アイデアが生成され_、`/grill-with-docs-matt-ryu` のメインフローに取り入れることができます。これは候補者を見つけるための調査であり；**`/codebase-design-matt-ryu`**（下）は、選ばれたものを設計するためのベンチです。
 
-## Vocabulary underneath
+## 下に語彙
 
-Two model-invoked references that run *beneath* the other skills, each the single source of truth for its vocabulary. Reach for them directly when the **words**, not the process, are the problem; or let the skills above pull them in.
+他のスキルの*下で*動作する2つのモデル呼び出し参照。それぞれが自身の語彙の唯一の正本です。**言葉**自体が問題で、過程ではない場合は直接それらにアクセスしてください。あるいは、上位のスキルにそれらを取り込ませることもできます。
 
-- **`/domain-modeling`**: sharpen the project's *domain* language: challenge a fuzzy term, resolve an overloaded word ("account" doing three jobs), record a hard-to-reverse decision as an ADR. It's the active discipline `/grill-with-docs` drives to keep `CONTEXT.md` a clean glossary.
-- **`/codebase-design`** is the deep-module vocabulary (module, interface, depth, seam, adapter, leverage, locality) for designing a module's *shape*: a lot of behaviour behind a small interface at a clean seam. `/tdd` and `/improve-codebase-architecture` both speak it.
+- **`/domain-modeling-matt-ryu`**: プロジェクトの*ドメイン*言語を研ぎ澄ます：あいまいな用語に挑戦する、過剰に意味が重なっている単語（「account」が三つの役割を果たしている）を解決する、逆にするのが難しい決定をADRとして記録する。これは`/grill-with-docs-matt-ryu`が`CONTEXT.md`をきれいな用語集に保つために推進する能動的な規律です。
+- **`/codebase-design-matt-ryu`** はモジュールの*形状*を設計するためのディープモジュール用語（モジュール、インターフェース、深さ、シーム、アダプター、レバレッジ、局所性）です：クリーンなシームに小さなインターフェースで多くの振る舞いを持たせること。`/tdd-matt-ryu` と `/improve-codebase-architecture-matt-ryu` はどちらもこれを話します。
 
-## Phase boundaries
+## フェーズ境界
 
-A **phase** is a chunk of work inside a session: the grilling, the implementation, the QA. At the **boundary** between two of them you have five options, and picking between them is the fuzziest decision in this whole map:
+フェーズとは、セッション内の作業の塊のことです：グリル作業、実装、QA。その2つの境界では、5つの選択肢があり、どれを選ぶかはこのマップ全体で最もあいまいな決定です。
 
-- **Continue**: stay put. Costs nothing, loses nothing.
-- **`/clear`**: empty the window, when nothing here matters to what's next.
-- **`/handoff`** writes a portable markdown file. Narrow: only for a **new harness**, a **new directory**, a **colleague**, or forking a side task **mid-phase**. What it buys is portability.
-- **Subagent**: send a tightly-scoped task to its own window and get a report back.
-- **`/compact`** compresses this context and seeds a fresh session with it. The **default**, at the bottom of the tree rather than the first reach.
+- **続ける**：そのままにする。コストも損失もなし。
+- **`/clear`**：ウィンドウを空にする。ここでのことは次に何が起こるかには関係ない場合。
+- **`/handoff-matt-ryu`** はポータブルなマークダウンファイルを書きます。対象は狭く：**新しいハーネス**、**新しいディレクトリ**、**同僚**、または **途中段階の副タスク** のみです。それが得られるのはポータビリティです。
+- **サブエージェント**：範囲を絞ったタスクを自分のウィンドウに送り、報告を受け取ります。
+- **`/compact`** はこのコンテキストを圧縮し、それを使って新しいセッションを開始します。**デフォルト**は、最初に到達するのではなく、ツリーの下部にあります。
 
-Read [PHASE-BOUNDARIES.md](PHASE-BOUNDARIES.md) for the ordered tree: the five questions, the reasoning behind each branch, and why the primary-source cost makes **Continue** the one to rule out first. Make the decision **at** a boundary; mid-phase, continue or split the rest into subagents.
+[PHASE-BOUNDARIES.md](PHASE-BOUNDARIES.md) を読んで、順序付きツリーについて理解してください：5つの質問、それぞれの枝の背後にある理由、そして一次情報源のコストがなぜ **Continue** を最初に除外すべきか。境界 **で** 決定を下してください；中間段階では、残りを続行するか、サブエージェントに分割してください。
 
-## Standalone
+## スタンドアロン
 
-Off the main flow entirely.
+メインの流れから完全に外れています。
 
-- **`/grill-me`**: the same relentless interview as `/grill-with-docs`, but **stateless**: it saves nothing locally and builds no `CONTEXT.md`. Reach for it when you are **not working in a working directory** (sharpening a plan, a design, a piece of writing, anything with no repo under it). If you are in a working directory, use `/grill-with-docs` instead: it runs the same interview and leaves a paper trail, so it is strictly the better one.
-- **`/grilling`** is the interview primitive itself: rounds, the frontier, facts are the agent's job and decisions are yours. `/grill-me` and `/grill-with-docs` are the two named ways in, and `/triage`, `/wayfinder` and `/improve-codebase-architecture` all run it internally. Reach for it directly only when you want the interview with no wrapper around it.
-- **`/resolving-merge-conflicts`** works an in-progress merge or rebase conflict hunk by hunk, resolving by **intent** traced to each side's primary source rather than by picking lines, then finishes the operation. It never runs `--abort`. Standalone and off every flow: reach for it when you are already mid-conflict.
-- **`/prototype`** is a small, throwaway program that answers one design question: does this state model feel right, or what should this UI look like. Throwaway is a constraint on how the code is written, not a promise to destroy it: the answer folds into the real code, and the prototype itself is kept as a **primary source** on a `prototype/<name>` branch out of main, pointed at from the implementation issue. It's the detour in step 2 of the main flow, but reach for it any time a design question is hard to settle on paper.
-- **`/research`**: delegate reading legwork to a **background agent**: it investigates a question against **primary sources**, then leaves a cited Markdown file in the repo. Keep working while it reads. The file it produces is something to take *into* the main flow at `/grill-with-docs`, since research feeds the thinking rather than replacing it.
-- **`/to-questionnaire`** comes in when the thing blocking you isn't in your head or the codebase but in **someone else's**, and it writes them a questionnaire to fill in. It's the inverse of `/grill-me`: instead of interviewing you about the subject, it interviews you about the **send** (who it's going to, what you need back) and aims the questions at the gap. What comes back is material for `/grill-with-docs` or `/to-spec`.
-- **`/wizard`** is for the steps only a **human** can take: provisioning infrastructure, setting up credentials or CI secrets, clicking through an unfamiliar third-party dashboard, running a one-off migration or cutover. It generates an interactive bash script that opens each URL, captures each value, and writes it into `.env` and GitHub secrets, so the procedure stops being something you re-explain to an agent every time. Model-invoked, so the agent reaches for it the moment it hits a wall only you can pass. If the agent could just do it itself, it should; this is for where a human is genuinely in the loop.
-- **`/wait-what`** is the corrective for a message that didn't land. Use it mid-conversation, inside any other skill, and the agent re-pitches what it just said with the context you were missing, in plain English, using the `CONTEXT.md` vocabulary. It works after the fact; `/grill-with-docs` is the upfront cure, because a shared language agreed early is what stops the jargon arriving at all.
-- **`/teach`**: learn a concept over multiple sessions, using the current directory as a stateful workspace.
-- **`/writing-for-agents`** is the reference for writing documents agents consume: skills, AGENTS.md, pointed-at docs.
+- **`/grill-me-matt-ryu`**: `/grill-with-docs-matt-ryu`と同じ容赦のないインタビューですが、**ステートレス**です：ローカルに何も保存せず、`CONTEXT.md`も作成しません。**作業ディレクトリで作業していないとき**に使用してください（計画、デザイン、文章など、リポジトリの下にないものを磨くとき）。作業ディレクトリ内にいる場合は、代わりに`/grill-with-docs-matt-ryu`を使用してください：同じインタビューを実行し、記録を残すので、こちらの方が明らかに優れています。
+- **`/grilling-matt-ryu`** はインタビュー原始そのものです：ラウンド、フロンティア、事実はエージェントの仕事で、決定はあなたのものです。`/grill-me-matt-ryu` と `/grill-with-docs-matt-ryu` は二つの名前付きの入り口であり、`/triage-matt-ryu`、`/wayfinder-matt-ryu`、`/improve-codebase-architecture-matt-ryu` はすべて内部でそれを実行します。ラッパーなしのインタビューが欲しいときだけ、直接それに手を伸ばしてください。
+- **`/resolving-merge-conflicts-matt-ryu`** は、進行中のマージまたはリベースのコンフリクトをハンクごとに処理し、行を選ぶのではなく各側の主要なソースに追跡された**意図**によって解決し、その操作を完了します。`--abort` を実行することはありません。スタンドアロンで、すべてのフローから外れて使用します：すでに中間のコンフリクトにあるときに、それを使ってください。
+- **`/prototype-matt-ryu`** は小さな使い捨てプログラムで、ひとつのデザイン上の質問に答えます：この状態モデルは適切に感じられるか、あるいはこのUIはどのように見えるべきか。使い捨てとはコードの書き方に関する制約であり、破棄を約束するものではありません：その答えは実際のコードに取り入れられ、プロトタイプ自体は main から派生した `prototype/<name>` ブランチ上の **一次資料** として保持され、実装課題から参照されます。これはメインのフローのステップ2における迂回路ですが、紙上でデザイン上の判断が難しいときはいつでも取り出せます。
+- **`/research-matt-ryu`**: 読書作業を**バックグラウンドエージェント**に委任する：エージェントは**一次資料**をもとに質問を調査し、その後リポジトリに引用付きのMarkdownファイルを残す。読みながら作業を続ける。エージェントが作成するファイルは`/grill-with-docs-matt-ryu`でメインフローに*取り込む*ものであり、研究は思考を置き換えるのではなく、思考を支えるためのものである。
+- **`/to-questionnaire-matt-ryu`** は、あなたを妨げているものが自分の頭やコードベースではなく、**他の誰かの**中にある場合に登場し、その人に記入してもらうアンケートを書きます。これは `/grill-me-matt-ryu` の逆です：主題についてあなたにインタビューする代わりに、**送信先**（誰に送るか、何を返してもらう必要があるか）についてあなたにインタビューし、そのギャップに質問を向けます。戻ってくるものは `/grill-with-docs-matt-ryu` や `/to-spec-matt-ryu` のための材料となります。
+- **`/wizard-matt-ryu`** は、人間だけが実行できるステップのためのものです：インフラのプロビジョニング、認証情報やCIシークレットの設定、馴染みのないサードパーティのダッシュボードでのクリック操作、単発のマイグレーションやカットオーバーの実行などです。これはインタラクティブなBashスクリプトを生成し、各URLを開き、各値を取得して、`.env`とGitHubシークレットに書き込みます。そのため、この手順をエージェントに毎回説明する必要がなくなります。モデルが呼び出すので、エージェントは自分では通過できない壁にぶつかった瞬間にこれを使います。もしエージェント自身がそれを実行できるなら実行すべきですが、これは人間が実際に関与する必要がある場合のためのものです。
+- **`/wait-what-matt-ryu`** は、伝わらなかったメッセージを修正するためのものです。会話の途中、他のスキルの中でも使用でき、エージェントはあなたが欠けていた文脈を踏まえて、先ほど言ったことを平易な英語で、`CONTEXT.md` の語彙を使って言い直します。事後的に効果があります；`/grill-with-docs-matt-ryu` は事前の対策で、早い段階で共通の言語に合意しておくことで、専門用語が最初から伝わらないことを防ぎます。
+- **`/teach-matt-ryu`**: 現在のディレクトリをステートフルな作業スペースとして使用し、複数のセッションにわたって概念を学習します。
+- **`/writing-for-agents-matt-ryu`**: エージェントが利用するドキュメントを書くためのリファレンスです：スキル、AGENTS.md、参照されたドキュメント。
 
-## Precondition
+## 前提条件
 
-**`/setup-matt-pocock-skills`**: run before your first engineering flow to configure the issue tracker, triage labels, and doc layout the other skills assume. Custom issue trackers also work.
+**`/setup-matt-pocock-skills-matt-ryu`**: 最初のエンジニアリングフローを実行する前に、課題トラッカー、ラベルの仕分け、および他のスキルが前提とするドキュメントのレイアウトを設定します。カスタムの課題トラッカーも使用可能です。

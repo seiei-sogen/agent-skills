@@ -1,5 +1,5 @@
 interface:
-  display_name: "To Questionnaire"
-  short_description: "Front-load questions into a doc for someone to answer"
+  display_name: "アンケートへ"
+  short_description: "誰かが答えるために、質問を最初に文書にまとめる"
 policy:
   allow_implicit_invocation: false

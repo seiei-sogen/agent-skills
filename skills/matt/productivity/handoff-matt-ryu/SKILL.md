@@ -1,16 +1,16 @@
 ---
 name: handoff-matt-ryu
-description: Compact the current conversation into a handoff document for another agent to pick up.
-argument-hint: "What will the next session be used for?"
+description: 現在の会話を別のエージェントが引き継げる引き継ぎ文書にまとめる。
+argument-hint: "次のセッションは何に使われますか？"
 disable-model-invocation: true
 ---
 
-Write a handoff document summarising the current conversation so a fresh agent can continue the work. Save to the temporary directory of the user's OS - not the current workspace.
+現在の会話を要約したハンドオフ文書を作成し、新しいエージェントが作業を引き継げるようにしてください。その文書は、現在のワークスペースではなく、ユーザーのOSの一時ディレクトリに保存してください。
 
-Include a "suggested skills" section in the document, naming which skills the next agent should call the Skill tool for.
+文書には「推奨スキル」セクションを含め、次のエージェントがどのスキルを Skill ツールで呼び出すべきかを記載してください。
 
-Do not duplicate content already captured in other artifacts (specs, plans, ADRs, issues, commits, diffs). Reference them by path or URL instead.
+他の成果物（仕様書、計画、ADR、課題、コミット、差分）ですでに取得されている内容を重複して記載しないでください。代わりにパスやURLで参照してください。
 
-Redact any sensitive information, such as API keys, passwords, or personally identifiable information.
+APIキー、パスワード、個人を特定できる情報などの機密情報は伏せてください。
 
-If the user passed arguments, treat them as a description of what the next session will focus on and tailor the doc accordingly.
+ユーザーが引数を渡した場合、それを次のセッションが何に焦点を当てるかの説明として扱い、それに応じてドキュメントを調整してください。

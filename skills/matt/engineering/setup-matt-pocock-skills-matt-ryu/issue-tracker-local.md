@@ -1,30 +1,30 @@
-# Issue tracker: Local Markdown
+# 課題トラッカー: ローカルMarkdown
 
-Issues and specs for this repo live as markdown files in `.scratch/`.
+このリポジトリの課題と仕様は`.scratch/`のMarkdownファイルとして管理されています。
 
-## Conventions
+## 規約
 
-- One feature per directory: `.scratch/<feature-slug>/`
-- The spec is `.scratch/<feature-slug>/spec.md`
-- Implementation issues are one file per ticket at `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01`, never a single combined tickets file
-- Triage state is recorded as a `Status:` line near the top of each issue file (see `triage-labels.md` for the role strings)
-- Comments and conversation history append to the bottom of the file under a `## Comments` heading
+- ディレクトリごとに1つの機能: `.scratch/<feature-slug>/`
+- 仕様は`.scratch/<feature-slug>/spec.md`
+- 実装に関する課題はチケットごとに1ファイルで`.scratch/<feature-slug>/issues/<NN>-<slug>.md`にあり、`01`から番号が付けられ、複数のチケットをまとめた単一ファイルは存在しません
+- トリアージ状態は、各課題ファイルの上部近くに `Status:` 行として記録されます（役割文字列については `triage-labels.md` を参照してください）
+- コメントと会話履歴は、`## Comments` 見出しの下でファイルの下部に追加されます
 
-## When a skill says "publish to the issue tracker"
+## スキルが「課題トラッカーに公開する」と言う場合
 
-Create a new file under `.scratch/<feature-slug>/` (creating the directory if needed).
+`.scratch/<feature-slug>/` の下に新しいファイルを作成します（必要に応じてディレクトリを作成します）。
 
-## When a skill says "fetch the relevant ticket"
+## スキルが「関連するチケットを取得する」と言う場合
 
-Read the file at the referenced path. The user will normally pass the path or the issue number directly.
+参照されたパスのファイルを読み込みます。ユーザーは通常、パスまたは問題番号を直接渡します。
 
-## Wayfinding operations
+## 道案内の操作
 
-Used by `/wayfinder`. The **map** is a file with one **child** file per ticket.
+`/wayfinder-matt-ryu`によって使用されます。**マップ**はチケットごとに1つの**子**ファイルを持つファイルです。
 
-- **Map**: `.scratch/<effort>/map.md` (the Notes / Decisions-so-far / Fog body).
-- **Child ticket**: `.scratch/<effort>/issues/NN-<slug>.md`, numbered from `01`, with the question in the body. A `Type:` line records the ticket type (`research`/`prototype`/`grilling`/`task`); a `Status:` line records `claimed`/`resolved`.
-- **Blocking**: a `Blocked by: NN, NN` line near the top. A ticket is unblocked when every file it lists is `resolved`.
-- **Frontier**: scan `.scratch/<effort>/issues/` for files that are open, unblocked, and unclaimed; first by number wins.
-- **Claim**: set `Status: claimed` and save before any work.
-- **Resolve**: append the answer under an `## Answer` heading, set `Status: resolved`, then append a context pointer (gist + link) to the map's Decisions-so-far in `map.md`.
+- **マップ**: `.scratch/<effort>/map.md`（メモ / これまでの決定 / フォグ本文）。
+- **子供用チケット**: `.scratch/<effort>/issues/NN-<slug>.md`、`01`から番号が振られ、本文に質問が含まれています。`Type:`行はチケットの種類（`research`/`prototype`/`grilling`/`task`）を記録します；`Status:`行は`claimed`/`resolved`を記録します。
+- **ブロッキング**: 上部近くの`Blocked by: NN, NN`行。チケットは、リストされているすべてのファイルが`resolved`されるとブロック解除されます。
+- **フロンティア**: `.scratch/<effort>/issues/` をスキャンして、開いている、ブロックされていない、かつ未請求のファイルを探します。番号が最初のものが勝ちです。
+- **クレーム**: 作業前に `Status: claimed` を設定して保存します。
+- **解決**: `## Answer` 見出しの下に答えを追加し、`Status: resolved` を設定してから、`map.md` のマップの「これまでの決定」へのコンテキストポインタ（gist + リンク）を追加します。
