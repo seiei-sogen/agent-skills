@@ -28,7 +28,7 @@ description: TypeScript または JavaScript の変更から、防御的な過�
 
 - 型注釈、`unknown`、`any`、`Record`、`Partial`、型アサーション、実行時ガード、バリデーション、型変換、オプショナルな値、キューのペイロード、HTTP 入力、データベースのドキュメントを変更している場合は、[types-and-boundaries.md](references/types-and-boundaries.md) を読む。
 - ヘルパー、ラッパー、DTO、マッパー、インターフェース、レイヤー、ジェネリクス、ファクトリー、コールバック、Promise のラッパー、クラス、共通ユーティリティを変更している場合は、[abstractions.md](references/abstractions.md) を読む。
-- 真偽値の分岐、ネストした条件、三項演算子、中間変数、`try/catch`、エラーのラップ、ログ、コメント、暗黙のフォールバックを変更している場合は、[control-flow-and-errors.md](references/control-flow-and-errors.md) を読む。
+- 真偽値の分岐、ネストした条件、三項演算子、中間変数、`try/catch`、エラーのラップ、ログ、暗黙のフォールバックを変更している場合は、[control-flow-and-errors.md](references/control-flow-and-errors.md) を読む。
 - 手書きの型チェック、型ガード、フォームバリデーション、3つ以上の判定を含む `if` 条件を変更している場合は、[ai-slop-type-check-condition-fixer](../ai-slop-type-check-condition-fixer/SKILL.md) も適用する。
 
 ## 3. 優先順位に従って簡潔にする
@@ -64,4 +64,8 @@ description: TypeScript または JavaScript の変更から、防御的な過�
 3. 信頼できないデータが一度だけ検証され、内部値が正確な型を保ち、削除した抽象化の呼び出し元が残っていないことを確認する。
 4. 最終差分が作業開始時より簡潔で、無関係な修正を含まないことを確認する。
 
-簡潔にした箇所、意図的に残した防御処理、実行した検証コマンドとその結果を報告する。
+## 6. TSDoc をレビュー・修正する
+
+[anti-ai-slop-tsdoc-fixer](../anti-ai-slop-tsdoc-fixer/SKILL.md) を読み、適用する。現在のブランチで追加・変更した関数、schema、オブジェクト、定数について、コメントがないものには追加し、形式が規約に合わないものは修正する。
+
+コメント修正後の差分を確認し、必要な formatter・lint を実行する。簡潔にした箇所、意図的に残した防御処理、コメントを追加・修正した定義、実行した検証コマンドとその結果を報告する。
