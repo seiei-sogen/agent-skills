@@ -15,7 +15,7 @@ description: 更新済みの AsciiDoc 要件定義書と事前調査 JSON から
 各工程を始める前に、対応する `SKILL.md` を最後まで読む。
 
 - `poteto-mode-start`
-- `grilling-jp`
+- `grilling-matt-p`
 - `quality-gated-review-improve`
 
 子スキルが見つからない場合は同等手順で代替せず、見つからないスキル名を報告して停止する。
@@ -46,7 +46,7 @@ implementation-plan-<issue-token>-<topic>.adoc
 
 ## 実装計画を生成する
 
-要件定義書と調査レポートを入力に `grilling-jp` を使う。
+要件定義書と調査レポートを入力に `grilling-matt-p` を使う。
 この工程では、同スキルの「1問ずつユーザー回答を待つ」を次の自動モードへ置き換える。
 
 1. 事実で解消できる論点は、調査レポートと必要最小限の追加調査で解消する。
