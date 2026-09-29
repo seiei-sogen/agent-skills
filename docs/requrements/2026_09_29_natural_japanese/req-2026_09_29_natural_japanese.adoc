@@ -779,7 +779,7 @@ AC-12 から AC-18 は SKILL.md と openai.yaml を読んでレビューする�
 
 いずれも実装を止めない。要件は未確定のまま安全側に倒した形で書いている。
 
-* KWJA の言語素性に敬語、語種（外来語）、話し言葉を示す素性があるかは未確認である。確認方法は `skills/natural-japanese/japanese-kwja-analyze/scripts/analyze.sh` を敬語と外来語を含む短文で実行し、素性タグを読むこと。素性がなければ該当規則は `LLM` 出所として判定する（例外と失敗時の挙動を参照）。
+* KWJA の言語素性に敬語、語種（外来語）、話し言葉を示す素性があるかは未確認である。KWJA 2.5.1 は導入済みだがモデル重みが未キャッシュで、初回実行時のダウンロード（`lotus.kuee.kyoto-u.ac.jp`）が本調査の環境では通信を許可されず実行できなかった。確認方法は、通信を許可した環境で `skills/natural-japanese/japanese-kwja-analyze/scripts/analyze.sh` を敬語・外来語・受身を含む短文で実行し、形態素行と素性タグを読むこと。素性がなければ該当規則は `LLM` 出所として判定する（例外と失敗時の挙動を参照）。
 * analyzer の `issues[].code` の語彙がコミット `f8f85a4` で消えた理由が意図的か不明である。確認方法は作者への確認。本件では analyzer を変更せず、規則 ID は親の `rewrite_targets` に置く（D-04）。
 * `references/detailed-rules.md:214` の「一文ごとに改行する」を既定として維持する意図があるか不明である。確認方法はユーザーへの確認。本件では当該行を変更せず、`output.line-break-each-line` の既定を `not-applicable` とする（D-08）。
 * 利用環境の nix 再ビルドの時期は不明である。旧スキルの symlink が残る間は旧スキルも起動し得る。運用上の注意として記載した。

@@ -355,7 +355,7 @@
     { "action": "risk", "description": "旧スキルは修正後に全規則を再確認する手順を持つが、マージ先の Phase 5 はデストロイモードで意味回帰検査を行わない。再照合を両モード共通にしないと、セーフモードの出力へ再適用したときに新たな actionable が出て収束しない。", "basis": ["skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:56", "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:166"], "confidence": "inferred" }
   ],
   "open_questions": [
-    "KWJA の言語素性に敬語、語種(外来語)、話し言葉を示す素性があるかは未確認。影響: honorific.* と word-choice.limit-loanwords-and-foreign-words、話し言葉系2規則の手がかりが KWJA 由来か LLM 判断かが決まらない。調査済み範囲: skills/natural-japanese/japanese-kwja-analyze/SKILL.md には素性名の列挙がない。次の確認先: scripts/analyze.sh を敬語と外来語を含む短文で実行し、素性タグを読む。要件では両規則を LLM 判断でも成立する形で定義する。",
+    "KWJA の言語素性に敬語、語種(外来語)、話し言葉を示す素性があるかは未確認。影響: honorific.* と word-choice.limit-loanwords-and-foreign-words、話し言葉系2規則の手がかりが KWJA 由来か LLM 判断かが決まらない。調査済み範囲: skills/natural-japanese/japanese-kwja-analyze/SKILL.md には素性名の列挙がない。KWJA 2.5.1 は /home/agir_wsl/.local/bin/kwja に導入済みだが、モデル重みが未キャッシュで、初回実行が lotus.kuee.kyoto-u.ac.jp からのダウンロードを要求し、サンドボックスの外向き通信で拒否されたため実行できなかった。次の確認先: ネットワークを許可した環境で scripts/analyze.sh を敬語・外来語・受身を含む短文で実行し、形態素行と素性タグを読む。要件では両規則を LLM 判断でも成立する形で定義する。",
     "analyzer の issues[].code から9種の問題コード表が消えた理由(f8f85a4)が意図的か不明。影響: 規則 ID を issues に載せるか、別欄に置くかの根拠。調査済み範囲: why.sources_consulted の source_control。次の確認先: 作者への確認。要件ではこの変更で analyzer を触らず、規則 ID は親の Phase 3 の記録に置く。",
     "detailed-rules.md 214行目の「一文ごとに改行する」を現行の既定として維持する意図があるか不明。影響: output.line-break-each-line の既定状態。調査済み範囲: マージ先 SKILL.md には改行方針の記述がなく、行分割は別スキルに分かれている。次の確認先: ユーザーの意図。要件では規則側の既定を not-applicable とし、detailed-rules.md の当該行は変更しない。",
     "利用環境の nix 再ビルドは誰がいつ行うか不明。影響: 旧スキルの symlink が残り、削除後も起動し得る。調査済み範囲: ~/.claude/skills の symlink 先。次の確認先: ユーザーの nix 設定。要件では運用上の注意として記載する。",
