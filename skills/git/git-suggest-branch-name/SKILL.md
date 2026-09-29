@@ -1,5 +1,5 @@
 ---
-name: suggest-git-branch-name
+name: git-suggest-branch-name
 description: issue 番号と変更内容から、frontend/backend と変更種別を判定し、所定の形式で Git ブランチ名を提案する。ユーザーが「ブランチ名を考えて」「この issue からブランチ名を付けて」など、作業内容に合うブランチ名を求めたときに使う。
 ---
 

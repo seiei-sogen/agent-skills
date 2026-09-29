@@ -25,7 +25,7 @@ description: 既存の AsciiDoc 要件定義書 req-*.adoc、または GitHub is
 
 差分に TypeScript または JavaScript が含まれる場合だけ、`anti-ai-slop-typescript-general` も利用できることを確認し、Phase 5 を始める前にその `SKILL.md` を最後まで読む。
 
-GitHub issue URL を入力にする場合だけ、`suggest-git-branch-name` も利用できることを確認し、issue 初期化を始める前にその `SKILL.md` を最後まで読む。
+GitHub issue URL を入力にする場合だけ、`git-suggest-branch-name` も利用できることを確認し、issue 初期化を始める前にその `SKILL.md` を最後まで読む。
 
 指示が衝突する場合は、現在のユーザー指示、この親スキルの段階固有の指示、子スキルの通常指示の順に優先する。子スキルが見つからなければ、その工程を同等手順で代替せず、見つからないスキル名を報告して停止する。
 

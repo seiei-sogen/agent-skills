@@ -1,0 +1,4 @@
+interface:
+  display_name: "git-suggest-branch-name"
+  short_description: "issue 番号と変更内容から所定形式のブランチ名を提案します"
+  default_prompt: "$git-suggest-branch-name を使って、入力した issue 番号と変更内容から Git ブランチ名を提案してください。"
