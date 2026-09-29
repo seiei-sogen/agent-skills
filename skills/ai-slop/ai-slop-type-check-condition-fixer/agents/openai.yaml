@@ -1,4 +1,0 @@
-interface:
-  display_name: "ai-slop-type-check-condition-fixer"
-  short_description: "手書きの型判定と複雑な条件式を簡潔で読みやすく修正"
-  default_prompt: "$ai-slop-type-check-condition-fixer を使って、このブランチの型判定と複雑な条件式を修正してください。"

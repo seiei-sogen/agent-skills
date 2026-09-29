@@ -29,7 +29,7 @@ description: TypeScript または JavaScript の変更から、防御的な過�
 - 型注釈、`unknown`、`any`、`Record`、`Partial`、型アサーション、実行時ガード、バリデーション、型変換、オプショナルな値、キューのペイロード、HTTP 入力、データベースのドキュメントを変更している場合は、[types-and-boundaries.md](references/types-and-boundaries.md) を読む。
 - ヘルパー、ラッパー、DTO、マッパー、インターフェース、レイヤー、ジェネリクス、ファクトリー、コールバック、Promise のラッパー、クラス、共通ユーティリティを変更している場合は、[abstractions.md](references/abstractions.md) を読む。
 - 真偽値の分岐、ネストした条件、三項演算子、中間変数、`try/catch`、エラーのラップ、ログ、暗黙のフォールバックを変更している場合は、[control-flow-and-errors.md](references/control-flow-and-errors.md) を読む。
-- 手書きの型チェック、型ガード、フォームバリデーション、3つ以上の判定を含む `if` 条件を変更している場合は、[ai-slop-type-check-condition-fixer](../ai-slop-type-check-condition-fixer/SKILL.md) も適用する。
+- 手書きの型チェック、型ガード、フォームバリデーション、3つ以上の判定を含む `if` 条件を変更している場合は、[anti-ai-slop-type-check-condition-fixer](../anti-ai-slop-type-check-condition-fixer/SKILL.md) も適用する。
 
 ## 3. 優先順位に従って簡潔にする
 

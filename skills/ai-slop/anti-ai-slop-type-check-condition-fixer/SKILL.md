@@ -1,5 +1,5 @@
 ---
-name: ai-slop-type-check-condition-fixer
+name: anti-ai-slop-type-check-condition-fixer
 description: 現在の Git ブランチの変更を調べ、手書きの型チェック、型ガード、フォームバリデーション、条件式をスキーマまたは説明的な名前へ置き換えて簡潔にする。変更差分にある型判定や、3条件以上を含む if 文を修正するときに使う。
 ---
 
