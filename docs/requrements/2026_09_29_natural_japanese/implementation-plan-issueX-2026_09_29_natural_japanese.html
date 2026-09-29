@@ -1,0 +1,2840 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data: https: http:; style-src 'unsafe-inline'; font-src 'self' data:;">
+  <meta name="generator" content="asciidoc-to-colorful-html">
+  <title>岩淵48規則の natural-japanese-rewriter への統合 実装計画</title>
+  <style>
+/*
+ * Standalone Asciidoctor theme.
+ * The palette and document treatments are adapted from
+ * document-base/supplemental-ui/css/custom.css.
+ */
+
+:root {
+  color-scheme: light;
+  --color-ink: #23354a;
+  --color-muted: #607286;
+  --color-primary: #176b87;
+  --color-primary-dark: #123f5d;
+  --color-primary-soft: #e9f5f7;
+  --color-secondary: #6d52a3;
+  --color-secondary-soft: #f1edfa;
+  --color-accent: #d98716;
+  --color-positive: #2f805d;
+  --color-danger: #b64c55;
+  --color-border: #c9d9e3;
+  --color-code-bg: #f3f6f8;
+  --color-surface: #ffffff;
+  --shadow-page: 0 1.4rem 4rem rgb(25 64 88 / 15%);
+  --shadow-soft: 0 0.25rem 1rem rgb(31 75 98 / 9%);
+  --radius-large: 1rem;
+  --radius-medium: 0.55rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 20rem;
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--color-ink);
+  background:
+    radial-gradient(circle at 12% 8%, rgb(64 176 174 / 18%), transparent 28rem),
+    radial-gradient(circle at 88% 12%, rgb(126 93 184 / 13%), transparent 25rem),
+    linear-gradient(145deg, #eef7f8 0%, #f8f7fc 52%, #fff8ed 100%);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP",
+    "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+::selection {
+  color: #142b3c;
+  background: #bde8ed;
+}
+
+.page-frame {
+  width: min(74rem, calc(100% - 2rem));
+  margin: 2.5rem auto;
+}
+
+.doc {
+  position: relative;
+  min-width: 0;
+  padding: clamp(1.4rem, 4vw, 4rem);
+  overflow-wrap: anywhere;
+  border: 1px solid rgb(195 216 226 / 85%);
+  border-radius: var(--radius-large);
+  background: #fff;
+  box-shadow: var(--shadow-page);
+}
+
+.doc::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 0.38rem;
+  border-radius: var(--radius-large) var(--radius-large) 0 0;
+  background: linear-gradient(90deg, var(--color-primary), #43a6a1 48%, var(--color-secondary));
+  content: "";
+}
+
+.doc h1,
+.doc h2,
+.doc h3,
+.doc h4,
+.doc h5,
+.doc h6 {
+  color: var(--color-primary-dark);
+  font-weight: 750;
+  line-height: 1.4;
+  letter-spacing: 0.015em;
+  scroll-margin-top: 1.5rem;
+}
+
+.doc h1,
+.doc #header > h1 {
+  margin: 0 0 2.3rem;
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: 0.025em;
+}
+
+.doc h1::after,
+.doc #header > h1::after {
+  display: block;
+  width: 5.4rem;
+  height: 0.32rem;
+  margin-top: 0.8rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-primary), #43a6a1, var(--color-secondary));
+  content: "";
+}
+
+.doc h2 {
+  margin: 2.8rem 0 1.2rem;
+  padding: 0.68rem 1rem 0.68rem 1.1rem;
+  border-left: 0.34rem solid var(--color-primary);
+  border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
+  background: linear-gradient(90deg, var(--color-primary-soft), #f8fbfc 72%, transparent);
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+}
+
+.doc h3 {
+  margin: 2.25rem 0 0.9rem;
+  padding-bottom: 0.38rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: clamp(1.22rem, 2.3vw, 1.5rem);
+}
+
+.doc h4 {
+  margin: 1.8rem 0 0.7rem;
+  color: #285d72;
+  font-size: 1.14rem;
+}
+
+.doc h5,
+.doc h6 {
+  margin: 1.5rem 0 0.55rem;
+  font-size: 1rem;
+}
+
+.doc p,
+.doc li,
+.doc dd {
+  line-height: 1.82;
+}
+
+.doc p {
+  margin: 0.8rem 0 1rem;
+}
+
+.doc a {
+  color: #086f91;
+  text-decoration-color: #76adbd;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+.doc a:hover {
+  color: #084f70;
+  text-decoration-color: currentcolor;
+}
+
+.doc ul,
+.doc ol {
+  padding-left: 1.55rem;
+}
+
+.doc li + li {
+  margin-top: 0.28rem;
+}
+
+.doc li::marker {
+  color: var(--color-primary);
+  font-weight: 750;
+}
+
+.doc dl dt {
+  margin-top: 1rem;
+  color: var(--color-primary-dark);
+  font-weight: 750;
+}
+
+.doc hr {
+  height: 1px;
+  margin: 2.4rem 0;
+  border: 0;
+  background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+}
+
+.doc #toc,
+.doc .toc {
+  margin: 1.6rem 0 2.2rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid #cddde5;
+  border-radius: var(--radius-medium);
+  background: linear-gradient(135deg, #f1f9fa, #f7f4fc);
+  box-shadow: var(--shadow-soft);
+}
+
+.doc #toctitle {
+  margin-bottom: 0.45rem;
+  color: var(--color-primary-dark);
+  font-weight: 800;
+}
+
+.doc #toc ul {
+  margin: 0.3rem 0;
+}
+
+.doc table.tableblock {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 1.6rem 0 1.9rem;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  border-collapse: collapse;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.doc table.tableblock thead {
+  color: #fff;
+  background: linear-gradient(90deg, var(--color-primary-dark), var(--color-primary));
+}
+
+.doc table.tableblock th,
+.doc table.tableblock td {
+  padding: 0.72rem 0.85rem;
+  border: 1px solid #d7e2e8;
+  text-align: left;
+  vertical-align: top;
+}
+
+.doc table.tableblock th {
+  font-weight: 750;
+}
+
+.doc table.tableblock tbody tr:nth-child(even) {
+  background: #f5f9fa;
+}
+
+.doc table.tableblock tbody tr:hover {
+  background: #edf6f7;
+}
+
+.doc :not(pre) > code,
+.doc kbd {
+  padding: 0.12em 0.4em;
+  border: 1px solid #d6e0e6;
+  border-radius: 0.3rem;
+  color: #87421f;
+  background: var(--color-code-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+.doc kbd {
+  color: #36495a;
+  background: linear-gradient(#fff, #edf1f4);
+  box-shadow: 0 0.12rem 0 #c3ced5;
+}
+
+.doc pre {
+  max-width: 100%;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid #cbd8df;
+  border-left: 0.26rem solid var(--color-primary);
+  border-radius: var(--radius-medium);
+  color: #213446;
+  background: #f4f7f9;
+  box-shadow: var(--shadow-soft);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+  line-height: 1.62;
+  tab-size: 4;
+}
+
+.doc pre code {
+  display: block;
+  padding: 1rem 1.1rem;
+  color: inherit;
+  background: transparent;
+}
+
+.doc .listingblock,
+.doc .literalblock {
+  margin: 1.35rem 0 1.65rem;
+}
+
+.doc .quoteblock blockquote {
+  margin: 1.4rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 0.32rem solid #5b9da5;
+  border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
+  color: #40566a;
+  background: #f2f8f8;
+}
+
+.doc .quoteblock .attribution {
+  margin-top: -0.9rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.doc .sidebarblock,
+.doc .exampleblock > .content {
+  margin: 1.5rem 0;
+  padding: 1rem 1.2rem;
+  border: 1px solid #d8d0e8;
+  border-radius: var(--radius-medium);
+  background: linear-gradient(135deg, #faf8ff, var(--color-secondary-soft));
+  box-shadow: var(--shadow-soft);
+}
+
+.doc .admonitionblock {
+  margin: 1.5rem 0;
+  overflow: hidden;
+  border: 1px solid #c8dce2;
+  border-left: 0.32rem solid var(--color-primary);
+  border-radius: var(--radius-medium);
+  background: #f5fafb;
+  box-shadow: var(--shadow-soft);
+}
+
+.doc .admonitionblock > table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+}
+
+.doc .admonitionblock td.icon {
+  width: 7.5rem;
+  padding: 0.95rem 0.75rem;
+  color: var(--color-primary-dark);
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.doc .admonitionblock td.content {
+  padding: 0.95rem 1rem;
+  border-left: 1px solid rgb(188 211 221 / 85%);
+  background: transparent;
+}
+
+.doc .admonitionblock.tip {
+  border-left-color: var(--color-positive);
+  background: #f0faf5;
+}
+
+.doc .admonitionblock.warning,
+.doc .admonitionblock.caution {
+  border-left-color: var(--color-accent);
+  background: #fff9ed;
+}
+
+.doc .admonitionblock.important {
+  border-left-color: var(--color-danger);
+  background: #fff5f5;
+}
+
+.doc .imageblock {
+  margin: 1.75rem 0 2rem;
+  text-align: center;
+}
+
+.doc img,
+.doc svg,
+.doc video {
+  max-width: 100%;
+  height: auto;
+}
+
+.doc .imageblock img {
+  border: 1px solid #d5e0e5;
+  border-radius: var(--radius-medium);
+  background: #fff;
+  box-shadow: 0 0.4rem 1.2rem rgb(31 75 98 / 12%);
+}
+
+.doc .title,
+.doc .imageblock > .title,
+.doc .listingblock > .title,
+.doc .tableblock > .title {
+  margin: 0.45rem 0;
+  color: var(--color-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.doc mark {
+  padding: 0.08em 0.2em;
+  border-radius: 0.2rem;
+  color: inherit;
+  background: #ffeca8;
+}
+
+.doc details {
+  margin: 1rem 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: #fbfdfd;
+}
+
+.doc summary {
+  color: var(--color-primary-dark);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.doc #footnotes {
+  margin-top: 3rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 0.92rem;
+}
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 0.18rem solid #fff;
+  outline-offset: 0.12rem;
+  box-shadow: 0 0 0 0.34rem #0b5e7a;
+}
+
+@media screen and (max-width: 768px) {
+  .page-frame {
+    width: min(100% - 1rem, 74rem);
+    margin: 0.5rem auto;
+  }
+
+  .doc {
+    padding: 1.35rem 1rem 2rem;
+    border-radius: 0.75rem;
+    font-size: 0.98rem;
+  }
+
+  .doc h1,
+  .doc #header > h1 {
+    margin-bottom: 1.8rem;
+    font-size: 1.85rem;
+  }
+
+  .doc h2 {
+    margin-top: 2.2rem;
+    padding: 0.58rem 0.72rem;
+    font-size: 1.38rem;
+  }
+
+  .doc h3 {
+    font-size: 1.2rem;
+  }
+
+  .doc table.tableblock th,
+  .doc table.tableblock td {
+    min-width: 7rem;
+    padding: 0.58rem 0.65rem;
+  }
+
+  .doc .admonitionblock > table,
+  .doc .admonitionblock > table > tbody,
+  .doc .admonitionblock > table > tbody > tr,
+  .doc .admonitionblock td {
+    display: block;
+    width: 100%;
+  }
+
+  .doc .admonitionblock td.icon {
+    padding-bottom: 0.25rem;
+    text-align: left;
+  }
+
+  .doc .admonitionblock td.content {
+    border-top: 1px solid rgb(188 211 221 / 85%);
+    border-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+@media print {
+  @page {
+    margin: 15mm;
+  }
+
+  body {
+    color: #111;
+    background: #fff;
+    font-size: 10.5pt;
+  }
+
+  .page-frame {
+    width: auto;
+    margin: 0;
+  }
+
+  .doc {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .doc::before {
+    display: none;
+  }
+
+  .doc h1,
+  .doc h2,
+  .doc h3,
+  .doc h4,
+  .doc h5,
+  .doc h6 {
+    color: #111;
+    break-after: avoid;
+  }
+
+  .doc h2 {
+    border-left-color: #555;
+    background: none;
+  }
+
+  .doc table.tableblock,
+  .doc pre,
+  .doc .admonitionblock,
+  .doc .imageblock img,
+  .doc #toc,
+  .doc .sidebarblock,
+  .doc .exampleblock > .content {
+    box-shadow: none;
+  }
+
+  .doc table.tableblock thead {
+    color: #111;
+    background: #eee;
+  }
+
+  .doc pre,
+  .doc table,
+  .doc .admonitionblock,
+  .doc .imageblock {
+    break-inside: avoid;
+  }
+
+  .doc a {
+    color: inherit;
+    text-decoration: underline;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div class="page-frame">
+    <article class="doc">
+<h1>岩淵48規則の natural-japanese-rewriter への統合 実装計画</h1>
+<div id="toc" class="toc">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_計画の状態">1. 計画の状態</a></li>
+<li><a href="#_要件サマリと対象外">2. 要件サマリと対象外</a>
+<ul class="sectlevel2">
+<li><a href="#_要件サマリ">2.1. 要件サマリ</a></li>
+<li><a href="#_対象外">2.2. 対象外</a></li>
+</ul>
+</li>
+<li><a href="#_技術方針と既存パターン">3. 技術方針と既存パターン</a>
+<ul class="sectlevel2">
+<li><a href="#_技術方針">3.1. 技術方針</a></li>
+<li><a href="#_既存パターン">3.2. 既存パターン</a></li>
+<li><a href="#_方式比較_id_表の形式">3.3. 方式比較: ID 表の形式</a></li>
+<li><a href="#_破綻条件と検証項目">3.4. 破綻条件と検証項目</a></li>
+</ul>
+</li>
+<li><a href="#_自動壁打ちで採用した判断">4. 自動壁打ちで採用した判断</a></li>
+<li><a href="#_統合後の_skill_md_の節構成と行数見積もり">5. 統合後の SKILL.md の節構成と行数見積もり</a></li>
+<li><a href="#_変更対象一覧">6. 変更対象一覧</a></li>
+<li><a href="#_実装タスク">7. 実装タスク</a>
+<ul class="sectlevel2">
+<li><a href="#_task_1_id_表を_skill_md_本体に新設する">7.1. Task 1: ID 表を SKILL.md 本体に新設する</a></li>
+<li><a href="#_task_2_description_と出力モードの判定を更新する">7.2. Task 2: description と出力モードの判定を更新する</a></li>
+<li><a href="#_task_3_モードごとの規則の扱いを書く">7.3. Task 3: モードごとの規則の扱いを書く</a></li>
+<li><a href="#_task_4_phase_3_に規則の状態判定を加える">7.4. Task 4: Phase 3 に規則の状態判定を加える</a></li>
+<li><a href="#_task_5_phase_5_に再照合を加える">7.5. Task 5: Phase 5 に再照合を加える</a></li>
+<li><a href="#_task_6_phase_6_に出力形式を統合する">7.6. Task 6: Phase 6 に出力形式を統合する</a></li>
+<li><a href="#_task_7_openai_yaml_の_short_description_を更新する">7.7. Task 7: openai.yaml の short_description を更新する</a></li>
+<li><a href="#_task_8_旧ディレクトリを削除する">7.8. Task 8: 旧ディレクトリを削除する</a></li>
+<li><a href="#_task_9_全体を検証し文書へ反映する">7.9. Task 9: 全体を検証し、文書へ反映する</a></li>
+</ul>
+</li>
+<li><a href="#_補助スクリプト">8. 補助スクリプト</a>
+<ul class="sectlevel2">
+<li><a href="#_id_表の生成スクリプトtask_1">8.1. ID 表の生成スクリプト（Task 1）</a></li>
+<li><a href="#_受け入れ条件の検査スクリプトac_03ac_06ac_07ac_09ac_11">8.2. 受け入れ条件の検査スクリプト（AC-03、AC-06、AC-07、AC-09、AC-11）</a></li>
+</ul>
+</li>
+<li><a href="#_テスト検証計画">9. テスト・検証計画</a>
+<ul class="sectlevel2">
+<li><a href="#_前提">9.1. 前提</a></li>
+<li><a href="#_検証コマンド">9.2. 検証コマンド</a></li>
+<li><a href="#_受け入れ条件の対応表">9.3. 受け入れ条件の対応表</a></li>
+<li><a href="#_検証シナリオの対応表">9.4. 検証シナリオの対応表</a></li>
+<li><a href="#_文書品質">9.5. 文書品質</a></li>
+</ul>
+</li>
+<li><a href="#_実装結果と検証結果">10. 実装結果と検証結果</a>
+<ul class="sectlevel2">
+<li><a href="#_実装結果">10.1. 実装結果</a></li>
+<li><a href="#_検証コマンドの結果">10.2. 検証コマンドの結果</a></li>
+<li><a href="#_検証シナリオのレビュー結果">10.3. 検証シナリオのレビュー結果</a></li>
+<li><a href="#_計画からの調整">10.4. 計画からの調整</a></li>
+</ul>
+</li>
+<li><a href="#_移行互換性ロールバック運用">11. 移行、互換性、ロールバック、運用</a>
+<ul class="sectlevel2">
+<li><a href="#_移行と互換性">11.1. 移行と互換性</a></li>
+<li><a href="#_ロールバック">11.2. ロールバック</a></li>
+<li><a href="#_運用上の作業">11.3. 運用上の作業</a></li>
+</ul>
+</li>
+<li><a href="#_リスクと軽減策">12. リスクと軽減策</a></li>
+<li><a href="#_判断から学べること">13. 判断から学べること</a></li>
+<li><a href="#_完了条件">14. 完了条件</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="_計画の状態">1. 計画の状態</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>実装済みの計画である。Task 1〜9 はすべて完了し、検証結果は「実装結果と検証結果」に記録した。実装後に <code>ponytail-review</code> によるレビューを2巡行い、重複の削除と矛盾の解消を反映した。計画からの調整と要件側の明確化は同節「計画からの調整」にある。</p>
+</div>
+<div class="paragraph">
+<p>作業は <code>main</code> 上で完結させ、ブランチと PR は作らない（要件「前置き」）。commit と push は親パイプラインが行い、本計画には PR 作成タスクを置かない。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_要件サマリと対象外">2. 要件サマリと対象外</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_要件サマリ">2.1. 要件サマリ</h3>
+<div class="paragraph">
+<p>要件定義書は <code>docs/requrements/2026_09_29_natural_japanese/req-2026_09_29_natural_japanese.adoc</code> である。本計画は同書を正とし、FR、D、AC、T の各 ID は同書のものを指す。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>旧スキル <code>rewrite-japanese-with-iwabuchi-rules</code> の48規則を <code>natural-japanese-rewriter</code> の <code>SKILL.md</code> 本体に内蔵し、各規則へ10種の上位概念と4種の出所（<code>P1</code> / <code>P2</code> / <code>P4</code> / <code>LLM</code>）を対応づける（FR-02、FR-03、D-01、D-02）。</p>
+</li>
+<li>
+<p>48個の ID の綴りと件数（<code>output</code> 1、<code>sentence</code> 21、<code>word-choice</code> 16、<code>honorific</code> 10）を変更前スナップショットと一致させる（D-03、AC-01、AC-02）。</p>
+</li>
+<li>
+<p>Phase 3 で48規則を4状態へ判定し、<code>rewrite_targets</code> の各要素に <code>decision</code> と <code>rule_ids</code> を記録する。Phase 5 で両モード共通に再照合し、Phase 6 で ID 付きの <code>要確認</code>、<code>diagnostic</code> の適用ルール、要求時だけの監査一覧を出す（FR-04、FR-06、FR-07）。</p>
+</li>
+<li>
+<p>セーフモードは旧スキルの原則と規則衝突時の優先順位を使い、デストロイモードは規則を自然さの判定基準として使う（FR-05、D-05）。</p>
+</li>
+<li>
+<p><code>description</code> に旧スキルのトリガー語を加え、<code>agents/openai.yaml</code> の <code>short_description</code> を現状に合わせ、旧ディレクトリを同じ変更で削除する（FR-01、FR-08、D-06）。</p>
+</li>
+<li>
+<p>受け入れ条件は AC-01〜AC-18、検証シナリオは T-01〜T-15 である。</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_対象外">2.2. 対象外</h3>
+<div class="paragraph">
+<p>要件「対象外」のとおり、次は変更しない。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>natural-japanese-rewrite-analyzer</code> と <code>japanese-kwja-analyze</code> の SKILL.md、スクリプト、出力契約</p>
+</li>
+<li>
+<p>analyzer の <code>issues[].code</code> への問題コードや規則 ID の追加</p>
+</li>
+<li>
+<p><code>references/detailed-rules.md</code> の規則本文の削除や再編。任意の FR-09（規則 ID の注記）も本計画では実施しない（P-11）</p>
+</li>
+<li>
+<p><code>README.md</code> のスキル一覧、<code>natural-japanese-rewriter-line-break</code>、<code>sentence-linebreak-skill</code>、<code>bullet-list-rewriter</code></p>
+</li>
+<li>
+<p>利用環境側のインストール（nix 再ビルド、<code>~/.claude/skills</code> の symlink 更新）</p>
+</li>
+<li>
+<p>元メモの原本照合や規則の追加・削除・改名</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_技術方針と既存パターン">3. 技術方針と既存パターン</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_技術方針">3.1. 技術方針</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>変更を <code>natural-japanese-rewriter/SKILL.md</code> の更新、<code>agents/openai.yaml</code> の1行更新、旧ディレクトリの削除の3点に閉じる。新しい参照ファイルを作らず、<code>manifest.json</code> は変えない（D-02）。</p>
+</li>
+<li>
+<p>ID 表は手で書き写さず、変更前スナップショットの ID 表と要件 FR-03 の対応表から生成スクリプトで作る。ID の綴り、件数、定義順はスクリプトが検査する（D-03、「補助スクリプト」）。</p>
+</li>
+<li>
+<p>規則の状態判定と ID の付与は Phase 3 に集約し、Phase 5 は再照合、Phase 6 は出力だけを担う（非機能要件「保守性」）。</p>
+</li>
+<li>
+<p>既存の修復トリガーと非トリガーの一覧は変えない。規則の判定はこの一覧を ID で言い換える位置づけとし、トリガーから ID への対応表を別に作らない（FR-04）。</p>
+</li>
+<li>
+<p>受け入れ条件は要件「品質確認方法」の bash と短い python で機械検証し、KWJA の実行が必要な検証はスキル指示のレビューで代替する（「テスト・検証計画」）。</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_既存パターン">3.2. 既存パターン</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 37.5%;">
+<col style="width: 37.5%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">パターン</th>
+<th class="tableblock halign-left valign-top">根拠</th>
+<th class="tableblock halign-left valign-top">適用方法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase ごとの完了条件</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>natural-japanese-rewriter/SKILL.md:91, 145, 193</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 3、5 の完了条件へ規則の判定状態を1文ずつ追加する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID 表は Markdown 表をカテゴリ見出しごとに置き、ID をバッククォートで囲む</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">旧スキル <code>SKILL.md:64, 70</code>、調査レポート <code>existing_patterns</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">列を5列に増やしても ID 列を先頭に保ち、要件の <code>ID_RE</code> で数えられる形にする</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">優先順位は番号付きリスト</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>natural-japanese-rewriter/SKILL.md:152</code>、旧スキル <code>SKILL.md:26</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">セーフモードの規則衝突時の順序を5項目の番号付きリストで書く</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>要確認</code> が未解決事項の唯一の出口</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>natural-japanese-rewriter/SKILL.md:75</code>、旧スキル <code>SKILL.md:145</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>needs-confirmation</code> は <code>decision: confirm</code> を経て ID 付きの <code>要確認</code> へ出す</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">出力形式はコードブロックで提示</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">旧スキル <code>SKILL.md:134</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">監査一覧の表形式を Phase 6 にコードブロックで置き、省略条件を直後に書く</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">変更前バックアップ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>docs/backups/2026_09_29/natural-japanese/</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID の比較基準とロールバック先に使う。バックアップは現行と完全一致している（<code>diff -rq</code> で確認済み）</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_方式比較_id_表の形式">3.3. 方式比較: ID 表の形式</h3>
+<div class="paragraph">
+<p>要件は表の形式（カテゴリ見出しごとの Markdown 表、上位概念と出所の列追加、規則本文は旧スキルの一文）を必須としている。比較対象は「主な手がかり」をどこに置くかである。参照ファイルへ表を置く案は D-02 が不採用と定めているため比較しない。</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 40%;">
+<col style="width: 40%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">観点</th>
+<th class="tableblock halign-left valign-top">A: 5列の1表（採用）</th>
+<th class="tableblock halign-left valign-top">B: 4列の表と、ID ごとの手がかり一覧を分ける</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">仕組みと前提</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ID</code>、<code>規則</code>、<code>上位概念</code>、<code>主な手がかり</code>、<code>出所</code> を1行に持つ。各規則の定義が1か所に閉じる</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">表は <code>ID</code>、<code>規則</code>、<code>上位概念</code>、<code>出所</code> の4列にし、手がかりは別の箇条書き（48行）に ID を再掲して書く</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">解決できる問題</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">「これは <code>sentence.keep-subject-and-predicate-close</code> だ」と判断する手がかりを ID の行で読める。AC-03 の機械検査が1行の列検査で済む</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">表の1行が短くなり、行の折り返しが減る</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">解決できない問題</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">規則本文が長い行（最長 <code>output.line-break-each-line</code> で約310字）は横に長い。人が生の Markdown を読むときの負担は残る</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID が2か所に現れ、綴りの不一致が起こり得る。48行増えて見積もりが約410行になり、上限を超える</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">コスト</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">生成スクリプトで一括生成。追加行数は表本体67行</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">生成は同程度だが、手がかり一覧の維持が増える</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">採否と判断が変わる条件</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">採用。SKILL.md はエージェントが読む文書で、行の長さより定義の一意性を優先する。400行を超える場合は「主な手がかり」を短くする（FR-03 が文言調整を許容）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">不採用。SKILL.md を人が頻繁に読む運用に変わり、かつ行数に余裕ができた場合は再検討する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">根拠と未確認事項</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FR-02、FR-03、D-01、<code>existing_patterns</code>「ID 表は Markdown の2列表」。モックで行数と <code>ID_RE</code> の一致を確認済み。未確認事項はなし。検索語: "markdown table single source of truth"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同上。未確認事項はなし</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_破綻条件と検証項目">3.4. 破綻条件と検証項目</h3>
+<div class="paragraph">
+<p>要件の失敗例（例外と失敗時の挙動、<code>change_guidance</code> の <code>risk</code>）に加え、計画段階で見つけた破綻条件は次の3件である。いずれも検証項目へ結び付ける。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>規則本文をそのまま移すと <code>output.line-break-each-line</code> の既定が2通りになる。</strong> 旧スキルの本文は「指定がなければ <code>needs-confirmation</code> とし」と書いており、D-08 と AC-16 の <code>not-applicable</code> と矛盾する。要件 FR-02 と D-08 にこの1か所の置き換えを明記した。生成スクリプトが置き換えを行い、検証コマンドの <code>grep</code> で旧文言が0件、新文言が1件であることを確認する。</p>
+</li>
+<li>
+<p><strong>本文の例示に実在の ID を表の行として書くと AC-01 の48行が崩れる。</strong> 要件の <code>ID_RE</code> はファイル全体を数えるため、Phase 6 の形式例や説明で <code>| `sentence.xxx` |</code> の形の行を書いてはならない。形式例は <code>{ID}</code> のプレースホルダーだけを使う。Task 6 の完了判定で AC-01 を再実行する。</p>
+</li>
+<li>
+<p><strong>「岩淵ルールで直して」が <code>polish</code> のままだと ID が出ず T-01 が成立しない。</strong> 規則や ID を名指しする依頼を <code>diagnostic</code> の要求として扱う判定を「入力と出力モード」節に置く。要件 FR-07 に同じ文を明記した。T-01 のレビューで確認する。</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_自動壁打ちで採用した判断">4. 自動壁打ちで採用した判断</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><code>grilling-matt-p</code> の質問を推奨回答で自動採用した結果である。各判断は反転できる文書上の判断であり、実装後の逸脱は本計画へ理由と最終形を反映する。</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">P-01 ID 表の位置と節名</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>質問: 48行の表を SKILL.md のどこに置くか</p>
+</li>
+<li>
+<p>選択肢: (a)「リライトの優先順位」の直後、Phase 1 の前 (b) Phase 6 の後ろに付録として置く (c) Phase 3 の中に置く</p>
+</li>
+<li>
+<p>採用: (a)。節名は <code>## 岩淵48規則の ID 表</code></p>
+</li>
+<li>
+<p>根拠: モード別の扱い（規則をどう使うか）の直後に規則の定義が続き、Phase 3・5・6 は上方を参照する。(c) は Phase 3 が80行以上に膨らむ</p>
+</li>
+<li>
+<p>影響: 節の順序は frontmatter、冒頭、子スキル、入力と出力モード、リライトの優先順位、ID 表、Phase 1〜6 になる</p>
+</li>
+<li>
+<p>不確実性: 低。(b) でも要件は満たす</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">P-02 表の列</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>質問: 列をいくつにするか</p>
+</li>
+<li>
+<p>採用: <code>| ID | 規則 | 上位概念 | 主な手がかり | 出所 |</code> の5列。ヘッダー行と区切り行は各カテゴリ表に置く</p>
+</li>
+<li>
+<p>根拠: 「方式比較」の A</p>
+</li>
+<li>
+<p>不確実性: 低</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">P-03 規則本文</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>質問: 規則本文をどこまで変えるか</p>
+</li>
+<li>
+<p>採用: 旧スキルの一文をそのまま移す。例外は <code>output.line-break-each-line</code> の「指定がなければ <code>needs-confirmation</code> とし」を <code>not-applicable</code> に置き換える1か所だけ（要件 FR-02、D-08 に明記）</p>
+</li>
+<li>
+<p>根拠: FR-02、破綻条件 1</p>
+</li>
+<li>
+<p>不確実性: なし。生成スクリプトが置き換え前後の文言を assert する</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">P-04 主な手がかりの文言</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>質問: 要件 FR-03 の「主な手がかり」を短縮するか</p>
+</li>
+<li>
+<p>採用: 要件の文言をそのまま使う（平均31字、最長64字）。分析メモの実フィールド名（<code>arguments</code>、<code>role</code>、<code>referent</code>、<code>recoverability</code>、<code>realization</code>、<code>surface_particle</code>、<code>voice</code>、<code>polarity</code>、<code>modality</code>、<code>ambiguities</code>、<code>entities</code>、<code>protected_ranges</code>）に合わせる調整だけを許す</p>
+</li>
+<li>
+<p>根拠: モックで表本体は67行、1行の平均は約97字で、400行の目安に収まる。短縮すると D-01 の「どの観測から判定するか」が薄れる</p>
+</li>
+<li>
+<p>影響: 400行を超えた場合の第一候補として「主な手がかり」の短縮を残す</p>
+</li>
+<li>
+<p>不確実性: 低</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">P-05 description の文面</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>質問: FR-01 と AC-06、AC-07、互換性（デストロイ既定の明記）を満たす文面</p>
+</li>
+<li>
+<p>採用: Task 1 の後にある Task 2 の文面のとおり。458文字で、<code>岩淵ルール</code>、<code>48規則</code>、<code>ルールID</code>、<code>監査</code> を含み、旧除外文を含まず、<code>&lt;</code> <code>&gt;</code> を含まない</p>
+</li>
+<li>
+<p>根拠: yaml で読み取った文字数と語の有無をモックで確認済み</p>
+</li>
+<li>
+<p>不確実性: 低。文字数は1024の半分以下</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">P-06 openai.yaml の short_description</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>質問: AC-17 を満たす文面</p>
+</li>
+<li>
+<p>採用: <code>README、仕様書、PR説明文、UI文言などの日本語を、既定では自然さを優先して大胆に書き直し、safe 指定で原意を保つ。岩淵48規則のルールID付きで診断・監査もできる</code>。<code>display_name</code> は維持し、<code>default_prompt</code> は追加しない</p>
+</li>
+<li>
+<p>根拠: FR-08 後半。既定がデストロイモードである現状と ID 付き診断に言及し、旧スキル名を含まない</p>
+</li>
+<li>
+<p>不確実性: 低。文字数の上限は不明だが現行の約2倍（約90字）にとどめる</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">P-07 規則を名指しする依頼の出力モード</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>質問: 「岩淵ルールで直して」「ルールID付きで推敲して」を <code>polish</code> と <code>diagnostic</code> のどちらで扱うか</p>
+</li>
+<li>
+<p>採用: <code>diagnostic</code> の要求として扱う。要件 FR-07 に明記し、SKILL.md の「入力と出力モード」に書く</p>
+</li>
+<li>
+<p>根拠: 利用シナリオと T-01。<code>polish</code> では適用ルールを出さないため ID が見えない</p>
+</li>
+<li>
+<p>不確実性: 低</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">P-08 モード別の扱いの置き場所</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>質問: FR-05 をどの節に書くか</p>
+</li>
+<li>
+<p>採用: 「リライトの優先順位」節の末尾に、両モード共通、セーフモード、デストロイモードの順で段落を追加し、セーフモードの規則衝突時の順序を番号付きリストで置く。Phase 4 の既存の優先順位（生成時の制約）は変えず、追加する順序は規則どうしの衝突にだけ使うと明記する</p>
+</li>
+<li>
+<p>根拠: FR-05、AC-15、既存パターン「優先順位は番号付きリスト」</p>
+</li>
+<li>
+<p>不確実性: 低</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">P-09 Phase 3 の記録形式</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>質問: <code>rewrite_targets</code> の要素に何を持たせるか、修復トリガー一覧をどう扱うか</p>
+</li>
+<li>
+<p>採用: 要素は <code>decision</code>（<code>repair</code> / <code>keep</code> / <code>confirm</code>）と <code>rule_ids</code>（主 ID を先頭、空配列可）だけを必須にする。既存のトリガー一覧は変えず、「トリガーに該当する箇所は該当する規則 ID で言い換えて <code>rule_ids</code> に記録する」の1文で結ぶ。<code>P4</code> の規則は Phase 3 で状態を決め、適用方法は規則本文にあるため Phase 4 は編集しない</p>
+</li>
+<li>
+<p>根拠: FR-04、非機能要件「保守性」、要件「対象」に Phase 4 がないこと</p>
+</li>
+<li>
+<p>不確実性: 低。追加フィールドが必要になっても親スキル側の記録なので analyzer の契約に影響しない</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">P-10 LLM 出所の表示</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>質問: <code>diagnostic</code> で KWJA の根拠がない判断をどう示すか</p>
+</li>
+<li>
+<p>採用: <code>diagnostic</code> の適用ルールと <code>要確認</code> の行末に <code>（LLM 判断）</code> を付け、監査一覧では「根拠または対象箇所」欄に同じ語を書く。<code>polish</code> では付けない。出所が <code>P1</code> でも手がかりの素性が KWJA 出力にない場合は同じ表示にする</p>
+</li>
+<li>
+<p>根拠: FR-03、FR-07、例外「素性がない場合」、<code>change_guidance</code> の risk</p>
+</li>
+<li>
+<p>不確実性: 低</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">P-11 FR-09（detailed-rules.md への注記）</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>質問: 任意の FR-09 を実施するか</p>
+</li>
+<li>
+<p>採用: 実施しない</p>
+</li>
+<li>
+<p>根拠: <code>detailed-rules.md</code> は Phase 3 で条件付きにしか読まれず、ID と手がかりの対応は毎回読む ID 表に置く。注記は同じ対応を2か所に持つことになり、1422行の参照資料への差分と AC-18 の検証を増やす。D-09 は不実施でも受け入れ条件を満たすと定めている</p>
+</li>
+<li>
+<p>影響: AC-18 は「FR-09 を実施した場合」の条件付きなので、不実施の記録で満たす。後日実施する場合は「修正観点 1〜6」の各見出し直下に <code>関連ID: `sentence.xxx`, `sentence.yyy`</code> の1行を加え、ID は表に存在するものに限る</p>
+</li>
+<li>
+<p>不確実性: 低。可逆で、別の変更として追加できる</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">P-12 旧ディレクトリの削除手順</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>採用: すべての SKILL.md 編集の後に <code>git rm -r skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules</code> で SKILL.md と <code>agents/openai.yaml</code> を同時に削除し、AC-04、AC-05 を確認する。stub、alias、転送スキルは作らない</p>
+</li>
+<li>
+<p>根拠: FR-08、D-06。表の生成元はバックアップなので削除の順序は結果に影響しないが、最後に置くと AC-05 の確認がすべての編集を対象にできる</p>
+</li>
+<li>
+<p>影響: <code>.claude/settings.local.json</code> に旧平坦パスの許可文字列が残るが、<code>skills/</code> 外で機能的な参照ではなく（調査レポート）、本計画では触らない</p>
+</li>
+<li>
+<p>不確実性: 低</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">P-13 検証の前提</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>採用: KWJA はモデル重みが未取得で実行できない前提とし、T-03、T-10、T-12、T-14 を含む全シナリオをスキル指示のレビューで確認する。実行可能な環境が得られた場合は要件「品質確認方法」のとおり4件を実行する</p>
+</li>
+<li>
+<p>根拠: 要件「未確定事項」、調査レポート <code>open_questions</code></p>
+</li>
+<li>
+<p>不確実性: 中。レビューは「指示から期待する判定を一意に説明できるか」を見るもので、モデルの実行時挙動は保証しない</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">P-14 400行の収め方</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>採用: 見積もりは約360行（「節構成と行数見積もり」）。超えた場合は次の順で削る。(1)「主な手がかり」の短縮 (2) 監査一覧のコードブロックを1行の形式説明にする (3) 4状態の定義を各1行にする。表の行と Phase の完了条件は削らない</p>
+</li>
+<li>
+<p>根拠: FR-02、AC-09、D-02 の不確実性</p>
+</li>
+<li>
+<p>不確実性: 低。モックで表と description を加えた時点で286行</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">P-15 Git の運用</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>採用: <code>main</code> 上で編集し、commit と push は親パイプラインが行う。ブランチ、PR、PR 本文更新のタスクを置かない</p>
+</li>
+<li>
+<p>根拠: 要件「前置き」、ユーザーの明示</p>
+</li>
+<li>
+<p>不確実性: なし</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_統合後の_skill_md_の節構成と行数見積もり">5. 統合後の SKILL.md の節構成と行数見積もり</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>現行209行に対する見積もりである。モックで測った値は description の差し替えと ID 表の追加を含めて286行で、残りの追記を加えた見積もりは約360行になる。</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 11.1111%;">
+<col style="width: 11.1111%;">
+<col style="width: 44.4445%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">節（<code>##</code>）</th>
+<th class="tableblock halign-left valign-top">現行</th>
+<th class="tableblock halign-left valign-top">変更後</th>
+<th class="tableblock halign-left valign-top">変更内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">frontmatter（<code>name</code>、<code>description</code>）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">11</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">15</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>description</code> を Task 2 の文面へ差し替える。<code>name</code> は変えない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">冒頭説明（見出しと2段落）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">9</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">11</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">「岩淵『悪文』メモ由来の48規則を規則 ID 付きで内蔵する」の1文を加える</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">子スキルと優先順位</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">13</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">13</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">変更なし</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">入力と出力モード</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">22</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">27</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">出力先に「本文を変更しない」を加え、規則を名指しする依頼は <code>diagnostic</code> とする判定と、監査一覧の要求時の扱いを加える（Task 2）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">リライトの優先順位</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">21</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">39</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">末尾に規則の扱い（共通、セーフ、デストロイ）と規則衝突時の順序を加える（Task 3）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">岩淵48規則の ID 表（新設）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">82</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID の扱い4項目、4状態の定義4項目、4カテゴリの5列表（表本体67行）（Task 1）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 1、Phase 2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">40</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">40</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">変更なし</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 3: 修復箇所を決める</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">30</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">42</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">規則の状態判定、<code>rewrite_targets</code> の記録、LLM 出所と保護範囲の扱い、完了条件の追記（Task 4）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 4: 制約に沿って生成する</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">17</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">17</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">変更なし（P-09）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 5: 候補文を検査する</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">31</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">35</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">両モード共通の再照合と完了条件の追記（Task 5）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 6: 出力する</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">15</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">39</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID 付き <code>要確認</code>、適用ルール、監査一覧、レビューのみ、最終版だけ、ファイル編集時の報告（Task 6）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">合計</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">209</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">約360</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">上限400行に対して約40行の余裕</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_変更対象一覧">6. 変更対象一覧</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 37.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">パス</th>
+<th class="tableblock halign-left valign-top">種別</th>
+<th class="tableblock halign-left valign-top">変更内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">更新</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">description、入力と出力モード、リライトの優先順位、ID 表の新設、Phase 3・5・6（Task 1〜6）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese/natural-japanese-rewriter/agents/openai.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">更新</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>short_description</code> の1行（Task 7）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">削除</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>git rm -r</code> でディレクトリごと削除（Task 8）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/agents/openai.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">削除</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同上</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese/natural-japanese-rewriter/manifest.json</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">変更なし</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">配布ファイルが変わらないため。AC-11 で列挙と実在の一致を確認する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">変更なし</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FR-09 を実施しない（P-11）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>docs/requrements/2026_09_29_natural_japanese/req-2026_09_29_natural_japanese.adoc</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">追随更新</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">実装で逸脱があれば要件を先に直す</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>docs/requrements/2026_09_29_natural_japanese/implementation-plan-issueX-2026_09_29_natural_japanese.adoc</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">追随更新</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">進捗、検証結果、逸脱の理由と最終形を反映する（Task 9）</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>要件定義書と実装計画の HTML、実装計画の解説 HTML は、親パイプラインの成果物契約に従い Phase 6 の直前に生成する。本計画の作業には含めない。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_実装タスク">7. 実装タスク</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>各タスクは、対応要件、対象パスと主要シンボル、変更前後の責務、依存タスク、追加・更新するテスト、完了判定を持つ。実装後にチェックボックスを実績に合わせて更新する。</p>
+</div>
+<div class="sect2">
+<h3 id="_task_1_id_表を_skill_md_本体に新設する">7.1. Task 1: ID 表を SKILL.md 本体に新設する</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">対応要件</dt>
+<dd>
+<p>FR-02、FR-03、D-01、D-02、D-03、D-08、AC-01、AC-02、AC-03、AC-16（表の規則本文）</p>
+</dd>
+<dt class="hdlist1">対象パス</dt>
+<dd>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code></p>
+</dd>
+<dt class="hdlist1">主要シンボル</dt>
+<dd>
+<p>新設する節 <code><mark> 岩淵48規則の ID 表</code> と、その下の <code></mark># 出力・行配置</code>、<code><mark># 文の組み立て</code>、<code></mark># 語の選び方</code>、<code><mark>#</mark> 敬語</code></p>
+</dd>
+<dt class="hdlist1">依存タスク</dt>
+<dd>
+<p>なし</p>
+</dd>
+<dt class="hdlist1">変更前の責務</dt>
+<dd>
+<p>ID 表は旧スキルにだけあり、<code>natural-japanese-rewriter</code> は48規則の ID をどこにも持たない。</p>
+</dd>
+<dt class="hdlist1">変更後の責務</dt>
+<dd>
+<p><code>natural-japanese-rewriter</code> が48規則の定義（ID、規則本文、上位概念、主な手がかり、出所）と、ID の扱い、4状態の意味を単独で持つ。</p>
+</dd>
+<dt class="hdlist1">実装内容</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>「リライトの優先順位」節の直後、<code><mark> Phase 1</code> の直前に <code></mark> 岩淵48規則の ID 表</code> を置く（P-01）。</p>
+</li>
+<li>
+<p>節の冒頭に ID の扱いを4項目で書く。「ID を安定した公開識別子として扱い、省略、改名、再利用しない。元メモの通し番号は使わない」「一つの問題に複数の規則が関係する場合は主 ID を先に示し、関連 ID を続ける」「48規則をすべて内部で照合し、通常は <code>actionable</code> と <code>needs-confirmation</code> の ID だけを報告する」「報告に使う ID は表の定義と完全一致させ、表にない ID を作らない」。</p>
+</li>
+<li>
+<p>続けて4状態の意味を旧スキル <code>SKILL.md:41-46</code> の文言で書く（<code>pass</code>、<code>not-applicable</code>、<code>actionable</code>、<code>needs-confirmation</code>）。</p>
+</li>
+<li>
+<p>表本体は「補助スクリプト」の生成スクリプトの出力を貼る。列は <code>| ID | 規則 | 上位概念 | 主な手がかり | 出所 |</code>、カテゴリ見出しは <code><mark>#</mark></code> で4つ（P-02）。</p>
+</li>
+<li>
+<p>規則本文は旧スキルの一文をそのまま使い、<code>output.line-break-each-line</code> の既定だけを <code>not-applicable</code> に置き換える（P-03）。生成スクリプトが行う。</p>
+</li>
+<li>
+<p>「主な手がかり」は要件 FR-03 の文言を使う。分析メモの実フィールド名への調整は許すが、上位概念と出所の語彙、ID、件数は変えない（P-04）。</p>
+</li>
+<li>
+<p>旧スキルの「このスキルは単独で実行する」と「一般的な自然化スキルとの併用」の文は移さない（非機能要件「保守性」）。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">追加・更新するテスト</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>要件「品質確認方法」の AC-01、AC-02 の bash（「検証コマンド」）。</p>
+</li>
+<li>
+<p>「補助スクリプト」の検査スクリプトの <code>AC-03</code> 行。</p>
+</li>
+<li>
+<p>生成スクリプトの assert（48件、定義順の一致、置き換え対象文言の存在）。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">完了判定</dt>
+<dd>
+<p><code>ID_RE</code> の一致行が48、重複0、カテゴリ別件数が 1 / 21 / 16 / 10、バックアップとの集合差分なし、検査スクリプトの <code>AC-03 rows=48 bad=[]</code>。</p>
+</dd>
+<dt class="hdlist1">状態</dt>
+<dd>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; 完了。ID 表を「リライトの優先順位」の直後に新設。AC-01 48件 / 重複0 / 1・21・16・10、AC-02 差分なし、AC-03 rows=48 bad=[]</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_task_2_description_と出力モードの判定を更新する">7.2. Task 2: description と出力モードの判定を更新する</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">対応要件</dt>
+<dd>
+<p>FR-01、FR-07（規則を名指しする依頼の扱い、監査一覧の要求）、AC-06、AC-07、AC-08、T-01、T-07、T-08、T-09</p>
+</dd>
+<dt class="hdlist1">対象パス</dt>
+<dd>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code></p>
+</dd>
+<dt class="hdlist1">主要シンボル</dt>
+<dd>
+<p>frontmatter の <code>description</code>、冒頭説明、節 <code>## 入力と出力モード</code></p>
+</dd>
+<dt class="hdlist1">依存タスク</dt>
+<dd>
+<p>なし</p>
+</dd>
+<dt class="hdlist1">変更前の責務</dt>
+<dd>
+<p><code>description</code> は自然化系のトリガー語だけを持ち、規則や ID を名指しする依頼は旧スキルが受けていた。出力先は「ファイル編集または応答本文」の2択で、本文を変更しない依頼の扱いがない。</p>
+</dd>
+<dt class="hdlist1">変更後の責務</dt>
+<dd>
+<p>規則や ID を名指しする依頼も <code>natural-japanese-rewriter</code> が受け、<code>diagnostic</code> として扱う。出力先に「本文を変更しない」が加わり、監査一覧、レビューだけ、最終版だけの依頼を開始時に確定する。</p>
+</dd>
+<dt class="hdlist1">実装内容</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p><code>description</code> を次の文面に差し替える（P-05）。<code>name</code> は変えない。</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-yaml" data-lang="yaml">description: &gt;-
+  日本語テキストを自然で読みやすく修正・リライト・校正したいときに使う。
+  LLMくさい日本語、翻訳調、硬すぎる日本語、文意の取りづらい悪文が対象。
+  README、仕様書、技術記事、Zenn記事、コードコメント、docstring、
+  エラーメッセージ、UI文言、issue、PR説明文、職務経歴書などの日本語を、
+  既定では自然さを優先して大胆に書き直し、第一引数が safe のときだけ原意を厳密に保つ。
+  岩淵「悪文」メモ由来の48規則を KWJA の解析結果に対応づけて内蔵し、
+  文の組み立て・語の選び方・敬語・行配置をルールID付きで診断・監査できる。
+  岩淵ルールでの推敲も既定はデストロイモードで、原意を保つには safe を付ける。
+  「自然にして」「翻訳調を直して」「読みやすくして」「LLMっぽさを消して」
+  「リライトして」「校正して」に加え、「岩淵ルールで直して」「48規則で悪文をチェックして」
+  「ルールID付きで推敲して」「文の組み立て・用語・敬語を網羅的に点検して」「監査して」
+  などの依頼で起動する。</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>冒頭説明に「岩淵『悪文』メモ由来の48規則を規則 ID 付きで内蔵し、規則の判定は KWJA の解析結果と上位レイヤーの観測から行う」の1文を加える。</p>
+</li>
+<li>
+<p>「入力と出力モード」の「出力先」を「ファイル編集、応答本文、または本文を変更しない（レビューだけ、監査だけ）」にする。</p>
+</li>
+<li>
+<p><code>diagnostic</code> の説明に「適用した規則 ID」を加え、「『岩淵ルールで直して』『ルールID付きで推敲して』のように規則や ID を名指しする依頼、適用した規則の提示を求める依頼は <code>diagnostic</code> として扱う」を書く（P-07）。</p>
+</li>
+<li>
+<p>「監査結果または全規則の判定を求められた場合は Phase 6 の監査一覧を出す。『最終版だけ』の指定は Phase 6 の省略条件に従う」を書く。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">追加・更新するテスト</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>検査スクリプトの <code>AC-06</code>、<code>AC-07</code> 行。</p>
+</li>
+<li>
+<p><code>quick_validate.py</code>（AC-08）。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">完了判定</dt>
+<dd>
+<p>検査スクリプトで4語がすべて <code>True</code>、除外文なし、<code>desc_chars</code> が1024以下、<code>name</code> が <code>natural-japanese-rewriter</code>。validator が <code>Skill is valid!</code> を返す。</p>
+</dd>
+<dt class="hdlist1">状態</dt>
+<dd>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; 完了。description 458文字、AC-06 4語 True / 除外文なし、AC-07 name 維持、AC-08 <code>Skill is valid!</code></p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_task_3_モードごとの規則の扱いを書く">7.3. Task 3: モードごとの規則の扱いを書く</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">対応要件</dt>
+<dd>
+<p>FR-05、D-05、AC-15、T-03、T-05、T-06、T-11</p>
+</dd>
+<dt class="hdlist1">対象パス</dt>
+<dd>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code></p>
+</dd>
+<dt class="hdlist1">主要シンボル</dt>
+<dd>
+<p>節 <code>## リライトの優先順位</code> の末尾</p>
+</dd>
+<dt class="hdlist1">依存タスク</dt>
+<dd>
+<p>Task 1（4状態と ID 表を参照する）</p>
+</dd>
+<dt class="hdlist1">変更前の責務</dt>
+<dd>
+<p>セーフモードとデストロイモードの方針は書かれているが、48規則との関係がない。</p>
+</dd>
+<dt class="hdlist1">変更後の責務</dt>
+<dd>
+<p>両モードで48規則を照合し、セーフモードは旧スキルの原則と規則衝突時の順序で最小修正し、デストロイモードは規則を自然さの判定基準として使う。</p>
+</dd>
+<dt class="hdlist1">実装内容</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>両モード共通の段落。「48規則をすべて照合する」「規則を理由に保護範囲を変えず、原文にない事実を作らない」「規則の判定が保護範囲（コード、識別子、URL など）にかかる場合は <code>not-applicable</code> とする」「<code>needs-confirmation</code> は省略せず <code>要確認</code> に出す」。</p>
+</li>
+<li>
+<p>セーフモードの段落。「<code>actionable</code> は原意・事実・仕様・技術的意味を変えずに修正できる問題に限る」「規則を機械的に適用せず、読みやすさや正確さが実際に上がる変更だけを採用する」。続けて規則どうしの衝突時の順序を番号付きリストで書く。</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-markdown" data-lang="markdown">規則どうしの判断が衝突した場合は、次の順序を優先する。Phase 4 の優先順位は生成時の制約であり、この順序は規則どうしの衝突にだけ使う。
+
+1. 原意・事実・仕様・技術的意味の保持
+2. 文脈、係り受け、否定範囲、用語の正確さ
+3. 読み手にとっての明確さ
+4. 語感、敬語、簡潔さ
+5. 行配置</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>デストロイモードの段落。「48規則を自然さの判定基準として使う」「<code>needs-confirmation</code> の箇所はもっとも自然な解釈を選んでよいが、選んだ解釈を事実として断定せず、事実に関わる <code>needs-confirmation</code>（<code>word-choice.match-expression-to-facts</code> など）は <code>要確認</code> に残す」「規則の優先順位は既存のデストロイモードの優先順位（自然さ最優先）を上位とし、上の順序は規則どうしの衝突を解くときだけ使う」。</p>
+</li>
+<li>
+<p>「技術用語を一般語へ薄めない」の既存項目に、<code>word-choice.simplify-overly-formal-literary-or-technical-terms</code> と <code>word-choice.limit-loanwords-and-foreign-words</code> は固有表現と技術的に必要な語を保護したうえで適用する旨を添える（非機能要件「意味安全性」）。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">追加・更新するテスト</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p><code>grep -n '行配置' "$NEW"</code> で番号付きリストの5項目を確認する。</p>
+</li>
+<li>
+<p>AC-15、T-03、T-05、T-06、T-11 のレビュー（「検証シナリオの対応表」）。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">完了判定</dt>
+<dd>
+<p>AC-15 の語（原意、文脈・係り受け・否定範囲・用語、明確さ、語感・敬語・簡潔さ、行配置）が番号付きリストにあり、デストロイモードでの規則の位置づけが1段落で読める。</p>
+</dd>
+<dt class="hdlist1">状態</dt>
+<dd>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; 完了。「<mark>#</mark> 48規則の扱い」を「リライトの優先順位」末尾に追加。番号付きリスト5項目（行配置まで）を確認</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_task_4_phase_3_に規則の状態判定を加える">7.4. Task 4: Phase 3 に規則の状態判定を加える</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">対応要件</dt>
+<dd>
+<p>FR-04、D-01、D-04、D-08、AC-12、AC-16、例外と失敗時の挙動、T-02、T-04、T-05、T-10、T-11、T-12、T-13</p>
+</dd>
+<dt class="hdlist1">対象パス</dt>
+<dd>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code></p>
+</dd>
+<dt class="hdlist1">主要シンボル</dt>
+<dd>
+<p>節 <code>## Phase 3: 修復箇所を決める</code>、<code>rewrite_targets</code>、<code>decision</code>、<code>rule_ids</code></p>
+</dd>
+<dt class="hdlist1">依存タスク</dt>
+<dd>
+<p>Task 1、Task 3</p>
+</dd>
+<dt class="hdlist1">変更前の責務</dt>
+<dd>
+<p>修復トリガーに照らして各 <code>rewrite_target</code>（単数表記）を「修復する」「意図的に残す」「要確認」に分類する。規則 ID は持たない。</p>
+</dd>
+<dt class="hdlist1">変更後の責務</dt>
+<dd>
+<p>同じ判断を48規則の4状態判定として行い、<code>rewrite_targets</code> の各要素に <code>decision</code> と <code>rule_ids</code> を記録する。トリガー一覧は ID で言い換えられ、二重に書かれない。</p>
+</dd>
+<dt class="hdlist1">実装内容</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>既存のトリガー一覧と非トリガー一覧は変えない。一覧の直後に「上の一覧に該当する箇所は、ID 表の該当する規則 ID で言い換えて <code>rule_ids</code> に記録する。同じ判断を一覧と ID の両方に長く書かない」の1文を置く（P-09）。</p>
+</li>
+<li>
+<p>状態判定の段落。「48規則をすべて照合し、各 ID を <code>pass</code>、<code>not-applicable</code>、<code>actionable</code>、<code>needs-confirmation</code> のいずれかにする。判定の材料は ID 表の出所に従う。<code>P1</code> は分析メモと KWJA 出力、<code>P2</code> は Phase 2 で固定した制約、<code>LLM</code> は原文と文脈から判断する。<code>P4</code> の <code>output.line-break-each-line</code> は、改行の単位が指定されていなければ <code>not-applicable</code> とし、指定があれば <code>actionable</code> として Phase 4 の生成時に規則本文のとおり適用する」。</p>
+</li>
+<li>
+<p>例外の段落。「出所が <code>P1</code> でも、手がかりとなる素性やタグが KWJA 出力にない規則は <code>LLM</code> 出所として原文から判定し、その旨を記録する。素性がないことを理由に <code>not-applicable</code> としない」「分析メモの <code>ambiguities</code> に該当箇所がある規則は、セーフモードでは <code>needs-confirmation</code> とし、<code>actionable</code> にしない」「KWJA の実行または解析ファイルの読み取りに失敗した場合は既存どおり停止し、規則の判定だけを LLM で続行しない」。</p>
+</li>
+<li>
+<p>記録の段落。「<code>rewrite_targets</code> の各要素は、少なくとも <code>decision</code>（<code>repair</code> / <code>keep</code> / <code>confirm</code>）と <code>rule_ids</code>（主 ID を先頭に関連 ID を続ける。空配列可）を持つ。<code>actionable</code> は <code>repair</code>、<code>needs-confirmation</code> は <code>confirm</code> とし、<code>confirm</code> は Phase 6 の <code>要確認</code> に ID 付きで出す。<code>pass</code> と <code>not-applicable</code> は記録するだけで出力しない。要素の形は親スキルが定める記録であり、analyzer の出力契約は変えない」。</p>
+</li>
+<li>
+<p>既存の完了条件の <code>rewrite_target</code> を <code>rewrite_targets</code> に直し、「48個の ID すべてに状態が付き、<code>actionable</code> と <code>needs-confirmation</code> が <code>rewrite_targets</code> に <code>rule_ids</code> 付きで記録されている」を加える。</p>
+</li>
+<li>
+<p><code>references/detailed-rules.md</code> の読み込み条件は変えない。</p>
+</li>
+<li>
+<p>「1〜2文や UI 文言でも48規則を照合し、<code>not-applicable</code> の判定を素早く済ませて出力を増やさない」を加える（非機能要件「コンテキスト効率」）。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">追加・更新するテスト</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p><code>grep -n 'rule_ids\|decision\|confirm' "$NEW"</code> で Phase 3 に記録の契約があることを確認する。</p>
+</li>
+<li>
+<p>検証コマンドの AC-16 用 <code>grep</code>（<code>not-applicable</code> の既定）。</p>
+</li>
+<li>
+<p>AC-12、AC-16、T-02、T-04、T-05、T-10、T-11、T-12、T-13 のレビュー。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">完了判定</dt>
+<dd>
+<p>AC-12 の3点（4状態判定、<code>decision</code> と <code>rule_ids</code>、<code>needs-confirmation</code> から <code>要確認</code> への経路）が Phase 3 の文に一意に対応し、完了条件に48個の ID の状態が含まれる。</p>
+</dd>
+<dt class="hdlist1">状態</dt>
+<dd>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; 完了。Phase 3 に状態判定、LLM 出所への倒し方、<code>rewrite_targets</code> の <code>decision</code> / <code>rule_ids</code>、完了条件を追加。AC-16 旧文言0 / 新文言1</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_task_5_phase_5_に再照合を加える">7.5. Task 5: Phase 5 に再照合を加える</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">対応要件</dt>
+<dd>
+<p>FR-06、AC-13、T-14</p>
+</dd>
+<dt class="hdlist1">対象パス</dt>
+<dd>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code></p>
+</dd>
+<dt class="hdlist1">主要シンボル</dt>
+<dd>
+<p>節 <code>## Phase 5: 候補文を検査する</code></p>
+</dd>
+<dt class="hdlist1">依存タスク</dt>
+<dd>
+<p>Task 4</p>
+</dd>
+<dt class="hdlist1">変更前の責務</dt>
+<dd>
+<p>デストロイモードは自然さと保護範囲を確認し、セーフモードだけが KWJA 再解析による意味回帰検査を行う。</p>
+</dd>
+<dt class="hdlist1">変更後の責務</dt>
+<dd>
+<p>両モード共通で候補文に48規則を再照合し、新たな <code>actionable</code> を作っていないことを確認してから、既存のモード別検査へ進む。</p>
+</dd>
+<dt class="hdlist1">実装内容</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>節の冒頭に両モード共通の段落を置く。「候補文に対して48規則を再照合し、新たな <code>actionable</code> を作っていないことを確認する。見つかった場合は候補を修正して再照合する。再照合は最大3巡とし、解消しない <code>actionable</code> は <code>needs-confirmation</code> に変えて <code>要確認</code> に出す」。</p>
+</li>
+<li>
+<p>セーフモードの意味回帰検査（KWJA 再解析、<code>SEMANTIC_DRIFT</code>、最大3巡、原子的修復単位の復元）は変えない。</p>
+</li>
+<li>
+<p>完了条件に「候補文で <code>actionable</code> の規則が0件」を加える。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">追加・更新するテスト</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p><code>grep -n '再照合' "$NEW"</code> で Phase 5 の記述を確認する。</p>
+</li>
+<li>
+<p>AC-13、T-14 のレビュー。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">完了判定</dt>
+<dd>
+<p>AC-13 の2点（両モード共通の再照合、<code>actionable</code> 0件の完了条件）が Phase 5 の文に一意に対応し、既存の意味回帰検査の段落に差分がない。</p>
+</dd>
+<dt class="hdlist1">状態</dt>
+<dd>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; 完了。Phase 5 冒頭に両モード共通の再照合（最大3巡）を追加し、完了条件に <code>actionable</code> 0件を追加</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_task_6_phase_6_に出力形式を統合する">7.6. Task 6: Phase 6 に出力形式を統合する</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">対応要件</dt>
+<dd>
+<p>FR-07、D-07、AC-14、例外と失敗時の挙動（監査一覧、長文の <code>polish</code>）、T-01、T-02、T-07、T-08、T-09、T-12、T-15</p>
+</dd>
+<dt class="hdlist1">対象パス</dt>
+<dd>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code></p>
+</dd>
+<dt class="hdlist1">主要シンボル</dt>
+<dd>
+<p>節 <code>## Phase 6: 出力する</code></p>
+</dd>
+<dt class="hdlist1">依存タスク</dt>
+<dd>
+<p>Task 4</p>
+</dd>
+<dt class="hdlist1">変更前の責務</dt>
+<dd>
+<p><code>polish</code> は本文と <code>要確認</code>、<code>diagnostic</code> は3項目を追加する。規則 ID、監査一覧、レビューだけ、最終版だけの扱いがない。</p>
+</dd>
+<dt class="hdlist1">変更後の責務</dt>
+<dd>
+<p><code>要確認</code> が ID 付きになり、<code>diagnostic</code> に適用ルールが加わる。監査一覧、レビューだけ、最終版だけ、ファイル編集時の報告が Phase 6 に閉じる。</p>
+</dd>
+<dt class="hdlist1">実装内容</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p><code>polish</code> の段落に「<code>要確認</code> の各項目は <code>- <code>{ID}</code>: {原文だけでは判断できない点}</code> の形にする。規則に対応しない <code>要確認</code>（KWJA と本文の食い違いなど）は ID なしで出す。適用した規則の一覧は出さない。長い文章で <code>actionable</code> が多数あっても、<code>polish</code> の出力は本文と <code>要確認</code> だけで、規則数や文数に比例して増えない」を加える。</p>
+</li>
+<li>
+<p><code>diagnostic</code> の項目に「4. 適用ルール」を加え、形式を <code>- <code>{ID}</code>: {対象箇所と修正内容}</code>、<code>actionable</code> がなければ「適用ルール: なし」とする。<code>diagnostic</code> では、<code>LLM</code> 出所の判定と、素性がなく <code>LLM</code> 出所へ倒した判定に、適用ルールと <code>要確認</code> の行末で <code>（LLM 判断）</code> を付ける。<code>polish</code> では付けない（P-10）。</p>
+</li>
+<li>
+<p>監査一覧の段落。「ユーザーが監査結果または全規則の判定を求めた場合だけ、規則の定義順に48行を出す。監査だけを求められた場合は本文を変更せず、監査と推敲の両方を求められた場合は <code>diagnostic</code> の末尾に加える。規則の判定を完了できない場合（Phase 3 前の停止など）は部分的な一覧を出さず、停止理由を報告する」。形式は次のコードブロックで示す。</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-markdown" data-lang="markdown">| ID | status | 根拠または対象箇所 |
+|---|---|---|
+| `{ID}` | `pass / not-applicable / actionable / needs-confirmation` | {短い根拠、対象箇所、判断に必要な情報。LLM 判断ならその旨} |</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>レビューだけの段落。「『レビューだけ』『直さないで』の場合は本文を変更せず、<code>diagnostic</code> の内容を <code>ID / 対象箇所 / 問題 / 修正案</code> の形で出す。<code>needs-confirmation</code> は修正案の代わりに判断に必要な情報を示す」。</p>
+</li>
+<li>
+<p>最終版だけの段落。「『最終版だけ』の場合は適用ルールと診断を省く。<code>要確認</code> は省略しない」。</p>
+</li>
+<li>
+<p>ファイル編集時の既存の文に「<code>diagnostic</code> では適用した ID も報告する」を加える。</p>
+</li>
+<li>
+<p>形式例では <code>{ID}</code> のプレースホルダーだけを使い、実在の ID を <code>| `sentence.xxx` |</code> の形で行頭に書かない（破綻条件 2）。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">追加・更新するテスト</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>検証コマンドの AC-01（48行の再確認）と <code>grep -n '適用ルール\|監査\|レビューだけ\|最終版だけ\|LLM 判断' "$NEW"</code>。</p>
+</li>
+<li>
+<p>AC-14、T-01、T-02、T-07、T-08、T-09、T-12、T-15 のレビュー。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">完了判定</dt>
+<dd>
+<p>AC-14 の4点（ID 付き <code>要確認</code>、適用ルール、要求時のみの監査一覧と形式、レビューのみと最終版だけ）が Phase 6 の文に一意に対応し、AC-01 の件数が48のまま変わらない。</p>
+</dd>
+<dt class="hdlist1">状態</dt>
+<dd>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; 完了。Phase 6 に ID 付き <code>要確認</code>、適用ルール、<code>（LLM 判断）</code>、監査一覧、レビューだけ、最終版だけを追加。AC-01 は48件のまま</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_task_7_openai_yaml_の_short_description_を更新する">7.7. Task 7: openai.yaml の short_description を更新する</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">対応要件</dt>
+<dd>
+<p>FR-08 後半、AC-17</p>
+</dd>
+<dt class="hdlist1">対象パス</dt>
+<dd>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/agents/openai.yaml</code></p>
+</dd>
+<dt class="hdlist1">主要シンボル</dt>
+<dd>
+<p><code>interface.short_description</code></p>
+</dd>
+<dt class="hdlist1">依存タスク</dt>
+<dd>
+<p>なし</p>
+</dd>
+<dt class="hdlist1">変更前の責務</dt>
+<dd>
+<p>「原意を保って自然に整える」と書かれ、既定がデストロイモードである現状と食い違う。</p>
+</dd>
+<dt class="hdlist1">変更後の責務</dt>
+<dd>
+<p>既定のデストロイモード、<code>safe</code> による原意保持、規則 ID 付きの診断と監査に言及する。</p>
+</dd>
+<dt class="hdlist1">実装内容</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p><code>short_description</code> を P-06 の文面に差し替える。</p>
+</li>
+<li>
+<p><code>display_name</code> は「自然な日本語への推敲」のまま維持し、<code>default_prompt</code> は追加しない。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">追加・更新するテスト</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p><code>grep -n short_description</code> の目視と、AC-05 の <code>git grep</code>（旧スキル名を含まない）。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">完了判定</dt>
+<dd>
+<p><code>short_description</code> に「既定」または「デストロイ」と「ルールID」があり、旧スキル名を含まず、YAML として読める（「検証コマンド」の AC-17 の <code>python3 -c</code> 行）。</p>
+</dd>
+<dt class="hdlist1">状態</dt>
+<dd>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; 完了。<code>short_description</code> を P-06 の文面に差し替え。YAML 読み込み OK</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_task_8_旧ディレクトリを削除する">7.8. Task 8: 旧ディレクトリを削除する</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">対応要件</dt>
+<dd>
+<p>FR-08、D-06、AC-04、AC-05</p>
+</dd>
+<dt class="hdlist1">対象パス</dt>
+<dd>
+<p><code>skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/</code>（<code>SKILL.md</code>、<code>agents/openai.yaml</code>）</p>
+</dd>
+<dt class="hdlist1">主要シンボル</dt>
+<dd>
+<p>旧スキル名 <code>rewrite-japanese-with-iwabuchi-rules</code></p>
+</dd>
+<dt class="hdlist1">依存タスク</dt>
+<dd>
+<p>Task 1、Task 2（表とトリガー語の移設が済んでいること）</p>
+</dd>
+<dt class="hdlist1">変更前の責務</dt>
+<dd>
+<p>旧スキルが規則名指しの依頼を単独で受ける。</p>
+</dd>
+<dt class="hdlist1">変更後の責務</dt>
+<dd>
+<p>旧スキルは存在せず、同じ依頼を <code>natural-japanese-rewriter</code> が受ける。stub、alias、転送スキルは作らない。</p>
+</dd>
+<dt class="hdlist1">実装内容</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p><code>git rm -r skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules</code> を実行する（P-12）。</p>
+</li>
+<li>
+<p><code>natural-japanese-rewriter</code> の本文、<code>description</code>、<code>openai.yaml</code> に旧スキル名がないことを確認する。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">追加・更新するテスト</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>検証コマンドの AC-04（<code>test ! -d</code>）、AC-05（<code>git grep &#8230;&#8203;&#8201;&#8212;&#8201;skills | wc -l</code> が0）。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">完了判定</dt>
+<dd>
+<p>AC-04 と AC-05 が通り、<code>git status --short</code> に旧ディレクトリの2ファイルが <code>D</code> として現れる。</p>
+</dd>
+<dt class="hdlist1">状態</dt>
+<dd>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; 完了。<code>git rm -r</code> で2ファイルを削除。AC-04 ok、AC-05 0件</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_task_9_全体を検証し文書へ反映する">7.9. Task 9: 全体を検証し、文書へ反映する</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">対応要件</dt>
+<dd>
+<p>AC-01〜AC-18、T-01〜T-15、AC-09、AC-10、AC-11</p>
+</dd>
+<dt class="hdlist1">対象パス</dt>
+<dd>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/</code>、要件定義書、本計画</p>
+</dd>
+<dt class="hdlist1">主要シンボル</dt>
+<dd>
+<p>「検証コマンド」の全ブロック、「受け入れ条件の対応表」、「検証シナリオの対応表」</p>
+</dd>
+<dt class="hdlist1">依存タスク</dt>
+<dd>
+<p>Task 1〜8</p>
+</dd>
+<dt class="hdlist1">変更前の責務</dt>
+<dd>
+<p>各タスクの部分検証だけが済んでいる。</p>
+</dd>
+<dt class="hdlist1">変更後の責務</dt>
+<dd>
+<p>全受け入れ条件が機械検証またはレビューで確認され、結果と逸脱が要件定義書と本計画に反映されている。</p>
+</dd>
+<dt class="hdlist1">実装内容</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>「検証コマンド」を先頭から実行し、期待値との差を記録する。</p>
+</li>
+<li>
+<p>「検証シナリオの対応表」のレビュー項目を1件ずつ確認し、結果を本計画の「実装結果と検証結果」に記入する。</p>
+</li>
+<li>
+<p>計画から逸脱した箇所は要件を先に直し、本計画に理由と最終形を書く。</p>
+</li>
+<li>
+<p>Task 1〜9 のチェックボックスを実績に合わせて更新する。</p>
+</li>
+<li>
+<p><code>git status --short</code> で変更ファイルが「変更対象一覧」の範囲内であることを確認する。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">追加・更新するテスト</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>「検証コマンド」の全ブロックと「文書品質」の <code>asciidoctor</code>。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">完了判定</dt>
+<dd>
+<p>「完了条件」の各項目が満たされ、検証結果が本計画に記録されている。</p>
+</dd>
+<dt class="hdlist1">状態</dt>
+<dd>
+<div class="ulist checklist">
+<ul class="checklist">
+<li>
+<p>&#10003; 完了。検証コマンドと検査スクリプトを全件実行し、結果を「実装結果と検証結果」に記録</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_補助スクリプト">8. 補助スクリプト</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>いずれもリポジトリルートで実行する。ファイルとして追加せず、ここから貼り付けて使う。</p>
+</div>
+<div class="sect2">
+<h3 id="_id_表の生成スクリプトtask_1">8.1. ID 表の生成スクリプト（Task 1）</h3>
+<div class="paragraph">
+<p>変更前スナップショットの ID 表と要件 FR-03 の対応表から、5列の Markdown 表を標準出力に出す。ID の綴りと定義順はスナップショットと一致させ、<code>output.line-break-each-line</code> の既定だけを置き換える。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash">python3 - &lt;&lt;'PY' &gt; "$TMPDIR/iwabuchi-table.md"
+import re
+OLD = "docs/backups/2026_09_29/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md"
+REQ = "docs/requrements/2026_09_29_natural_japanese/req-2026_09_29_natural_japanese.adoc"
+rules = dict(re.findall(r"^\| `([a-z-]+\.[a-z0-9-]+)` \| (.+) \|$", open(OLD, encoding="utf-8").read(), re.M))
+assert len(rules) == 48, len(rules)
+old_lb = "指定がなければ `needs-confirmation` とし、現在の行配置を保つ。"
+assert old_lb in rules["output.line-break-each-line"]
+rules["output.line-break-each-line"] = rules["output.line-break-each-line"].replace(
+    old_lb, "指定がなければ `not-applicable` とし、現在の行配置を保つ。")
+lines = open(REQ, encoding="utf-8").read().splitlines()
+heads = {"output": "出力・行配置", "sentence": "文の組み立て", "word-choice": "語の選び方", "honorific": "敬語"}
+rows, i = [], 0
+while i &lt; len(lines):
+    m = re.match(r"^\|`((output|sentence|word-choice|honorific)\.[a-z0-9-]+)`$", lines[i])
+    if m:
+        rows.append((m.group(2), m.group(1), lines[i+1][1:], lines[i+2][1:], lines[i+3][1:])); i += 4
+    else:
+        i += 1
+assert [r[1] for r in rows] == list(rules), "ID order differs from backup"
+out, cur = [], None
+for cat, rid, concept, cue, src in rows:
+    if cat != cur:
+        cur = cat
+        out += ["", f"### {heads[cat]}", "", "| ID | 規則 | 上位概念 | 主な手がかり | 出所 |", "|---|---|---|---|---|"]
+    out.append(f"| `{rid}` | {rules[rid]} | {concept} | {cue} | {src} |")
+print("\n".join(out[1:]))
+PY
+wc -l "$TMPDIR/iwabuchi-table.md"   # 67</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_受け入れ条件の検査スクリプトac_03ac_06ac_07ac_09ac_11">8.2. 受け入れ条件の検査スクリプト（AC-03、AC-06、AC-07、AC-09、AC-11）</h3>
+<div class="paragraph">
+<p>表の各行に上位概念（10種）と出所（4種）があること、<code>description</code> の語と文字数、<code>name</code>、行数、<code>manifest.json</code> の列挙と実在の一致を検査し、すべて満たせば <code>RESULT PASS</code> と終了コード0を返す。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash">python3 - &lt;&lt;'PY'
+import json, os, re, sys, yaml
+D = "skills/natural-japanese/natural-japanese-rewriter"
+skill = open(f"{D}/SKILL.md", encoding="utf-8").read()
+CONCEPTS = {"述語項構造","係り受け","節構造・談話関係","共参照・照応","形態素・語彙",
+            "固有表現・保護範囲","語用論・モダリティ","対人関係","文体","文書構造"}
+SOURCES = {"P1","P2","P4","LLM"}
+ID_ROW = re.compile(r"^\| `((?:output|sentence|word-choice|honorific)\.[a-z0-9-]+)` \|(.*)\|$", re.M)
+bad, rows = [], ID_ROW.findall(skill)
+for rid, rest in rows:
+    cells = [c.strip() for c in rest.split("|")]
+    if len(cells) != 4:
+        bad.append((rid, f"列数 {len(cells)+1}")); continue
+    rule, concept, cue, src = cells
+    if not rule or not cue: bad.append((rid, "規則または主な手がかりが空"))
+    if concept not in CONCEPTS: bad.append((rid, f"上位概念 {concept!r}"))
+    if src not in SOURCES: bad.append((rid, f"出所 {src!r}"))
+print(f"AC-03 rows={len(rows)} bad={bad}")
+fm = yaml.safe_load(skill.split("---")[1])
+desc = fm["description"]
+words = {w: (w in desc) for w in ["岩淵ルール", "48規則", "ルールID", "監査"]}
+print(f"AC-06 words={words} exclusion_absent={'だけの依頼には使わない' not in desc}")
+print(f"AC-07 name={fm['name']} desc_chars={len(desc)}")
+print(f"AC-09 lines={skill.count(chr(10))}")
+listed = set(json.load(open(f"{D}/manifest.json"))["files"])
+actual = {os.path.relpath(os.path.join(r, f), D) for r, _, fs in os.walk(D) for f in fs} - {"manifest.json"}
+print(f"AC-11 missing={sorted(listed - actual)} unlisted={sorted(actual - listed)}")
+ok = (len(rows) == 48 and not bad and all(words.values()) and "だけの依頼には使わない" not in desc
+      and fm["name"] == "natural-japanese-rewriter" and len(desc) &lt;= 1024 and skill.count("\n") &lt;= 400
+      and listed == actual)
+print("RESULT", "PASS" if ok else "FAIL")
+sys.exit(0 if ok else 1)
+PY</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>このスクリプトは計画時に、現行 SKILL.md に表と description を差し込んだモックで <code>PASS</code>、現行のままの SKILL.md で <code>FAIL</code>（表なし、トリガー語なし）、上位概念を1件誤記し出所を1件空にしたモックで <code>FAIL</code>（該当2行を列挙）になることを確認した。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_テスト検証計画">9. テスト・検証計画</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_前提">9.1. 前提</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>KWJA 2.5.1 は導入済みだがモデル重みが未取得で、本環境では実行できない（要件「未確定事項」）。検証シナリオ T-01〜T-15 はすべて「スキル指示から期待する判定と失敗時挙動を一意に説明できるか」のレビューで確認する。要件が実行を求める T-03、T-10、T-12、T-14 も同じ扱いとし、実行できる環境が得られた場合に追加で実行する。</p>
+</li>
+<li>
+<p><code>quick_validate.py</code> は <code>find</code> で実パスを特定する。計画時の候補は <code>/home/agir_wsl/.claude/plugins/marketplaces/claude-plugins-official/plugins/skill-creator/skills/skill-creator/scripts/quick_validate.py</code> で、システムの <code>python3</code>（PyYAML あり）で現行スキルに対して <code>Skill is valid!</code> を返すことを確認済み。</p>
+</li>
+<li>
+<p>比較基準のコミットは <code>0d6c6cf</code>（計画時の HEAD）とし、AC-10 は commit 後でも同じ基準で差分を取る。</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_検証コマンド">9.2. 検証コマンド</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash">set -u
+cd /home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/agent-skills
+BASE=0d6c6cf
+ID_RE='^\| `(output|sentence|word-choice|honorific)\.[a-z0-9-]+` \|'
+NEW=skills/natural-japanese/natural-japanese-rewriter/SKILL.md
+OLD=docs/backups/2026_09_29/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md
+QV=$(find "$HOME/.claude/plugins" "$HOME/.codex/skills" \
+      -path '*skill-creator/scripts/quick_validate.py' 2&gt;/dev/null | head -1)
+echo "QV=$QV"
+
+# AC-01: 件数と重複
+grep -cE "$ID_RE" "$NEW"                                   # 48
+grep -oE "$ID_RE" "$NEW" | sort | uniq -d | wc -l          # 0
+for c in output sentence word-choice honorific; do
+  printf '%s ' "$c"; grep -cE "^\| \`$c\." "$NEW"          # 1 21 16 10
+done
+
+# AC-02: 変更前スナップショットと集合が一致
+diff &lt;(grep -oE "$ID_RE" "$OLD" | sort) &lt;(grep -oE "$ID_RE" "$NEW" | sort) &amp;&amp; echo "AC-02 ok"
+
+# AC-03, AC-06, AC-07, AC-09, AC-11: 検査スクリプト（「補助スクリプト」を貼る）
+# 期待: AC-03 rows=48 bad=[] / AC-06 すべて True / AC-07 1024以下 / AC-09 400以下 / AC-11 空 / RESULT PASS
+
+# AC-04, AC-05: 旧ディレクトリと参照の不在
+test ! -d skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules &amp;&amp; echo "AC-04 ok"
+git grep -n rewrite-japanese-with-iwabuchi-rules -- skills | wc -l           # 0
+
+# AC-08: validator
+python3 "$QV" skills/natural-japanese/natural-japanese-rewriter              # Skill is valid!
+
+# AC-10: 子スキルの不変
+git diff --stat "$BASE" -- skills/natural-japanese/natural-japanese-rewrite-analyzer \
+  skills/natural-japanese/japanese-kwja-analyze                             # 出力なし
+
+# AC-16 と D-08: 規則本文の既定
+grep -c 'needs-confirmation` とし、現在の行配置' "$NEW"                   # 0
+grep -c 'not-applicable` とし、現在の行配置' "$NEW"                       # 1
+
+# AC-17: openai.yaml
+grep -n short_description skills/natural-japanese/natural-japanese-rewriter/agents/openai.yaml
+python3 -c 'import yaml,sys; yaml.safe_load(open(sys.argv[1]))' \
+  skills/natural-japanese/natural-japanese-rewriter/agents/openai.yaml &amp;&amp; echo "yaml ok"
+
+# AC-12〜AC-15 のレビュー補助（該当行の位置を出す）
+grep -n 'rule_ids\|decision\|再照合\|適用ルール\|監査\|レビューだけ\|最終版だけ\|LLM 判断\|行配置' "$NEW"
+
+# 変更ファイルの範囲（Claude のサンドボックス内では .bashrc などのマスク用デバイスノードが ?? で見えるが実ファイルではない）
+git status --short</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_受け入れ条件の対応表">9.3. 受け入れ条件の対応表</h3>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 14.2857%;">
+<col style="width: 28.5714%;">
+<col style="width: 57.1429%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">受け入れ条件</th>
+<th class="tableblock halign-left valign-top">実装タスク</th>
+<th class="tableblock halign-left valign-top">検証</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-01</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 1、Task 6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ID_RE</code> の件数48、重複0、カテゴリ別 1 / 21 / 16 / 10。Task 6 の後に再実行する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-02</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">バックアップとの <code>diff</code> が空</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-03</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">検査スクリプトの <code>AC-03 rows=48 bad=[]</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-04</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 8</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>test ! -d</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-05</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 8</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>git grep &#8230;&#8203;&#8201;&#8212;&#8201;skills</code> が0件</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-06</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">検査スクリプトの <code>AC-06</code>（4語 <code>True</code>、除外文なし）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-07</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">検査スクリプトの <code>AC-07</code>（<code>name</code> と1024以下）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-08</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 2、Task 9</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>quick_validate.py</code> が <code>Skill is valid!</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-09</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 9</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">検査スクリプトの <code>AC-09</code> が400以下。超える場合は P-14 の順で削る</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-10</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 9</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>git diff --stat 0d6c6cf --</code> が空</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-11</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 9</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">検査スクリプトの <code>AC-11</code> が <code>missing=[] unlisted=[]</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-12</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 3 のレビュー。4状態判定、<code>decision</code> と <code>rule_ids</code>、<code>confirm</code> から <code>要確認</code> への経路</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-13</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 5 のレビュー。両モード共通の再照合、<code>actionable</code> 0件の完了条件</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-14</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 6 のレビュー。ID 付き <code>要確認</code>、適用ルール、要求時のみの監査一覧と形式、レビューのみと最終版だけ</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-15</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">「リライトの優先順位」のレビュー。5項目の順序とデストロイモードでの位置づけ</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-16</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 1、Task 4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>grep</code> で旧文言0件、新文言1件。Phase 3 の <code>P4</code> の段落をレビュー</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-17</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 7</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>short_description</code> の目視と YAML 読み込み。AC-05 で旧スキル名の不在</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-18</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">該当なし</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FR-09 を実施しないため、条件付きの AC-18 は不実施の記録で満たす（P-11）</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_検証シナリオの対応表">9.4. 検証シナリオの対応表</h3>
+<div class="paragraph">
+<p>すべてレビューで確認する。「確認する記述」は、その記述から期待する判定を一意に説明できるかを見る。</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 16.6666%;">
+<col style="width: 66.6668%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">シナリオ</th>
+<th class="tableblock halign-left valign-top">タスク</th>
+<th class="tableblock halign-left valign-top">確認する記述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-01</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 2、Task 6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">規則を名指しする依頼が <code>diagnostic</code> になる判定と、適用ルールの <code>- <code>{ID}</code>: {対象箇所と修正内容}</code> 形式</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-02</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 4、Task 6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 3 の全48規則の照合と、<code>polish</code> が本文と ID 付き <code>要確認</code> だけを出すこと</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-03（KWJA 未実行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 1、Task 3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.keep-subject-and-predicate-close</code> の行（係り受け、ガ格の項と述語の基本句距離、<code>P1</code>）と、セーフモードの <code>actionable</code> の条件</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-04</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 1、Task 4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.state-changed-subject-explicitly</code> の行と、<code>ambiguities</code> に該当する規則をセーフモードで <code>needs-confirmation</code> にする段落</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-05</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 1、Task 3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.minimize-passive-voice</code> の行（<code>voice: passive</code>、動作主の <code>recoverability</code>）と、原文にない主体を作らない既存の制約</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-06</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 1、Task 3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>honorific.avoid-repeated-o-prefixes</code> と <code>honorific.retain-required-forms</code> の行と、規則衝突時の順序（語感・敬語・簡潔さ）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-07</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 2、Task 6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">監査一覧の要求時だけの出力、規則の定義順、<code>pass</code> と <code>not-applicable</code> を含む48行、本文を変更しないこと</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-08</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 2、Task 6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">レビューだけの扱い（本文不変、<code>ID / 対象箇所 / 問題 / 修正案</code>、<code>needs-confirmation</code> の情報）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-09</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 2、Task 6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">最終版だけの扱い（適用ルールと診断の省略、<code>要確認</code> は省略しない）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-10（KWJA 未実行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 1、Task 4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>output.line-break-each-line</code> の規則本文と Phase 3 の <code>P4</code> の段落（単位未指定なら <code>not-applicable</code>、<code>要確認</code> に出さない）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-11</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 3、Task 4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">保護範囲にかかる判定を <code>not-applicable</code> とする段落と、<code>word-choice.limit-loanwords-and-foreign-words</code> の行の保護条件</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-12（KWJA 未実行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 4、Task 6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">素性がない規則を <code>LLM</code> 出所へ倒す段落と、<code>（LLM 判断）</code> の表示</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-13</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">KWJA 失敗時の既存の停止（<code>SKILL.md</code> 冒頭の「子スキルと優先順位」）と、規則判定を LLM で続行しない段落</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-14（KWJA 未実行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">両モード共通の再照合と、<code>actionable</code> 0件の完了条件</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-15</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>polish</code> の出力が規則数や文数に比例して増えない段落</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_文書品質">9.5. 文書品質</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>要件定義書と本計画を同じ変更の文書ペアとして品質ゲートにかけ、両方90点以上、重大な不整合0件を維持する。</p>
+</li>
+<li>
+<p>次で AsciiDoc の警告がないことを確認する。</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash">for f in docs/requrements/2026_09_29_natural_japanese/req-2026_09_29_natural_japanese.adoc \
+         docs/requrements/2026_09_29_natural_japanese/implementation-plan-issueX-2026_09_29_natural_japanese.adoc; do
+  asciidoctor --failure-level WARN -o /dev/null "$f" &amp;&amp; echo "ok $f"
+done</code></pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_実装結果と検証結果">10. 実装結果と検証結果</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Task 9 で記入した。比較基準は <code>0d6c6cf</code>、実装時の HEAD は <code>8845b02</code> である。</p>
+</div>
+<div class="sect2">
+<h3 id="_実装結果">10.1. 実装結果</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code>: 209行 → 330行（レビュー前は347行）。description の差し替え、出力先と <code>polish</code> / <code>diagnostic</code> の定義の更新、「リライトの優先順位」への規則の扱いと衝突時の順序の追記、「## 岩淵48規則の ID 表」（4カテゴリ、5列、表本体67行）、Phase 3・5・6 の追記。</p>
+</li>
+<li>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/agents/openai.yaml</code>: <code>short_description</code> の1行。</p>
+</li>
+<li>
+<p><code>skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/</code>: <code>SKILL.md</code> と <code>agents/openai.yaml</code> を削除。</p>
+</li>
+<li>
+<p><code>manifest.json</code>、<code>references/detailed-rules.md</code>、analyzer、<code>japanese-kwja-analyze</code>: 変更なし。</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_検証コマンドの結果">10.2. 検証コマンドの結果</h3>
+<div class="paragraph">
+<p>「検証コマンド」と「受け入れ条件の検査スクリプト」を実行した結果である。</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 80%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">受け入れ条件</th>
+<th class="tableblock halign-left valign-top">結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-01</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ID_RE</code> 一致 48行、重複 0、<code>output</code> 1 / <code>sentence</code> 21 / <code>word-choice</code> 16 / <code>honorific</code> 10</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-02</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">バックアップとの <code>diff</code> 差分なし</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-03</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>AC-03 rows=48 bad=[]</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-04</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>test ! -d</code> ok</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-05</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>git grep&#8201;&#8212;&#8201;skills</code> 0件</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-06</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>岩淵ルール</code>、<code>48規則</code>、<code>ルールID</code>、<code>監査</code> すべて <code>True</code>、除外文なし</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-07</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name=natural-japanese-rewriter</code>、<code>desc_chars=458</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-08</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>quick_validate.py</code>（<code>~/.codex/skills/.system/skill-creator/scripts/quick_validate.py</code>）が <code>Skill is valid!</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-09</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">330行（上限400）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-10</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>git diff --stat 0d6c6cf&#8201;&#8212;&#8201;analyzer kwja</code> 出力なし</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-11</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>missing=[] unlisted=[]</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-12</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">レビュー。Phase 3 の段落に4状態判定、<code>decision</code> と <code>rule_ids</code>、<code>confirm</code> から <code>要確認</code> への経路がある</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-13</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">レビュー。Phase 5 冒頭の両モード共通の再照合と、完了条件の <code>actionable</code> 0件</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-14</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">レビュー。Phase 6 の ID 付き <code>要確認</code>、適用ルール（4項目目）、要求時のみの監査一覧と表形式、レビューだけ、最終版だけ</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-15</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">レビュー。「リライトの優先順位」末尾の番号付きリスト5項目（両モード共通、デストロイモードは自然さ最優先を上位）と、デストロイモード段落の規則の位置づけ</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-16</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">旧文言（<code>needs-confirmation</code> とし、現在の行配置）0件、新文言（<code>not-applicable</code> とし、現在の行配置）1件</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-17</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>short_description</code> に「既定」「ルールID」を含み、旧スキル名なし、YAML 読み込み OK</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-18</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FR-09 不実施のため該当なし（P-11）</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>レビュー2巡の修正後に同じ検証を再実行し、すべて同じ結果だった（AC-09 だけ347行から330行に変化）。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_検証シナリオのレビュー結果">10.3. 検証シナリオのレビュー結果</h3>
+<div class="paragraph">
+<p>T-01〜T-15 を「検証シナリオの対応表」の記述で確認し、いずれも期待する判定を SKILL.md の記述から一意に説明できた。T-03、T-10、T-12、T-14 は KWJA 未実行のレビュー確認である（モデル重み未取得のため実行していない）。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_計画からの調整">10.4. 計画からの調整</h3>
+<div class="paragraph">
+<p>実装時の調整は次の3件で、要件の範囲内である。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Task 1 の ID 表の冒頭に、上位概念と出所（<code>P1</code> / <code>P2</code> / <code>P4</code> / <code>LLM</code>）の意味を1段落で添えた。要件「用語」の定義を SKILL.md 単独で読めるようにするためである。</p>
+</li>
+<li>
+<p>Task 4 の Phase 3 の完了条件は、旧表記「修復する」「意図的に残す」「要確認」を <code>decision</code> の値（<code>repair</code> / <code>keep</code> / <code>confirm</code>）で書いた。FR-04 の記録形式と同じ語彙にするためである。</p>
+</li>
+<li>
+<p>Task 3 で予定した <code><mark>#</mark> 48規則の扱い</code> の小見出しは、レビュー1巡目で「既存のモード段落と重複する」と指摘され、内容をデストロイモード段落、セーフモードの箇条書き、衝突時の順序の3か所へ畳み込んで小見出しを外した。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>レビュー2巡（<code>ponytail-review</code>、TypeScript / JavaScript を含まないため <code>anti-ai-slop-typescript-general</code> は省略）で、次の矛盾を解消し、要件定義書を先に明確化してから SKILL.md へ反映した。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>デストロイモードの <code>actionable</code> の意味。4状態の定義は「原意を変えず」だが、デストロイモードは細部の意味の変化を許容する。FR-05 に「<code>actionable</code> の判定と修正もデストロイモードが許容する意味の変化の範囲で行う」を追加した。</p>
+</li>
+<li>
+<p>解消した <code>needs-confirmation</code> の状態。デストロイモードで自然な解釈を選んだ箇所は <code>actionable</code> として扱い、事実に関わるものだけ <code>needs-confirmation</code> のまま <code>要確認</code> に残す（FR-05）。</p>
+</li>
+<li>
+<p><code>keep</code> の割り当て。「補わない」一覧に当たる箇所など意図的に残す箇所を <code>keep</code> とする（FR-04）。</p>
+</li>
+<li>
+<p>デストロイモードの Phase 5 再照合の根拠。候補文を再解析しないため <code>LLM</code> 出所で判定し、セーフモードは意味回帰検査で再解析した分析メモを使う（FR-06）。</p>
+</li>
+<li>
+<p>保護範囲の判定単位。規則単位ではなく箇所単位で <code>not-applicable</code> とし、保護範囲の外には同じ規則を通常どおり適用する（FR-05、例外）。</p>
+</li>
+<li>
+<p>「レビューだけ」の出力内容。<code>diagnostic</code> の3項目ではなく <code>actionable</code> と <code>needs-confirmation</code> の判定を <code>ID / 対象箇所 / 問題 / 修正案</code> で出す（FR-07、T-08）。</p>
+</li>
+<li>
+<p>Phase 6 の完了条件。監査だけ・レビューだけでは本文を出さないため「出力先に応じてリライト本文、判定、または監査一覧が出力され」とした。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>レビューで指摘されたが採らなかった項目は、旧 SKILL.md から引き継いだ既存文（冒頭の2文、「子スキルと優先順位」の最終文、Phase 3 の導入2文）の短縮で、本件の変更対象外として残した。</p>
+</div>
+<div class="paragraph">
+<p>行数は見積もり約360行に対して330行だった。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_移行互換性ロールバック運用">11. 移行、互換性、ロールバック、運用</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_移行と互換性">11.1. 移行と互換性</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>実行コード、永続データ、外部依存を追加しないため、データ移行はない。</p>
+</li>
+<li>
+<p><code>natural-japanese-rewriter</code> の名前、配置、<code>safe</code> 引数、<code>polish</code> / <code>diagnostic</code> の意味、Phase 1〜6 の順序は維持する。<code>mendan-junbi</code> が名前で参照しているため改名しない。</p>
+</li>
+<li>
+<p>analyzer と <code>japanese-kwja-analyze</code> の契約は変えない。<code>rewrite_targets</code> への <code>decision</code> と <code>rule_ids</code> は親スキル側の記録で、analyzer は空配列を渡すだけである。</p>
+</li>
+<li>
+<p>旧スキルの利用者は同じ依頼文で <code>natural-japanese-rewriter</code> が起動する。既定がデストロイモードになるため、旧スキルと同じ原意保持が必要なら <code>safe</code> を付ける。この差は <code>description</code> に明記する（Task 2）。</p>
+</li>
+<li>
+<p>過去の出力に残る ID は綴りが変わらないため、そのまま新しい表で引ける（D-03）。</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_ロールバック">11.2. ロールバック</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>commit 前は <code>git restore --staged --worktree skills/natural-japanese</code> で SKILL.md、openai.yaml、削除した旧ディレクトリを HEAD の状態へ戻す。</p>
+</li>
+<li>
+<p>commit 後は <code>git revert &lt;commit&gt;</code> で戻す。<code>docs/backups/2026_09_29/natural-japanese/</code> の <code>natural-japanese-rewriter</code> と <code>rewrite-japanese-with-iwabuchi-rules</code> を <code>skills/natural-japanese/</code> へコピーしても同じ状態になる（現行と完全一致を確認済み）。</p>
+</li>
+<li>
+<p>外部状態やデータの巻き戻しは不要である。</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_運用上の作業">11.3. 運用上の作業</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>作業は <code>main</code> 上で行い、commit と push は親パイプラインが行う。ブランチ、PR、PR 本文の更新は行わない。</p>
+</li>
+<li>
+<p>利用環境の <code>~/.claude/skills/</code> は nix store のスナップショットへの symlink で、リポジトリで旧ディレクトリを削除しても再ビルドまで旧スキルが残り、同じ依頼に2つのスキルが反応し得る。再ビルドは利用者の作業とし、完了条件に含めない。完了報告でこの点を伝える。</p>
+</li>
+<li>
+<p>実装後に要件定義書と本計画の HTML、本計画の解説 HTML を親パイプラインが生成する。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_リスクと軽減策">12. リスクと軽減策</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 37.5%;">
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">リスク</th>
+<th class="tableblock halign-left valign-top">影響</th>
+<th class="tableblock halign-left valign-top">軽減策</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SKILL.md が400行を超える</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">中</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">見積もり約360行。超えた場合は P-14 の順（主な手がかりの短縮、監査一覧の1行化、4状態の1行化）で削り、表の行と完了条件は削らない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">本文の形式例に実在の ID の表行を書き、AC-01 の件数が崩れる</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">中</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">形式例は <code>{ID}</code> だけを使う。Task 6 の後に AC-01 を再実行する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">規則本文をそのまま移し、<code>output.line-break-each-line</code> の既定が2通りになる</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">高</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">生成スクリプトが置き換える。<code>grep</code> で旧文言0件、新文言1件を確認する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>LLM</code> 出所の判定が KWJA の事実として読まれる</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">中</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 3 で出所に従って判定し、Phase 6 で <code>（LLM 判断）</code> を付ける。素性がない場合も同じ表示にする</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>polish</code> の <code>要確認</code> が規則の数だけ増えて騒がしくなる</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">中</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>output.line-break-each-line</code> の既定を <code>not-applicable</code> にし、<code>pass</code> と <code>not-applicable</code> は出力しない。<code>polish</code> の出力を本文と <code>要確認</code> に固定する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 5 の再照合が収束しない</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">低</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">再照合を最大3巡とし、解消しない <code>actionable</code> は <code>needs-confirmation</code> に変えて <code>要確認</code> に出す（要件 FR-06）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">旧スキルの symlink が残り、同じ依頼に2つのスキルが反応する</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">低</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">運用上の注意として記載し、完了報告で再ビルドを案内する</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">KWJA を実行できず、規則判定の実行時挙動を確認できない</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">中</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">スキル指示のレビューで期待する判定を一意に説明できるかを確認し、実行可能な環境で T-03、T-10、T-12、T-14 を追加実行する</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_判断から学べること">13. 判断から学べること</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>安定 ID を持つ表を別ファイルへ移すときは、原本から生成するスクリプトと、移設先を検査するスクリプトを計画に埋め込む。</strong>
+兆候は、ID の綴りを受け入れ条件で機械照合する要件と、commit 済みの原本（バックアップ）があること。
+使える条件は、原本が正規表現で読める形式で、移設先の列追加が機械的に決まること。
+使わないほうがよい条件は、移設と同時に本文を大きく書き換える場合で、そのときは手書きと差分レビューのほうが短い。
+参照は Task 1、「補助スクリプト」、D-03。検索語は "golden file"、"table migration script"。</p>
+</li>
+<li>
+<p><strong>件数を固定する grep の受け入れ条件があるときは、同じパターンの例示を本文に書かない制約を計画に置く。</strong>
+兆候は、<code>grep -c</code> でファイル全体の件数を固定する AC と、同じ形式を説明する形式例が本文にあること。
+使える条件は、形式例をプレースホルダーで書けること。
+使わないほうがよい条件は、実例が読者の理解に不可欠な場合で、そのときは AC の正規表現を節の範囲に限定する。
+参照は破綻条件 2、Task 6、AC-01。検索語は "count-based acceptance check false positive"。</p>
+</li>
+<li>
+<p><strong>任意の要件は、主となる定義が毎回読まれる場所にあり、参照資料が条件付きにしか読まれないなら実施しない。</strong>
+兆候は、「任意」と書かれた FR と、1000行を超える参照資料への注記。
+使える条件は、注記が主表の情報の再掲で、後から別の変更として追加できること。
+使わないほうがよい条件は、参照資料が判断の主な材料になっている場合で、そのときは注記が ID の付与を直接助ける。
+参照は P-11、D-09、FR-09。検索語は "YAGNI documentation cross-reference"。</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_完了条件">14. 完了条件</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Task 1〜9 のチェックボックスが実績どおり更新されている。</p>
+</li>
+<li>
+<p>AC-01〜AC-17 が「検証コマンド」と対応表のレビューで確認され、AC-18 は FR-09 不実施の記録で満たされている。</p>
+</li>
+<li>
+<p>T-01〜T-15 がレビューで確認され、T-03、T-10、T-12、T-14 は KWJA 未実行のレビュー確認であることが記録されている。</p>
+</li>
+<li>
+<p><code>quick_validate.py</code> が <code>Skill is valid!</code> を返し、<code>SKILL.md</code> が400行以下である。</p>
+</li>
+<li>
+<p><code>git status --short</code> の変更が <code>natural-japanese-rewriter/SKILL.md</code>、<code>agents/openai.yaml</code>、旧ディレクトリの削除、要件定義書、本計画の範囲に収まっている。</p>
+</li>
+<li>
+<p>要件定義書と本計画に <code>asciidoctor --failure-level WARN</code> の警告がなく、両文書の品質ゲートが90点以上、重大な不整合0件である。</p>
+</li>
+<li>
+<p>計画からの逸脱があれば、要件を先に直し、本計画に理由と最終形が書かれている。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+    </article>
+  </div>
+</body>
+</html>

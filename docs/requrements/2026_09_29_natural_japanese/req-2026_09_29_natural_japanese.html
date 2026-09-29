@@ -1,0 +1,1923 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data: https: http:; style-src 'unsafe-inline'; font-src 'self' data:;">
+  <meta name="generator" content="asciidoc-to-colorful-html">
+  <title>岩淵48規則の natural-japanese-rewriter への統合 要件定義書</title>
+  <style>
+/*
+ * Standalone Asciidoctor theme.
+ * The palette and document treatments are adapted from
+ * document-base/supplemental-ui/css/custom.css.
+ */
+
+:root {
+  color-scheme: light;
+  --color-ink: #23354a;
+  --color-muted: #607286;
+  --color-primary: #176b87;
+  --color-primary-dark: #123f5d;
+  --color-primary-soft: #e9f5f7;
+  --color-secondary: #6d52a3;
+  --color-secondary-soft: #f1edfa;
+  --color-accent: #d98716;
+  --color-positive: #2f805d;
+  --color-danger: #b64c55;
+  --color-border: #c9d9e3;
+  --color-code-bg: #f3f6f8;
+  --color-surface: #ffffff;
+  --shadow-page: 0 1.4rem 4rem rgb(25 64 88 / 15%);
+  --shadow-soft: 0 0.25rem 1rem rgb(31 75 98 / 9%);
+  --radius-large: 1rem;
+  --radius-medium: 0.55rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 20rem;
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--color-ink);
+  background:
+    radial-gradient(circle at 12% 8%, rgb(64 176 174 / 18%), transparent 28rem),
+    radial-gradient(circle at 88% 12%, rgb(126 93 184 / 13%), transparent 25rem),
+    linear-gradient(145deg, #eef7f8 0%, #f8f7fc 52%, #fff8ed 100%);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP",
+    "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+::selection {
+  color: #142b3c;
+  background: #bde8ed;
+}
+
+.page-frame {
+  width: min(74rem, calc(100% - 2rem));
+  margin: 2.5rem auto;
+}
+
+.doc {
+  position: relative;
+  min-width: 0;
+  padding: clamp(1.4rem, 4vw, 4rem);
+  overflow-wrap: anywhere;
+  border: 1px solid rgb(195 216 226 / 85%);
+  border-radius: var(--radius-large);
+  background: #fff;
+  box-shadow: var(--shadow-page);
+}
+
+.doc::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 0.38rem;
+  border-radius: var(--radius-large) var(--radius-large) 0 0;
+  background: linear-gradient(90deg, var(--color-primary), #43a6a1 48%, var(--color-secondary));
+  content: "";
+}
+
+.doc h1,
+.doc h2,
+.doc h3,
+.doc h4,
+.doc h5,
+.doc h6 {
+  color: var(--color-primary-dark);
+  font-weight: 750;
+  line-height: 1.4;
+  letter-spacing: 0.015em;
+  scroll-margin-top: 1.5rem;
+}
+
+.doc h1,
+.doc #header > h1 {
+  margin: 0 0 2.3rem;
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: 0.025em;
+}
+
+.doc h1::after,
+.doc #header > h1::after {
+  display: block;
+  width: 5.4rem;
+  height: 0.32rem;
+  margin-top: 0.8rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-primary), #43a6a1, var(--color-secondary));
+  content: "";
+}
+
+.doc h2 {
+  margin: 2.8rem 0 1.2rem;
+  padding: 0.68rem 1rem 0.68rem 1.1rem;
+  border-left: 0.34rem solid var(--color-primary);
+  border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
+  background: linear-gradient(90deg, var(--color-primary-soft), #f8fbfc 72%, transparent);
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+}
+
+.doc h3 {
+  margin: 2.25rem 0 0.9rem;
+  padding-bottom: 0.38rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: clamp(1.22rem, 2.3vw, 1.5rem);
+}
+
+.doc h4 {
+  margin: 1.8rem 0 0.7rem;
+  color: #285d72;
+  font-size: 1.14rem;
+}
+
+.doc h5,
+.doc h6 {
+  margin: 1.5rem 0 0.55rem;
+  font-size: 1rem;
+}
+
+.doc p,
+.doc li,
+.doc dd {
+  line-height: 1.82;
+}
+
+.doc p {
+  margin: 0.8rem 0 1rem;
+}
+
+.doc a {
+  color: #086f91;
+  text-decoration-color: #76adbd;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+.doc a:hover {
+  color: #084f70;
+  text-decoration-color: currentcolor;
+}
+
+.doc ul,
+.doc ol {
+  padding-left: 1.55rem;
+}
+
+.doc li + li {
+  margin-top: 0.28rem;
+}
+
+.doc li::marker {
+  color: var(--color-primary);
+  font-weight: 750;
+}
+
+.doc dl dt {
+  margin-top: 1rem;
+  color: var(--color-primary-dark);
+  font-weight: 750;
+}
+
+.doc hr {
+  height: 1px;
+  margin: 2.4rem 0;
+  border: 0;
+  background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+}
+
+.doc #toc,
+.doc .toc {
+  margin: 1.6rem 0 2.2rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid #cddde5;
+  border-radius: var(--radius-medium);
+  background: linear-gradient(135deg, #f1f9fa, #f7f4fc);
+  box-shadow: var(--shadow-soft);
+}
+
+.doc #toctitle {
+  margin-bottom: 0.45rem;
+  color: var(--color-primary-dark);
+  font-weight: 800;
+}
+
+.doc #toc ul {
+  margin: 0.3rem 0;
+}
+
+.doc table.tableblock {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 1.6rem 0 1.9rem;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  border-collapse: collapse;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.doc table.tableblock thead {
+  color: #fff;
+  background: linear-gradient(90deg, var(--color-primary-dark), var(--color-primary));
+}
+
+.doc table.tableblock th,
+.doc table.tableblock td {
+  padding: 0.72rem 0.85rem;
+  border: 1px solid #d7e2e8;
+  text-align: left;
+  vertical-align: top;
+}
+
+.doc table.tableblock th {
+  font-weight: 750;
+}
+
+.doc table.tableblock tbody tr:nth-child(even) {
+  background: #f5f9fa;
+}
+
+.doc table.tableblock tbody tr:hover {
+  background: #edf6f7;
+}
+
+.doc :not(pre) > code,
+.doc kbd {
+  padding: 0.12em 0.4em;
+  border: 1px solid #d6e0e6;
+  border-radius: 0.3rem;
+  color: #87421f;
+  background: var(--color-code-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+.doc kbd {
+  color: #36495a;
+  background: linear-gradient(#fff, #edf1f4);
+  box-shadow: 0 0.12rem 0 #c3ced5;
+}
+
+.doc pre {
+  max-width: 100%;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid #cbd8df;
+  border-left: 0.26rem solid var(--color-primary);
+  border-radius: var(--radius-medium);
+  color: #213446;
+  background: #f4f7f9;
+  box-shadow: var(--shadow-soft);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+  line-height: 1.62;
+  tab-size: 4;
+}
+
+.doc pre code {
+  display: block;
+  padding: 1rem 1.1rem;
+  color: inherit;
+  background: transparent;
+}
+
+.doc .listingblock,
+.doc .literalblock {
+  margin: 1.35rem 0 1.65rem;
+}
+
+.doc .quoteblock blockquote {
+  margin: 1.4rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 0.32rem solid #5b9da5;
+  border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
+  color: #40566a;
+  background: #f2f8f8;
+}
+
+.doc .quoteblock .attribution {
+  margin-top: -0.9rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.doc .sidebarblock,
+.doc .exampleblock > .content {
+  margin: 1.5rem 0;
+  padding: 1rem 1.2rem;
+  border: 1px solid #d8d0e8;
+  border-radius: var(--radius-medium);
+  background: linear-gradient(135deg, #faf8ff, var(--color-secondary-soft));
+  box-shadow: var(--shadow-soft);
+}
+
+.doc .admonitionblock {
+  margin: 1.5rem 0;
+  overflow: hidden;
+  border: 1px solid #c8dce2;
+  border-left: 0.32rem solid var(--color-primary);
+  border-radius: var(--radius-medium);
+  background: #f5fafb;
+  box-shadow: var(--shadow-soft);
+}
+
+.doc .admonitionblock > table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+}
+
+.doc .admonitionblock td.icon {
+  width: 7.5rem;
+  padding: 0.95rem 0.75rem;
+  color: var(--color-primary-dark);
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.doc .admonitionblock td.content {
+  padding: 0.95rem 1rem;
+  border-left: 1px solid rgb(188 211 221 / 85%);
+  background: transparent;
+}
+
+.doc .admonitionblock.tip {
+  border-left-color: var(--color-positive);
+  background: #f0faf5;
+}
+
+.doc .admonitionblock.warning,
+.doc .admonitionblock.caution {
+  border-left-color: var(--color-accent);
+  background: #fff9ed;
+}
+
+.doc .admonitionblock.important {
+  border-left-color: var(--color-danger);
+  background: #fff5f5;
+}
+
+.doc .imageblock {
+  margin: 1.75rem 0 2rem;
+  text-align: center;
+}
+
+.doc img,
+.doc svg,
+.doc video {
+  max-width: 100%;
+  height: auto;
+}
+
+.doc .imageblock img {
+  border: 1px solid #d5e0e5;
+  border-radius: var(--radius-medium);
+  background: #fff;
+  box-shadow: 0 0.4rem 1.2rem rgb(31 75 98 / 12%);
+}
+
+.doc .title,
+.doc .imageblock > .title,
+.doc .listingblock > .title,
+.doc .tableblock > .title {
+  margin: 0.45rem 0;
+  color: var(--color-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.doc mark {
+  padding: 0.08em 0.2em;
+  border-radius: 0.2rem;
+  color: inherit;
+  background: #ffeca8;
+}
+
+.doc details {
+  margin: 1rem 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: #fbfdfd;
+}
+
+.doc summary {
+  color: var(--color-primary-dark);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.doc #footnotes {
+  margin-top: 3rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 0.92rem;
+}
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 0.18rem solid #fff;
+  outline-offset: 0.12rem;
+  box-shadow: 0 0 0 0.34rem #0b5e7a;
+}
+
+@media screen and (max-width: 768px) {
+  .page-frame {
+    width: min(100% - 1rem, 74rem);
+    margin: 0.5rem auto;
+  }
+
+  .doc {
+    padding: 1.35rem 1rem 2rem;
+    border-radius: 0.75rem;
+    font-size: 0.98rem;
+  }
+
+  .doc h1,
+  .doc #header > h1 {
+    margin-bottom: 1.8rem;
+    font-size: 1.85rem;
+  }
+
+  .doc h2 {
+    margin-top: 2.2rem;
+    padding: 0.58rem 0.72rem;
+    font-size: 1.38rem;
+  }
+
+  .doc h3 {
+    font-size: 1.2rem;
+  }
+
+  .doc table.tableblock th,
+  .doc table.tableblock td {
+    min-width: 7rem;
+    padding: 0.58rem 0.65rem;
+  }
+
+  .doc .admonitionblock > table,
+  .doc .admonitionblock > table > tbody,
+  .doc .admonitionblock > table > tbody > tr,
+  .doc .admonitionblock td {
+    display: block;
+    width: 100%;
+  }
+
+  .doc .admonitionblock td.icon {
+    padding-bottom: 0.25rem;
+    text-align: left;
+  }
+
+  .doc .admonitionblock td.content {
+    border-top: 1px solid rgb(188 211 221 / 85%);
+    border-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+@media print {
+  @page {
+    margin: 15mm;
+  }
+
+  body {
+    color: #111;
+    background: #fff;
+    font-size: 10.5pt;
+  }
+
+  .page-frame {
+    width: auto;
+    margin: 0;
+  }
+
+  .doc {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .doc::before {
+    display: none;
+  }
+
+  .doc h1,
+  .doc h2,
+  .doc h3,
+  .doc h4,
+  .doc h5,
+  .doc h6 {
+    color: #111;
+    break-after: avoid;
+  }
+
+  .doc h2 {
+    border-left-color: #555;
+    background: none;
+  }
+
+  .doc table.tableblock,
+  .doc pre,
+  .doc .admonitionblock,
+  .doc .imageblock img,
+  .doc #toc,
+  .doc .sidebarblock,
+  .doc .exampleblock > .content {
+    box-shadow: none;
+  }
+
+  .doc table.tableblock thead {
+    color: #111;
+    background: #eee;
+  }
+
+  .doc pre,
+  .doc table,
+  .doc .admonitionblock,
+  .doc .imageblock {
+    break-inside: avoid;
+  }
+
+  .doc a {
+    color: inherit;
+    text-decoration: underline;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div class="page-frame">
+    <article class="doc">
+<h1>岩淵48規則の natural-japanese-rewriter への統合 要件定義書</h1>
+<div id="toc" class="toc">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_前置き">1. 前置き</a></li>
+<li><a href="#_概要">2. 概要</a></li>
+<li><a href="#_背景">3. 背景</a></li>
+<li><a href="#_目的">4. 目的</a></li>
+<li><a href="#_利用者と利用シナリオ">5. 利用者と利用シナリオ</a></li>
+<li><a href="#_用語">6. 用語</a></li>
+<li><a href="#_対象範囲">7. 対象範囲</a>
+<ul class="sectlevel2">
+<li><a href="#_対象">7.1. 対象</a></li>
+<li><a href="#_対象外">7.2. 対象外</a></li>
+</ul>
+</li>
+<li><a href="#_機能要件">8. 機能要件</a>
+<ul class="sectlevel2">
+<li><a href="#_fr_01_トリガー語と起動条件を引き継ぐ">8.1. FR-01 トリガー語と起動条件を引き継ぐ</a></li>
+<li><a href="#_fr_02_規則_id_表を_skill_md_本体に置く">8.2. FR-02 規則 ID 表を SKILL.md 本体に置く</a></li>
+<li><a href="#_fr_03_規則を上位概念へ対応づける">8.3. FR-03 規則を上位概念へ対応づける</a>
+<ul class="sectlevel3">
+<li><a href="#_出力行配置">8.3.1. 出力・行配置</a></li>
+<li><a href="#_文の組み立て">8.3.2. 文の組み立て</a></li>
+<li><a href="#_語の選び方">8.3.3. 語の選び方</a></li>
+<li><a href="#_敬語">8.3.4. 敬語</a></li>
+</ul>
+</li>
+<li><a href="#_fr_04_phase_3_で規則の状態を判定する">8.4. FR-04 Phase 3 で規則の状態を判定する</a></li>
+<li><a href="#_fr_05_モードごとに規則を扱う">8.5. FR-05 モードごとに規則を扱う</a></li>
+<li><a href="#_fr_06_phase_5_で再照合する">8.6. FR-06 Phase 5 で再照合する</a></li>
+<li><a href="#_fr_07_出力形式を統合する">8.7. FR-07 出力形式を統合する</a></li>
+<li><a href="#_fr_08_旧スキルを削除する">8.8. FR-08 旧スキルを削除する</a></li>
+<li><a href="#_fr_09_detailed_rules_md_に規則_id_を注記する任意">8.9. FR-09 detailed-rules.md に規則 ID を注記する（任意）</a></li>
+</ul>
+</li>
+<li><a href="#_例外と失敗時の挙動">9. 例外と失敗時の挙動</a></li>
+<li><a href="#_非機能要件">10. 非機能要件</a>
+<ul class="sectlevel2">
+<li><a href="#_id_の安定性">10.1. ID の安定性</a></li>
+<li><a href="#_意味安全性">10.2. 意味安全性</a></li>
+<li><a href="#_コンテキスト効率">10.3. コンテキスト効率</a></li>
+<li><a href="#_保守性">10.4. 保守性</a></li>
+</ul>
+</li>
+<li><a href="#_互換性移行運用">11. 互換性、移行、運用</a></li>
+<li><a href="#_採用した意思決定">12. 採用した意思決定</a>
+<ul class="sectlevel2">
+<li><a href="#_d_01_48規則を10の上位概念と4つの出所に対応づけ判定を_phase_3_に集約する">12.1. D-01 48規則を10の上位概念と4つの出所に対応づけ、判定を Phase 3 に集約する</a></li>
+<li><a href="#_d_02_id_表は_skill_md_本体に置き参照ファイルを増やさない">12.2. D-02 ID 表は SKILL.md 本体に置き、参照ファイルを増やさない</a></li>
+<li><a href="#_d_03_id_の綴りと件数を変更前スナップショットと一致させる">12.3. D-03 ID の綴りと件数を変更前スナップショットと一致させる</a></li>
+<li><a href="#_d_04_規則_id_は親スキルの_rewrite_targets_と出力に置きanalyzer_の_issues_code_には載せない">12.4. D-04 規則 ID は親スキルの <code>rewrite_targets</code> と出力に置き、analyzer の <code>issues[].code</code> には載せない</a></li>
+<li><a href="#_d_05_セーフモードは旧スキルの原則デストロイモードは自然さの基準として規則を使う">12.5. D-05 セーフモードは旧スキルの原則、デストロイモードは自然さの基準として規則を使う</a></li>
+<li><a href="#_d_06_旧ディレクトリを同じ変更で削除しstub_を残さない">12.6. D-06 旧ディレクトリを同じ変更で削除し、stub を残さない</a></li>
+<li><a href="#_d_07_出力モードを増やさずレビューのみと最終版だけを既存の枠で扱う">12.7. D-07 出力モードを増やさず、レビューのみと最終版だけを既存の枠で扱う</a></li>
+<li><a href="#_d_08_output_line_break_each_line_の既定を_not_applicable_にする">12.8. D-08 <code>output.line-break-each-line</code> の既定を <code>not-applicable</code> にする</a></li>
+<li><a href="#_d_09_referencesdetailed_rules_md_への注記は任意にする">12.9. D-09 <code>references/detailed-rules.md</code> への注記は任意にする</a></li>
+</ul>
+</li>
+<li><a href="#_判断から学べること">13. 判断から学べること</a></li>
+<li><a href="#_受け入れ条件">14. 受け入れ条件</a></li>
+<li><a href="#_検証シナリオ">15. 検証シナリオ</a></li>
+<li><a href="#_品質確認方法">16. 品質確認方法</a></li>
+<li><a href="#_未確定事項">17. 未確定事項</a></li>
+<li><a href="#_参考資料">18. 参考資料</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="_前置き">1. 前置き</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>pipe-requirements-to-prスキルで、これを実行する時、
+この要件は、全部mainで完結させたいので、
+ブランチを作ったり、PRを上げたり更新したりしなくてよいです。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_概要">2. 概要</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>スキル
+<code>/home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/agent-skills/skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md</code>
+を、
+<code>/home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/agent-skills/skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code>
+にマージする。</p>
+</div>
+<div class="paragraph">
+<p>ただし、natural-japanese-rewriter の既存の「項」の概念や、
+<code>/home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/agent-skills/skills/natural-japanese/japanese-kwja-analyze/SKILL.md</code>
+の KWJA での解析（分かち書き、単語正規化、形態素解析、固有表現認識、言語素性、係り受け、述語項構造、橋渡し照応、共参照、談話関係）などの言語学的概念を上位の概念とし、
+rewrite-japanese-with-iwabuchi-rules のルールを、これらの概念で上位に昇華するような形にする。</p>
+</div>
+<div class="paragraph">
+<p>また、「これは <code>sentence.keep-subject-and-predicate-close</code> だ」のように、
+rewrite-japanese-with-iwabuchi-rules の規則をエージェントが作業しやすい形で利用できるようにする。</p>
+</div>
+<div class="paragraph">
+<p>あくまで natural-japanese-rewriter 単独で、rewrite-japanese-with-iwabuchi-rules のルールがマージされている形にする。
+natural-japanese-rewriter 内から rewrite-japanese-with-iwabuchi-rules を呼び出す形にはしない。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_背景">3. 背景</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>現行の <code>natural-japanese-rewriter</code> は、KWJA の解析ファイルから述語項グラフの分析メモを作り、談話・情報構造・語用論・対人関係・文体の制約を固定してから修復箇所を決めて生成する6 Phase 構成である
+（<code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md:77-209</code>）。</p>
+</div>
+<div class="paragraph">
+<p>一方の <code>rewrite-japanese-with-iwabuchi-rules</code> は、岩淵「悪文」メモ由来の48規則を文章へ直接照合し、各規則を <code>pass</code> / <code>not-applicable</code> / <code>actionable</code> / <code>needs-confirmation</code> の4状態に分類して、規則 ID 付きで報告する単独スキルである
+（<code>skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:34-60</code>）。
+起動条件は「岩淵ルールで直して」など規則を名指しする依頼に限られ、一般的な「校正して」「自然にして」からは除外されている（同 <code>:9-10</code>）。</p>
+</div>
+<div class="paragraph">
+<p>両者は同じ悪文を別の語彙で扱っている。
+たとえば <code>sentence.keep-subject-and-predicate-close</code> は、分析メモではガ格の項と述語の基本句距離として観測でき、<code>sentence.minimize-passive-voice</code> は <code>voice: passive</code> と動作主の復元可能性として観測できる。
+規則を文字列照合のチェックリストのまま残すと、同じ判断を二つのスキルが別々に行い、ID による説明責任と KWJA の根拠が結びつかない。</p>
+</div>
+<div class="paragraph">
+<p>調査で確認した事実（<code>pre-investigation-report-2026_09_29_natural_japanese.json</code>）のうち、要件に影響するものは次のとおりである。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>48個の ID は <code>output</code> 1件、<code>sentence</code> 21件、<code>word-choice</code> 16件、<code>honorific</code> 10件で重複がない（スクリプトで検証済み）。</p>
+</li>
+<li>
+<p>旧スキルは ID を「省略、改名、再利用しない」公開識別子と定めている（<code>rewrite-japanese-with-iwabuchi-rules/SKILL.md:36-37</code>）。元メモは通し番号が原本とずれている可能性を注記しており（<code>docs/sample/iwabuchi-akubun/memo.md:65</code>）、番号は識別子にならない。</p>
+</li>
+<li>
+<p>追跡ファイルの中で旧スキルを参照するのは旧スキル自身、<code>docs/backups</code>、本要件だけで、README にも他スキルにも参照がない（<code>git grep</code> 0件）。</p>
+</li>
+<li>
+<p>分析メモの <code>rewrite_targets</code> は analyzer 側では空配列としてしか現れず、要素の形も埋める手順もない（<code>natural-japanese-rewrite-analyzer/SKILL.md:90</code>）。実質的な生産者は親の Phase 3 である（<code>natural-japanese-rewriter/SKILL.md:145</code>）。</p>
+</li>
+<li>
+<p>analyzer の <code>issues[].code</code> は語彙が未定義である。9種の問題コード表はコミット <code>f8f85a4</code> で削除され、参照文だけが残っている（<code>natural-japanese-rewrite-analyzer/SKILL.md:74</code>）。</p>
+</li>
+<li>
+<p>analyzer は KWJA の解析事実と LLM の判断を区別して記録する（同 <code>:25-27</code>）。</p>
+</li>
+<li>
+<p><code>references/detailed-rules.md</code> は分割前の保存版で Phase 3 の条件付き読み込みに限られ（<code>natural-japanese-rewriter/SKILL.md:142</code>）、48規則の ID はどこにも現れない。</p>
+</li>
+<li>
+<p>変更前スナップショット <code>docs/backups/2026_09_29/natural-japanese/</code> は現行と完全一致し、ID の比較基準とロールバック先になる。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_目的">4. 目的</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><code>natural-japanese-rewriter</code> を、次の状態にする。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>48規則を、項・付加部・骨格、KWJA の11処理、Phase 2 の5層という既存の上位概念に対応づけて内蔵する。規則は「文字列に照らすチェック項目」ではなく、「分析メモと上位レイヤーのどの観測から判定する規範か」として定義される。</p>
+</li>
+<li>
+<p>各規則を安定 ID で参照でき、エージェントが判定、修正理由、<code>要確認</code>、診断出力で ID をそのまま使える。</p>
+</li>
+<li>
+<p>旧スキルのトリガー語、出力形式、監査機能を引き継ぎ、<code>natural-japanese-rewriter</code> 単独で完結する。旧スキルは削除し、内部から呼び出さない。</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_利用者と利用シナリオ">5. 利用者と利用シナリオ</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>主な利用者は、README、仕様書、技術記事、コードコメント、UI 文言、issue、PR 説明、業務連絡、職務経歴書などの日本語を推敲する Claude Code / Codex の利用者と、その依頼を受けるエージェントである。</p>
+</div>
+<div class="paragraph">
+<p>代表的な利用シナリオは次のとおりである。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>「自然にして」と頼まれ、既定のデストロイモードで書き直す。内部では48規則を照合し、確定できない点だけを ID 付きの <code>要確認</code> で返す。</p>
+</li>
+<li>
+<p>「岩淵ルールで直して」「ルールID付きで推敲して」と頼まれ、<code>diagnostic</code> モードで適用した規則 ID と対象箇所を示す。</p>
+</li>
+<li>
+<p>「48規則で監査して」と頼まれ、本文を変えずに48行の判定一覧を返す。</p>
+</li>
+<li>
+<p>「safe で校正して」と頼まれ、原意を保つ範囲で <code>actionable</code> の規則だけを最小修正する。</p>
+</li>
+<li>
+<p>エージェントが分析メモの述語項構造を読み、「これは <code>sentence.state-changed-subject-explicitly</code> だ」と判断して修復理由に ID を残す。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_用語">6. 用語</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 33.3333%;">
+<col style="width: 50.0001%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">用語</th>
+<th class="tableblock halign-left valign-top">定義</th>
+<th class="tableblock halign-left valign-top">出典</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">規則 ID</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>&lt;カテゴリ&gt;.&lt;kebab-case&gt;</code> 形式の安定識別子。カテゴリは <code>output</code>、<code>sentence</code>、<code>word-choice</code>、<code>honorific</code> の4種</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>rewrite-japanese-with-iwabuchi-rules/SKILL.md:62-128</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">規則の状態</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>pass</code>（適用でき問題なし）、<code>not-applicable</code>（媒体や内容から対象外）、<code>actionable</code>（原意を変えず安全に修正できる問題）、<code>needs-confirmation</code>（原文にない情報や意図が必要）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同 <code>:41-46</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">上位概念</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">規則を判定する観測の層。<code>述語項構造</code>、<code>係り受け</code>、<code>節構造・談話関係</code>、<code>共参照・照応</code>、<code>形態素・語彙</code>、<code>固有表現・保護範囲</code>、<code>語用論・モダリティ</code>、<code>対人関係</code>、<code>文体</code>、<code>文書構造</code> の10種。Phase 2 の情報構造（topic / focus）に対応する規則は48規則にないため語彙に含めない</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">KWJA の11処理（<code>japanese-kwja-analyze/SKILL.md:25-35</code>）と Phase 2 の5層（<code>natural-japanese-rewriter/SKILL.md:97-110</code>）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">手がかりの出所</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">規則を判定する材料をどこで得るか。<code>P1</code>（Phase 1 の分析メモと KWJA 出力）、<code>P2</code>（Phase 2 の上位レイヤー）、<code>P4</code>（Phase 4 の生成時の文書構造）、<code>LLM</code>（KWJA 出力に直接の手がかりがなく、原文と文脈から LLM が判断する）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">本書 D-01</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">項 / 付加部 / 骨格</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">項は述語が要求する参加者、付加部は述語が要求しない補足、骨格は項と述語の中心的な組み合わせ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>references/detailed-rules.md:118-207</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">分析メモ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">analyzer が出力する <code>schema_version: 2</code> の YAML。<code>rewrite_targets</code>、<code>predicates</code>、<code>issues</code>、<code>ambiguities</code>、<code>graph_invariants</code>、<code>rewrite_policy</code> などを持つ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>natural-japanese-rewrite-analyzer/SKILL.md:83-146</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">セーフモード / デストロイモード</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">第一引数が <code>safe</code> のときだけ原意を厳密に保つ。既定はデストロイモードで自然さを優先する</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>natural-japanese-rewriter/SKILL.md:37, 58-75</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">polish / diagnostic</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>polish</code> は本文中心で内部分析を出さない既定。<code>diagnostic</code> はユーザーが分析・理由・問題箇所を求めたときだけ診断を追加する</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同 <code>:48-52</code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_対象範囲">7. 対象範囲</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_対象">7.1. 対象</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code> の frontmatter、モード定義、Phase 3・5・6、規則 ID 表</p>
+</li>
+<li>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/agents/openai.yaml</code> の <code>short_description</code></p>
+</li>
+<li>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/manifest.json</code>（配布ファイルが変わる場合のみ）</p>
+</li>
+<li>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md</code> への規則 ID の注記（任意。FR-09）</p>
+</li>
+<li>
+<p><code>skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/</code> ディレクトリの削除</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_対象外">7.2. 対象外</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><code>natural-japanese-rewrite-analyzer</code> と <code>japanese-kwja-analyze</code> の SKILL.md、スクリプト、出力契約の変更</p>
+</li>
+<li>
+<p>analyzer の <code>issues[].code</code> への問題コードや規則 ID の追加</p>
+</li>
+<li>
+<p><code>references/detailed-rules.md</code> の規則本文の削除や再編</p>
+</li>
+<li>
+<p>README.md のスキル一覧の更新（現状も移動前のパスのままで、本件とは独立）</p>
+</li>
+<li>
+<p><code>natural-japanese-rewriter-line-break</code>、<code>sentence-linebreak-skill</code>、<code>bullet-list-rewriter</code> の変更</p>
+</li>
+<li>
+<p>利用環境側のインストール（nix 再ビルド、<code>~/.claude/skills</code> の symlink 更新）</p>
+</li>
+<li>
+<p>元メモの原本照合や規則の追加・削除・改名</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_機能要件">8. 機能要件</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_fr_01_トリガー語と起動条件を引き継ぐ">8.1. FR-01 トリガー語と起動条件を引き継ぐ</h3>
+<div class="paragraph">
+<p><code>natural-japanese-rewriter</code> の <code>description</code> に、旧スキルのトリガー語を加える。
+少なくとも「岩淵ルールで直して」「48規則で悪文をチェックして」「ルールID付きで推敲して」「文の組み立て・用語・敬語を網羅的に点検して」「監査」を含める。
+旧スキルの「一般的な校正・自然化依頼には使わない」という除外文は引き継がない。
+既存のトリガー語（「自然にして」「翻訳調を直して」「読みやすくして」「LLMっぽさを消して」「リライトして」「校正して」）と、<code>safe</code> 引数の説明は維持する。</p>
+</div>
+<div class="paragraph">
+<p><code>description</code> は validator の上限である1024文字以内に収める（現状264文字と239文字）。<code>name</code> は <code>natural-japanese-rewriter</code> のまま変えない。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fr_02_規則_id_表を_skill_md_本体に置く">8.2. FR-02 規則 ID 表を SKILL.md 本体に置く</h3>
+<div class="paragraph">
+<p>48規則の ID 表を <code>natural-japanese-rewriter/SKILL.md</code> 本体に置く。
+表は既存の形式（<code>| ID | 規則 |</code> の Markdown 表をカテゴリ見出しごとに置き、ID をバッククォートで囲む）を保ちつつ、FR-03 の上位概念と手がかりの出所を列として加える。
+規則本文は旧スキルの一文をそのまま移す。
+ただし <code>output.line-break-each-line</code> の本文にある「指定がなければ <code>needs-confirmation</code> とし」は、D-08 に合わせて <code>not-applicable</code> に置き換える。置き換えはこの1か所に限る。</p>
+</div>
+<div class="paragraph">
+<p>新しい参照ファイルは作らない。
+<code>references/detailed-rules.md</code> は現状どおり Phase 3 で条件付きにだけ読む。
+SKILL.md の行数は400行以下を目安とし、超える場合は表以外の重複記述を削って収める。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fr_03_規則を上位概念へ対応づける">8.3. FR-03 規則を上位概念へ対応づける</h3>
+<div class="paragraph">
+<p>各規則に、上位概念（用語の10種から1つ）と手がかりの出所（<code>P1</code> / <code>P2</code> / <code>P4</code> / <code>LLM</code> から1つ）を対応づける。
+推奨する対応表を次に示す（D-01）。実装者は「主な手がかり」の文言を分析メモの実フィールド名に合わせて調整してよいが、ID、件数、上位概念と出所の語彙は変えない。</p>
+</div>
+<div class="paragraph">
+<p><code>LLM</code> を出所とする規則は、KWJA の出力に直接の根拠がないことを意味する。
+これらの判定は分析メモの解析事実と混ぜず、<code>diagnostic</code> では LLM の判断であることが分かる形で示す。</p>
+</div>
+<div class="sect3">
+<h4 id="_出力行配置">8.3.1. 出力・行配置</h4>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 30%;">
+<col style="width: 20%;">
+<col style="width: 40%;">
+<col style="width: 10%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">ID</th>
+<th class="tableblock halign-left valign-top">上位概念</th>
+<th class="tableblock halign-left valign-top">主な手がかり</th>
+<th class="tableblock halign-left valign-top">出所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>output.line-break-each-line</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">文書構造</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">出力先の行構造、保護範囲（表、箇条書き、コード、front matter）。改行の単位が指定されたときだけ判定する</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P4</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_文の組み立て">8.3.2. 文の組み立て</h4>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 30%;">
+<col style="width: 20%;">
+<col style="width: 40%;">
+<col style="width: 10%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">ID</th>
+<th class="tableblock halign-left valign-top">上位概念</th>
+<th class="tableblock halign-left valign-top">主な手がかり</th>
+<th class="tableblock halign-left valign-top">出所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.split-overlong-sentences</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">節構造・談話関係</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1文中の述語数と節境界（係り受け、談話関係）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.keep-one-topic-per-sentence</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">節構造・談話関係</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1文中の独立した述語項構造の数と談話関係</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.preserve-context-consistency</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">共参照・照応</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">共参照、橋渡し照応、談話関係の参照先と <code>entities</code> の一致。前提と結論の食い違い</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.limit-suspensive-clause-chains</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">節構造・談話関係</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">連用中止で連なる述語の数（係り受け、活用形）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.avoid-ambiguous-suspensive-clauses</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">節構造・談話関係</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">中止節の係り先候補が複数ある（係り受け、<code>ambiguities</code>）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.clarify-suspensive-clause-attachment</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">係り受け</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">中止節の係り先（文節・基本句の係り先）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.use-punctuation-to-clarify-attachment</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">係り受け</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.clarify-suspensive-clause-attachment</code> と同じ手がかり。修正手段が句読点</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.clarify-subject-predicate-correspondence</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">述語項構造</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">各述語のガ格の項（<code>arguments</code> の <code>role</code>、<code>referent</code>、<code>recoverability</code>）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.retain-required-predicates</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">述語項構造</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">項があるのに述語が欠ける節（<code>predicates</code> と係り受け）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.keep-subject-and-predicate-close</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">係り受け</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ガ格の項と述語の基本句距離</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.state-changed-subject-explicitly</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">述語項構造</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">並列述語または文間でガ格の <code>referent</code> が切り替わる箇所（共有項と主体切り替えの検査）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.clarify-parallel-elements</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">係り受け</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">並列関係と同形の助詞（係り受け、<code>surface_particle</code>）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.avoid-repeating-equivalent-particles</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">述語項構造</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同一述語の <code>arguments</code> と <code>adjuncts</code> で <code>surface_particle</code> が重複する</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.retain-required-particles</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">述語項構造</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>realization: overt</code> なのに <code>surface_particle</code> が欠ける項</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.ensure-adverb-predicate-concord</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">係り受け</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">副詞の係り先述語の <code>polarity</code> と <code>modality</code>（言語素性）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.keep-modifier-and-modified-word-close</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">係り受け</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">修飾文節と被修飾文節の距離</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.clarify-modifier-scope</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">係り受け</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">修飾文節の係り先候補が複数ある（<code>ambiguities</code>）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.clarify-negation-scope</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">述語項構造</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>polarity: negative</code> の述語と否定が係る範囲</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.avoid-overlong-modifiers</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">係り受け</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">連体修飾節の長さ（基本句数）と入れ子</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.split-overlong-modifiers-into-sentences</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">節構造・談話関係</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.avoid-overlong-modifiers</code> と同じ手がかり。修正手段が文分割</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.minimize-passive-voice</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">述語項構造</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>voice: passive</code> と動作主の <code>recoverability</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_語の選び方">8.3.3. 語の選び方</h4>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 30%;">
+<col style="width: 20%;">
+<col style="width: 40%;">
+<col style="width: 10%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">ID</th>
+<th class="tableblock halign-left valign-top">上位概念</th>
+<th class="tableblock halign-left valign-top">主な手がかり</th>
+<th class="tableblock halign-left valign-top">出所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.remove-redundancy-and-clarify-ambiguity</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">形態素・語彙</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">基本形の重複、意味の重複、多義語（単語正規化、形態素解析）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.avoid-roundabout-phrasing</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">形態素・語彙</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">「〜することができる」「〜を行う」などの型（<code>detailed-rules.md</code> の LLM くさい表現）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">LLM</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.use-precise-nonmisleading-terms</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">形態素・語彙</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">用語の指示対象と文脈（<code>entities</code>、固有表現）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">LLM</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.avoid-idiosyncratic-neologisms-and-phrasing</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">形態素・語彙</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">未知語や低頻度表記（形態素解析の未知語）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.maintain-terminology-register-consistency</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">形態素・語彙</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同一概念の表記揺れ（基本形、単語正規化）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.choose-reader-appropriate-terms</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">語用論・モダリティ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">読み手と媒体（Phase 2 の語用論と文体）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.handle-directive-language-carefully</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">語用論・モダリティ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">発話行為が指示・依頼であること、requested action、<code>modality</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.match-expression-to-facts</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">語用論・モダリティ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>modality</code>、断定の強さ、<code>graph_invariants</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.verify-metaphor-appropriateness</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">文体</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">比喩表現と媒体</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">LLM</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.follow-established-usage</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">形態素・語彙</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">慣用的な語法。固有の用語法は <code>protected_ranges</code> で保護</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">LLM</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.avoid-translationese</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">文体</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">翻訳調の型（受身の連続、無生物主語、「〜に関して」）と <code>voice</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">LLM</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.simplify-overly-formal-literary-or-technical-terms</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">形態素・語彙</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">漢語・文語（形態素の品詞・語種）。固有表現と技術用語は保護</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.limit-loanwords-and-foreign-words</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">形態素・語彙</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">外来語・外国語（形態素の語種。素性の有無は未確定事項）。固有名称と技術的に必要な語は保護</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.use-immediately-understandable-spoken-words</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">文体</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">媒体が話し言葉のときだけ。読み（形態素解析）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.avoid-confusing-homophones-in-speech</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">形態素・語彙</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同じ読みで異なる基本形（形態素解析の読み）。話し言葉のときだけ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.avoid-unfamiliar-abbreviations</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">固有表現・保護範囲</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">略語（固有表現認識、未知語）。技術的に必要な略語は保護</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_敬語">8.3.4. 敬語</h4>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 30%;">
+<col style="width: 20%;">
+<col style="width: 40%;">
+<col style="width: 10%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">ID</th>
+<th class="tableblock halign-left valign-top">上位概念</th>
+<th class="tableblock halign-left valign-top">主な手がかり</th>
+<th class="tableblock halign-left valign-top">出所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>honorific.prefer-plain-simple-forms</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">対人関係</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">敬語形式の複雑さ（形態素の活用、補助動詞）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>honorific.avoid-archaic-reverential-sino-japanese-terms</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">対人関係</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">候文体由来の漢語</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">LLM</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>honorific.avoid-unnecessary-o-prefix</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">対人関係</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">接頭辞「お」「ご」（形態素解析）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>honorific.avoid-repeated-o-prefixes</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">対人関係</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同一文章内の「お」「ご」の出現密度</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>honorific.do-not-use-humble-forms-as-respectful</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">対人関係</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">謙譲形の述語と、その主体の <code>referent</code> が敬意の対象であること</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>honorific.avoid-double-respectful-forms</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">対人関係</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">尊敬語形式の重複（形態素、活用）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P1</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>honorific.retain-required-forms</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">対人関係</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">読み手、相手、場面と敬語レベル</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>honorific.keep-forms-consistent</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">対人関係</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">文章全体の敬語形式と敬意の向き</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>honorific.avoid-mixing-polite-and-plain-styles</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">文体</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">文末形式（です・ます / だ・である）の分布</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>honorific.allow-deliberate-style-mixing-for-effect</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">文体</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">意図的な混用。<code>honorific.avoid-mixing-polite-and-plain-styles</code> の例外</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P2</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fr_04_phase_3_で規則の状態を判定する">8.4. FR-04 Phase 3 で規則の状態を判定する</h3>
+<div class="paragraph">
+<p>Phase 3「修復箇所を決める」に、規則の状態判定を加える。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>48規則をすべて内部で照合し、各 ID を4状態のいずれかにする。判定の材料は FR-03 の出所に従い、<code>P1</code> は分析メモと KWJA 出力、<code>P2</code> は Phase 2 で固定した制約、<code>LLM</code> は原文と文脈から判断する。<code>P4</code> の規則（<code>output.line-break-each-line</code>）は、Phase 3 で改行単位の指定の有無から状態を決め、Phase 4 の生成時に適用する。</p>
+</li>
+<li>
+<p><code>actionable</code> と <code>needs-confirmation</code> の規則は、分析メモの <code>rewrite_targets</code> の対応する要素に <code>rule_ids</code> として記録する。主となる ID を先頭に、関連 ID を続ける。現行 SKILL.md の Phase 3 は <code>rewrite_target</code> と単数で書いているが、分析メモのキーは <code>rewrite_targets</code> であり、統合後はキー名に合わせる。</p>
+</li>
+<li>
+<p><code>rewrite_targets</code> の各要素は、少なくとも <code>decision</code>（<code>repair</code> / <code>keep</code> / <code>confirm</code>）と <code>rule_ids</code>（空配列可）を持つ。<code>actionable</code> は <code>repair</code>、<code>needs-confirmation</code> は <code>confirm</code>、項を無理に補わない一覧に当たる箇所など意図的に残す箇所は <code>keep</code> とする。既存の修復トリガー（主体の複数候補、係り先の曖昧さなど）による対象には、該当する規則 ID があれば同じ欄に付ける。要素の形は親スキルが定める記録であり、analyzer の出力契約は変えない。</p>
+</li>
+<li>
+<p><code>needs-confirmation</code> は <code>decision: confirm</code> とし、Phase 6 の <code>要確認</code> に ID 付きで出す。</p>
+</li>
+<li>
+<p><code>pass</code> と <code>not-applicable</code> は記録するだけで、出力しない。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>既存の修復トリガーと非トリガーの一覧（<code>natural-japanese-rewriter/SKILL.md:122-140</code>）は維持する。
+規則の判定は、これらの一覧を ID で言い換える位置づけであり、同じ判断を二重に書かない。</p>
+</div>
+<div class="paragraph">
+<p>Phase 3 の完了条件に「48個の ID すべてに状態が付き、<code>actionable</code> と <code>needs-confirmation</code> が <code>rewrite_targets</code> に <code>rule_ids</code> 付きで記録されている」を加える。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fr_05_モードごとに規則を扱う">8.5. FR-05 モードごとに規則を扱う</h3>
+<div class="paragraph">
+<p>両モードで共通する扱いは次のとおりとする。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>48規則をすべて照合する。</p>
+</li>
+<li>
+<p>コード、コマンド、ファイルパス、API 名、設定値、数値、固有名詞、引用、リンク、構造化データを保護し、原文にない事実を作らない。規則を理由に保護範囲を変えず、保護範囲にかかる箇所への規則の判定は <code>not-applicable</code> とする。</p>
+</li>
+<li>
+<p><code>needs-confirmation</code> は省略せず <code>要確認</code> に出す。</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>セーフモードでは、旧スキルの最優先原則をそのまま適用する。
+<code>actionable</code> は原意・事実・仕様・技術的意味を変えずに修正できる問題に限り、規則を機械的に適用せず、読みやすさや正確さが実際に上がる変更だけを採用する。
+規則どうしの判断が衝突した場合は、原意の保持、文脈・係り受け・否定範囲・用語の正確さ、読み手にとっての明確さ、語感・敬語・簡潔さ、行配置の順に優先する。</p>
+</div>
+<div class="paragraph">
+<p>デストロイモードでは、48規則を自然さの判定基準として使う。
+既存の方針どおり文の分割・結合、構成の変更、語の置き換え、冗長な情報の削除を積極的に行い、<code>actionable</code> の判定と修正もデストロイモードが許容する意味の変化の範囲で行う。
+<code>needs-confirmation</code> の箇所はもっとも自然な解釈を選んで <code>actionable</code> として扱ってよい。ただし選んだ解釈を事実として断定せず、事実に関わる <code>needs-confirmation</code>（<code>word-choice.match-expression-to-facts</code> など）は <code>needs-confirmation</code> のまま <code>要確認</code> に残す。
+規則の優先順位は、既存のデストロイモードの優先順位（自然さ最優先）を上位とし、旧スキルの順序は規則どうしの衝突を解くときだけ使う。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fr_06_phase_5_で再照合する">8.6. FR-06 Phase 5 で再照合する</h3>
+<div class="paragraph">
+<p>Phase 5「候補文を検査する」に、両モード共通で「候補文に対して48規則を再照合し、新たな <code>actionable</code> を作っていないことを確認する」を加える。
+デストロイモードは候補文を再解析しないため <code>LLM</code> 出所で再照合し、セーフモードは意味回帰検査で再解析した分析メモを使う。
+新たな <code>actionable</code> が見つかった場合は候補を修正して再照合する。
+再照合は意味回帰検査と同じく最大3巡とし、3巡で解消しない <code>actionable</code> は <code>needs-confirmation</code> に変えて Phase 6 の <code>要確認</code> に ID 付きで出す。
+セーフモードの意味回帰検査（KWJA 再解析、<code>SEMANTIC_DRIFT</code>）は変更しない。</p>
+</div>
+<div class="paragraph">
+<p>Phase 5 の完了条件に「候補文で <code>actionable</code> の規則が0件」を加える。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fr_07_出力形式を統合する">8.7. FR-07 出力形式を統合する</h3>
+<div class="paragraph">
+<p>「岩淵ルールで直して」「ルールID付きで推敲して」のように規則や ID を名指しする依頼、および適用した規則の提示を求める依頼は、<code>diagnostic</code> の要求として扱う。
+この判定は「入力と出力モード」の出力モードの定義に書く。</p>
+</div>
+<div class="paragraph">
+<p><code>polish</code>（既定）は現状どおり本文中心とし、<code>要確認</code> の各項目を規則 ID 付き（<code>- <code>{ID}</code>: {原文だけでは判断できない点}</code>）にする。
+規則に対応しない <code>要確認</code>（KWJA と本文の食い違いなど）は ID なしで出す。
+適用した規則の一覧は出さない。</p>
+</div>
+<div class="paragraph">
+<p><code>diagnostic</code> は既存の3項目（問題のある述語、不明または競合していた項、修復で明確になった関係）に加えて「適用ルール」を出す。
+形式は旧スキルの <code>- <code>{ID}</code>: {対象箇所と修正内容}</code> とし、<code>actionable</code> がなければ「適用ルール: なし」と書く。
+<code>LLM</code> を出所とする規則は、KWJA の根拠がない判断であることが分かるように示す。</p>
+</div>
+<div class="paragraph">
+<p>監査一覧は、ユーザーが監査結果または全規則の判定を求めた場合だけ、規則の定義順で出す。
+形式は旧スキルの表（<code>| ID | status | 根拠または対象箇所 |</code>）をそのまま使う。
+監査だけを求められた場合はレビューのみと同じく本文を変更せず、監査と推敲の両方を求められた場合は <code>diagnostic</code> の末尾に加える。</p>
+</div>
+<div class="paragraph">
+<p>ユーザーが「レビューだけ」「直さないで」と指定した場合は、本文を変更せず、<code>actionable</code> と <code>needs-confirmation</code> の判定を <code>ID / 対象箇所 / 問題 / 修正案</code> の形で出す。<code>needs-confirmation</code> は修正案の代わりに判断に必要な情報を示す。
+出力モードを増やさず、開始時に確定する出力先（ファイル編集、応答本文、本文を変更しない）で扱う。</p>
+</div>
+<div class="paragraph">
+<p>ユーザーが「最終版だけ」と指定した場合は、適用ルールと診断を省略する。<code>要確認</code> は省略しない。</p>
+</div>
+<div class="paragraph">
+<p>ファイルを編集した場合は本文を再掲せず、変更ファイル、変更概要、<code>要確認</code> を報告する。<code>diagnostic</code> では適用した ID も報告する。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fr_08_旧スキルを削除する">8.8. FR-08 旧スキルを削除する</h3>
+<div class="paragraph">
+<p><code>skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/</code> を、SKILL.md と <code>agents/openai.yaml</code> を含めて同じ変更で削除する。
+旧スキル名の stub、転送用スキル、alias は作らない。
+<code>natural-japanese-rewriter</code> の本文、description、openai.yaml のいずれにも旧スキル名を書かない。</p>
+</div>
+<div class="paragraph">
+<p><code>natural-japanese-rewriter/agents/openai.yaml</code> の <code>short_description</code> は、既定がデストロイモードである現状と規則 ID 付きの診断に合わせて更新する。<code>display_name</code> は維持する。<code>default_prompt</code> は追加しなくてよい。</p>
+</div>
+<div class="paragraph">
+<p><code>manifest.json</code> は、配布ファイルが変わらない限り変更しない。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fr_09_detailed_rules_md_に規則_id_を注記する任意">8.9. FR-09 detailed-rules.md に規則 ID を注記する（任意）</h3>
+<div class="paragraph">
+<p><code>references/detailed-rules.md</code> の修正観点や典型例のうち、48規則と対応する節に「関連ID: <code>&#8230;&#8203;</code>」を1行で添えてよい。
+規則本文の削除、節の並べ替え、モード方針の追記は行わない。
+注記した ID は FR-02 の表に存在するものに限る。
+この要件を実施しない場合も受け入れ条件は満たせる。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_例外と失敗時の挙動">9. 例外と失敗時の挙動</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>KWJA の実行または解析ファイルの読み取りに失敗した場合は、既存どおりリライトを止めて原因を報告する。規則の判定だけを LLM で続行しない。</p>
+</li>
+<li>
+<p>KWJA は成功したが、ある規則の手がかりとなる素性やタグが出力にない場合（たとえば語種、敬語）は、その規則を <code>LLM</code> 出所として原文から判定し、<code>diagnostic</code> ではその旨を示す。素性がないことを理由に <code>not-applicable</code> としない。</p>
+</li>
+<li>
+<p>分析メモの <code>ambiguities</code> に該当箇所がある規則は、セーフモードでは <code>needs-confirmation</code> とし、<code>actionable</code> にしない。</p>
+</li>
+<li>
+<p>保護範囲（コード、識別子、URL など）にかかる箇所への規則の判定は <code>not-applicable</code> とし、保護範囲を変更しない。保護範囲の外の箇所には同じ規則を通常どおり適用する。</p>
+</li>
+<li>
+<p><code>output.line-break-each-line</code> は、改行の単位が指定されていなければ <code>not-applicable</code> とし、現在の行配置を保つ。指定があれば <code>actionable</code> として、表・箇条書き・コード・front matter など行自体に意味がある構造を崩さずに適用する。</p>
+</li>
+<li>
+<p>監査一覧を求められたが規則の判定を完了できない場合（Phase 3 前の停止など）は、部分的な一覧を出さず、停止理由を報告する。</p>
+</li>
+<li>
+<p>長い文章で <code>actionable</code> が多数ある場合も、<code>polish</code> の出力は本文と <code>要確認</code> だけであり、規則数や文数に比例して増えない。監査一覧は文書単位の48行に固定する。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_非機能要件">10. 非機能要件</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_id_の安定性">10.1. ID の安定性</h3>
+<div class="paragraph">
+<p>48個の ID の綴りは、変更前スナップショット <code>docs/backups/2026_09_29/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md</code> の ID 表と完全一致させる。
+ID を省略、改名、再利用しない。
+将来規則を追加する場合は新しい ID を付け、廃止した ID を再利用しない。
+報告に使う ID は表の定義と完全一致させ、表にない ID を作らない。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_意味安全性">10.2. 意味安全性</h3>
+<div class="paragraph">
+<p>規則の適用を理由に、原文にない主体、対象、原因、目的、時刻、確実性を追加しない。
+技術用語を一般語へ薄めない。<code>word-choice.simplify-overly-formal-literary-or-technical-terms</code> と <code>word-choice.limit-loanwords-and-foreign-words</code> は、固有表現と技術的に必要な語を保護したうえで適用する。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_コンテキスト効率">10.3. コンテキスト効率</h3>
+<div class="paragraph">
+<p>ID 表は SKILL.md 本体に置き、毎回の起動で参照できるようにする。
+<code>references/detailed-rules.md</code> の読み込み条件は変えない。
+1〜2文や UI 文言でも48規則の照合は行うが、<code>not-applicable</code> の判定を素早く済ませ、出力を増やさない。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_保守性">10.4. 保守性</h3>
+<div class="paragraph">
+<p>同じ判断を Phase 3 の修復トリガー一覧と規則 ID 表の両方に長く書かない。
+規則の状態判定と ID の付与は Phase 3 に集約し、Phase 5 は再照合、Phase 6 は出力だけを担う。
+旧スキルの「このスキルは単独で実行する」は引き継がない。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_互換性移行運用">11. 互換性、移行、運用</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><code>natural-japanese-rewriter</code> の名前、配置、<code>safe</code> 引数、<code>polish</code> / <code>diagnostic</code> の意味、Phase 1〜6 の順序は維持する。<code>mendan-junbi</code> などが名前で参照しているため、改名しない。</p>
+</li>
+<li>
+<p>analyzer と japanese-kwja-analyze の契約は変更しない。<code>rewrite_targets</code> への <code>decision</code> と <code>rule_ids</code> の付与は親スキル側の記録であり、analyzer の出力契約に影響しない。</p>
+</li>
+<li>
+<p>旧スキルの利用者は、同じ依頼文（「岩淵ルールで直して」など）で <code>natural-japanese-rewriter</code> が起動する。既定がデストロイモードになるため、旧スキルと同じ原意保持の挙動が必要な場合は <code>safe</code> を付ける。この差は description に明記する。</p>
+</li>
+<li>
+<p>実行コード、永続データ、外部依存を追加しないため、データ移行は不要である。</p>
+</li>
+<li>
+<p>ロールバックは <code>docs/backups/2026_09_29/natural-japanese/</code> の <code>natural-japanese-rewriter</code> と <code>rewrite-japanese-with-iwabuchi-rules</code> を <code>skills/natural-japanese/</code> へ戻すことで行える。</p>
+</li>
+<li>
+<p>利用環境の <code>~/.claude/skills/</code> は nix store のスナップショットへの symlink であり、リポジトリで旧ディレクトリを削除しても再ビルドまで旧スキルが残る。再ビルドは利用者の作業とし、本件の完了条件に含めない。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_採用した意思決定">12. 採用した意思決定</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>各決定は自動壁打ちの推奨案であり、根拠と不確実性を併記する。</p>
+</div>
+<div class="sect2">
+<h3 id="_d_01_48規則を10の上位概念と4つの出所に対応づけ判定を_phase_3_に集約する">12.1. D-01 48規則を10の上位概念と4つの出所に対応づけ、判定を Phase 3 に集約する</h3>
+<div class="paragraph">
+<p>規則ごとに「どの層の、どの観測から判定するか」を FR-03 の表で固定する。
+上位概念の語彙は KWJA の11処理と Phase 2 の5層、<code>detailed-rules.md</code> の項・付加部・骨格から取り、新しい概念を持ち込まない。48規則が使わない層（情報構造）は語彙に含めない。
+判定の位置は既存の修復判断がある Phase 3 に集約し、Phase ごとに判定を分散させない。</p>
+</div>
+<div class="paragraph">
+<p>根拠は、ユーザーが「項の概念や KWJA の解析を上位概念とする」と明示していること、Phase 3 が実質的に <code>rewrite_targets</code> の生産者であること（<code>natural-japanese-rewriter/SKILL.md:145</code>）である。
+不確実性は、KWJA の言語素性に敬語や語種の素性があるかを未確認である点で、該当する規則は <code>LLM</code> 出所へ倒しても要件を満たす形にした。</p>
+</div>
+<div class="paragraph">
+<p>代替案として「カテゴリ単位（sentence / word-choice / honorific）で層に対応づけ、規則ごとの手がかりは実装者に委ねる」を検討したが、受け入れ条件を検証できず、「これは <code>sentence.keep-subject-and-predicate-close</code> だ」と判断するための手がかりが定義されないため採らない。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_d_02_id_表は_skill_md_本体に置き参照ファイルを増やさない">12.2. D-02 ID 表は SKILL.md 本体に置き、参照ファイルを増やさない</h3>
+<div class="paragraph">
+<p>ID は <code>polish</code> の <code>要確認</code> にも使うため、毎回の起動で参照できる必要がある。
+条件付きにしか読まれない参照ファイルへ置くと、読んでいない実行で ID を誤って綴る。
+SKILL.md は現状209行で、48行の表と Phase 3・5・6 の追記を加えても validator の制限内に収まる。</p>
+</div>
+<div class="paragraph">
+<p>不確実性は行数の目安（400行）が慣行に基づく値である点で、超えた場合は表以外の重複を削る。
+代替案「<code>references/iwabuchi-rules.md</code> を新設し、SKILL.md にはカテゴリ表だけ置く」は、ID の定義が二か所に分かれ、<code>manifest.json</code> の更新も要るため採らない。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_d_03_id_の綴りと件数を変更前スナップショットと一致させる">12.3. D-03 ID の綴りと件数を変更前スナップショットと一致させる</h3>
+<div class="paragraph">
+<p>旧スキルが ID を公開識別子と定義し（<code>rewrite-japanese-with-iwabuchi-rules/SKILL.md:36-37</code>）、リポジトリ内で参照がなくても利用者の過去の出力に ID が残り得る。
+綴りを保つコストはゼロで、変更前スナップショットが commit 済みのため機械的に照合できる。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_d_04_規則_id_は親スキルの_rewrite_targets_と出力に置きanalyzer_の_issues_code_には載せない">12.4. D-04 規則 ID は親スキルの <code>rewrite_targets</code> と出力に置き、analyzer の <code>issues[].code</code> には載せない</h3>
+<div class="paragraph">
+<p>analyzer は KWJA の解析事実と LLM の判断を分けて記録する方針を明記しており（<code>natural-japanese-rewrite-analyzer/SKILL.md:25-27</code>）、規則の状態は判断に属する。
+<code>issues[].code</code> は語彙が未定義で、その経緯（コミット <code>f8f85a4</code>）も不明のため、この変更で analyzer の契約に触らない。
+<code>rewrite_targets</code> は analyzer が空配列で渡し、親が埋める欄であり、ここに <code>decision</code> と <code>rule_ids</code> を持たせても子スキルの契約は変わらない。</p>
+</div>
+<div class="paragraph">
+<p>不確実性は、<code>issues[].code</code> の空白が意図的かどうかで、未確定事項に残す。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_d_05_セーフモードは旧スキルの原則デストロイモードは自然さの基準として規則を使う">12.5. D-05 セーフモードは旧スキルの原則、デストロイモードは自然さの基準として規則を使う</h3>
+<div class="paragraph">
+<p>旧スキルの最優先原則はセーフモードの制約と一致する。
+デストロイモードにそのまま持ち込むと「問題のない文は変更しない」が既定方針（<code>natural-japanese-rewriter/SKILL.md:58</code>）と衝突する。
+両モードで共通する保護範囲と事実の非捏造、<code>needs-confirmation</code> の報告は維持し、優先順位だけをモードで切り替える。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_d_06_旧ディレクトリを同じ変更で削除しstub_を残さない">12.6. D-06 旧ディレクトリを同じ変更で削除し、stub を残さない</h3>
+<div class="paragraph">
+<p>追跡ファイルに旧スキルの参照がなく、トリガー語を description へ移せば起動経路が途切れない。
+stub を残すと二つのスキルが同じ依頼に反応し、ユーザーが「呼び出す形にしない」とした意図に反する。
+不確実性は利用環境の symlink で、運用上の注意として記載した。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_d_07_出力モードを増やさずレビューのみと最終版だけを既存の枠で扱う">12.7. D-07 出力モードを増やさず、レビューのみと最終版だけを既存の枠で扱う</h3>
+<div class="paragraph">
+<p>「レビューだけ」は <code>diagnostic</code> で本文を変更しない場合、「最終版だけ」は <code>polish</code> で診断を省く場合として扱う。
+旧スキル内で「最終版だけなら推敲後だけを出す」と「どのモードでも <code>needs-confirmation</code> は省略しない」が両立していなかったため（同 <code>:149, :154</code>）、安全側の後者を採る。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_d_08_output_line_break_each_line_の既定を_not_applicable_にする">12.8. D-08 <code>output.line-break-each-line</code> の既定を <code>not-applicable</code> にする</h3>
+<div class="paragraph">
+<p>旧スキルは単位未指定なら <code>needs-confirmation</code> として現状維持としていたが、この解釈では毎回 <code>要確認</code> が出て <code>polish</code> が騒がしくなる。
+現状維持という結果は同じなので、状態だけを <code>not-applicable</code> に変える。
+FR-02 で移す規則本文もこの既定に合わせて書き換え、表と例外の記述が食い違わないようにする。
+<code>references/detailed-rules.md:214</code> の「一文ごとに改行する」との整合は未確定事項とし、本件では当該行を変更しない。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_d_09_referencesdetailed_rules_md_への注記は任意にする">12.9. D-09 <code>references/detailed-rules.md</code> への注記は任意にする</h3>
+<div class="paragraph">
+<p>修正観点の多くが <code>sentence.*</code> と重なるため注記は有用だが、1422行の参照資料を変更しなくても目的は達成できる。
+実施する場合も規則本文の削除と再編は行わない。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_判断から学べること">13. 判断から学べること</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>規則集を既存の解析層へ昇華するときは、規則 ID を安定識別子として残し、規則ごとに「どの観測から判定するか」を表で固定する。</strong>
+兆候は、チェックリスト型のスキルと解析パイプライン型のスキルが同じ問題を別の語彙で扱っていること。
+使える条件は、解析側に観測できるフィールド（項、係り受け、共参照など）が既にあること。
+使わないほうがよい条件は、規則が解析結果に対応せず主観的な好みだけで決まる場合で、そのときは <code>LLM</code> 出所として分けて扱う。
+参照は D-01、D-04、<code>natural-japanese-rewrite-analyzer/SKILL.md:25-27</code>。
+今後調べる概念名と検索語は「rule-to-feature mapping」「predicate-argument structure」「KWJA 言語素性」。</p>
+</li>
+<li>
+<p><strong>スキルをマージするときは、呼び出し委譲ではなく、トリガー語と出力契約を移して旧スキルを同じ変更で削除する。</strong>
+兆候は、二つのスキルが同じ依頼に反応し得る状態や、片方が他方を呼ぶだけの薄いスキル。
+使える条件は、追跡ファイルに旧スキルの参照がなく、description の上限内でトリガー語を吸収できること。
+使わないほうがよい条件は、外部の利用者が旧スキル名に依存している場合で、そのときは期限付きの alias を検討する。
+参照は D-06、<code>README.md:98</code>、<code>git grep</code> の結果。
+検索語は「migrate callers then delete」「skill description triggers」。</p>
+</li>
+<li>
+<p><strong>契約に宙に浮いた参照（列挙されていない語彙を指す文）を見つけても、マージのついでに別スキルの契約を直さず、未確定事項として残す。</strong>
+兆候は、<code>issues[].code</code> のように値の語彙がなく、参照文だけが残っている状態。
+使える条件は、当該契約が今回の変更対象外で、削除の経緯が履歴から読めないこと。
+使わないほうがよい条件は、宙に浮いた参照が今回の受け入れ条件を直接壊す場合で、そのときは同じ変更で直す。
+参照は D-04、未確定事項、コミット <code>f8f85a4</code>。
+検索語は「dangling reference」「schema enum drift」。</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_受け入れ条件">14. 受け入れ条件</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>機械的に検証できる条件は、品質確認方法のコマンドで確認する。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>AC-01: <code>natural-japanese-rewriter/SKILL.md</code> の ID 表に、規則 ID の行がちょうど48行あり、<code>output</code> 1件、<code>sentence</code> 21件、<code>word-choice</code> 16件、<code>honorific</code> 10件で、重複がない。</p>
+</li>
+<li>
+<p>AC-02: 48個の ID の集合が、<code>docs/backups/2026_09_29/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md</code> の ID 表の集合と完全一致する。</p>
+</li>
+<li>
+<p>AC-03: 48行のそれぞれに、上位概念（10種のいずれか）と出所（<code>P1</code> / <code>P2</code> / <code>P4</code> / <code>LLM</code> のいずれか）が付いている。</p>
+</li>
+<li>
+<p>AC-04: <code>skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/</code> ディレクトリが存在しない。</p>
+</li>
+<li>
+<p>AC-05: <code>skills/</code> 配下の追跡ファイルに文字列 <code>rewrite-japanese-with-iwabuchi-rules</code> が0件である。</p>
+</li>
+<li>
+<p>AC-06: <code>natural-japanese-rewriter/SKILL.md</code> の <code>description</code> に「岩淵ルール」「48規則」「ルールID」「監査」の各語が含まれ、旧スキルの除外文（「一般的な…だけの依頼には使わない」）を含まない。</p>
+</li>
+<li>
+<p>AC-07: <code>natural-japanese-rewriter/SKILL.md</code> の <code>name</code> が <code>natural-japanese-rewriter</code> のままで、<code>description</code> が1024文字以内である。</p>
+</li>
+<li>
+<p>AC-08: <code>natural-japanese-rewriter</code> が skill-creator の <code>quick_validate.py</code> を通過する。</p>
+</li>
+<li>
+<p>AC-09: <code>natural-japanese-rewriter/SKILL.md</code> が400行以下である。</p>
+</li>
+<li>
+<p>AC-10: <code>natural-japanese-rewrite-analyzer/</code> と <code>japanese-kwja-analyze/</code> に差分がない。</p>
+</li>
+<li>
+<p>AC-11: <code>natural-japanese-rewriter/manifest.json</code> に列挙されたファイルがすべて存在し、ディレクトリ内の配布対象ファイルがすべて列挙されている。</p>
+</li>
+<li>
+<p>AC-12: Phase 3 の記述に、48規則の4状態判定、<code>rewrite_targets</code> の <code>decision</code> と <code>rule_ids</code>、<code>needs-confirmation</code> から <code>要確認</code> への経路が書かれている。</p>
+</li>
+<li>
+<p>AC-13: Phase 5 の記述に、両モード共通の48規則再照合と「<code>actionable</code> が0件」の完了条件が書かれている。</p>
+</li>
+<li>
+<p>AC-14: Phase 6 の記述に、<code>polish</code> の ID 付き <code>要確認</code>、<code>diagnostic</code> の適用ルール、要求時のみの監査一覧（規則の定義順、<code>| ID | status | 根拠または対象箇所 |</code>）、レビューのみと最終版だけの扱いが書かれている。</p>
+</li>
+<li>
+<p>AC-15: SKILL.md に、セーフモードの規則衝突時の優先順位（原意、文脈・係り受け・否定範囲・用語、明確さ、語感・敬語・簡潔さ、行配置）と、デストロイモードでの規則の位置づけが書かれている。</p>
+</li>
+<li>
+<p>AC-16: <code>output.line-break-each-line</code> の既定が <code>not-applicable</code> で、単位の指定があるときだけ適用すると書かれている。</p>
+</li>
+<li>
+<p>AC-17: <code>natural-japanese-rewriter/agents/openai.yaml</code> の <code>short_description</code> が、既定のデストロイモードと規則 ID 付き診断に言及し、旧スキル名を含まない。</p>
+</li>
+<li>
+<p>AC-18: FR-09 を実施した場合、<code>references/detailed-rules.md</code> に注記した ID がすべて FR-02 の表に存在し、規則本文の削除がない。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_検証シナリオ">15. 検証シナリオ</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 14.2857%;">
+<col style="width: 42.8571%;">
+<col style="width: 42.8572%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">ID</th>
+<th class="tableblock halign-left valign-top">入力上の論点</th>
+<th class="tableblock halign-left valign-top">期待する判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-01</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">「岩淵ルールで直して」と本文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>natural-japanese-rewriter</code> が起動し、<code>diagnostic</code> として適用ルールを ID 付きで出す</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-02</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">「自然にして」と本文（既定のデストロイモード）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">48規則を内部で照合し、出力は本文と ID 付き <code>要確認</code> だけ</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-03</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">「safe で校正して」と、主語と述語が離れた文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.keep-subject-and-predicate-close</code> を <code>actionable</code> とし、ガ格の項と述語の距離を根拠に語順を整える。原意は変えない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-04</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">並列述語の途中で動作主が切り替わるが、新しい主語が書かれていない文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.state-changed-subject-explicitly</code> を判定し、<code>referent</code> が一意なら明示、複数候補なら <code>needs-confirmation</code> として主体を捏造しない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-05</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">受身で動作主が復元できない文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>sentence.minimize-passive-voice</code> を <code>needs-confirmation</code> または <code>not-applicable</code> とし、動作主を補わない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-06</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">「お」が連続する依頼メール</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>honorific.avoid-repeated-o-prefixes</code> を <code>actionable</code> とし、<code>honorific.retain-required-forms</code> により必要な敬語は落とさない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-07</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">「監査して」と本文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">本文を変えず、規則の定義順に48行の判定表を出す。<code>pass</code> と <code>not-applicable</code> も含む</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-08</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">「レビューだけ」と本文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">本文を変えず、<code>actionable</code> と <code>needs-confirmation</code> の判定を <code>ID / 対象箇所 / 問題 / 修正案</code> で出す。<code>needs-confirmation</code> は判断に必要な情報を示す</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-09</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">「最終版だけ」と本文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">推敲後の本文と <code>要確認</code> だけを出し、適用ルールと診断を省く</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-10</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">改行の単位を指定しない Markdown 文書</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>output.line-break-each-line</code> を <code>not-applicable</code> とし、行配置を変えない。<code>要確認</code> にも出さない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-11</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">コードブロックと API 名を含む技術文で、<code>word-choice.limit-loanwords-and-foreign-words</code> に該当しそうな語</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">保護範囲と技術用語を <code>not-applicable</code> とし、変更しない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-12</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">KWJA の出力に敬語や語種の素性がない文</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>honorific.<strong></code> と該当する <code>word-choice.</strong></code> を <code>LLM</code> 出所として判定し、<code>diagnostic</code> で KWJA の根拠がない判断だと示す。停止しない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-13</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">KWJA の実行に失敗した入力</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">既存どおり停止し、規則の判定だけを続行しない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-14</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">セーフモードの出力に同じスキルを <code>safe</code> で再適用</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>actionable</code> が0件で本文が変わらない</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">T-15</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>actionable</code> が多数ある長文の <code>polish</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">出力は本文と <code>要確認</code> だけで、規則の一覧や pass の列挙を含まない</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_品質確認方法">16. 品質確認方法</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>次のコマンドはリポジトリルートで実行する。<code>ID_RE</code> は Markdown 表の ID 行を抽出する正規表現である。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash">ID_RE='^\| `(output|sentence|word-choice|honorific)\.[a-z0-9-]+` \|'
+NEW=skills/natural-japanese/natural-japanese-rewriter/SKILL.md
+OLD=docs/backups/2026_09_29/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md
+
+# AC-01: 件数と重複
+grep -cE "$ID_RE" "$NEW"                                   # 48
+grep -oE "$ID_RE" "$NEW" | sort | uniq -d | wc -l          # 0
+for c in output sentence word-choice honorific; do
+  printf '%s ' "$c"; grep -cE "^\| \`$c\." "$NEW"          # 1 21 16 10
+done
+
+# AC-02: 変更前スナップショットと集合が一致
+diff &lt;(grep -oE "$ID_RE" "$OLD" | sort) &lt;(grep -oE "$ID_RE" "$NEW" | sort)   # 差分なし
+
+# AC-04, AC-05: 旧ディレクトリと参照の不在
+test ! -d skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules &amp;&amp; echo removed
+git grep -n rewrite-japanese-with-iwabuchi-rules -- skills | wc -l           # 0
+
+# AC-06, AC-07, AC-09（description に限定した AC-06 の確認と AC-03、AC-11 は実装計画の検査スクリプトで行う）
+for w in 岩淵ルール 48規則 ルールID 監査; do
+  printf '%s ' "$w"; grep -c "$w" "$NEW"                   # それぞれ1以上
+done
+grep -c 'だけの依頼には使わない' "$NEW"                    # 0
+wc -l &lt; "$NEW"                                             # 400以下
+
+# AC-08: validator
+python3 &lt;quick_validate.py のパス&gt; skills/natural-japanese/natural-japanese-rewriter
+
+# AC-10: 子スキルの不変
+git diff --stat HEAD -- skills/natural-japanese/natural-japanese-rewrite-analyzer \
+  skills/natural-japanese/japanese-kwja-analyze                             # 出力なし</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>AC-03 は、48行それぞれの上位概念列と出所列を目視または短いスクリプトで確認する。
+AC-11 は <code>manifest.json</code> の <code>files</code> を読み、各パスの存在とディレクトリ内の未列挙ファイルの有無を確認する。
+AC-12 から AC-18 は SKILL.md と openai.yaml を読んでレビューする。
+検証シナリオは、スキル指示から期待する判定と失敗時挙動を一意に説明できるかをレビューで確認する。実際に KWJA を実行できる環境では、T-03、T-10、T-12、T-14 を実行して確認する。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_未確定事項">17. 未確定事項</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>いずれも実装を止めない。要件は未確定のまま安全側に倒した形で書いている。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>KWJA の言語素性に敬語、語種（外来語）、話し言葉を示す素性があるかは未確認である。KWJA 2.5.1 は導入済みだがモデル重みが未キャッシュで、初回実行時のダウンロード（<code>lotus.kuee.kyoto-u.ac.jp</code>）が本調査の環境では通信を許可されず実行できなかった。確認方法は、通信を許可した環境で <code>skills/natural-japanese/japanese-kwja-analyze/scripts/analyze.sh</code> を敬語・外来語・受身を含む短文で実行し、形態素行と素性タグを読むこと。素性がなければ該当規則は <code>LLM</code> 出所として判定する（例外と失敗時の挙動を参照）。</p>
+</li>
+<li>
+<p>analyzer の <code>issues[].code</code> の語彙がコミット <code>f8f85a4</code> で消えた理由が意図的か不明である。確認方法は作者への確認。本件では analyzer を変更せず、規則 ID は親の <code>rewrite_targets</code> に置く（D-04）。</p>
+</li>
+<li>
+<p><code>references/detailed-rules.md:214</code> の「一文ごとに改行する」を既定として維持する意図があるか不明である。確認方法はユーザーへの確認。本件では当該行を変更せず、<code>output.line-break-each-line</code> の既定を <code>not-applicable</code> とする（D-08）。</p>
+</li>
+<li>
+<p>利用環境の nix 再ビルドの時期は不明である。旧スキルの symlink が残る間は旧スキルも起動し得る。運用上の注意として記載した。</p>
+</li>
+<li>
+<p>README.md のスキル一覧は移動前のパスのままで、旧スキルも <code>japanese-kwja-analyze</code> も未掲載である。本件の対象外とし、更新の要否はユーザーに委ねる。</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_参考資料">18. 参考資料</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>調査レポート: <code>docs/requrements/2026_09_29_natural_japanese/pre-investigation-report-2026_09_29_natural_japanese.json</code></p>
+</li>
+<li>
+<p>元メモ: <code>docs/sample/iwabuchi-akubun/memo.md</code></p>
+</li>
+<li>
+<p>変更前スナップショット: <code>docs/backups/2026_09_29/natural-japanese/</code></p>
+</li>
+<li>
+<p>前回の同系統要件: <code>docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc</code></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+    </article>
+  </div>
+</body>
+</html>
