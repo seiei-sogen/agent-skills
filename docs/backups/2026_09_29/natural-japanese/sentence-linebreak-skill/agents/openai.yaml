@@ -1,0 +1,3 @@
+interface:
+  display_name: "一文ごとの改行追加"
+  short_description: "Markdown と AsciiDoc の文章に一文ごとの hard line break を追加する"

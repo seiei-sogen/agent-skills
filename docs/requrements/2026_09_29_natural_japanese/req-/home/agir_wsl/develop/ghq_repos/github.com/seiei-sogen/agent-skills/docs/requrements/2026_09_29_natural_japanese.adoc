@@ -1,0 +1,21 @@
+スキル
+/home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/agent-skills/skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md
+
+を、
+/home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/agent-skills/skills/natural-japanese/natural-japanese-rewriter/SKILL.md
+
+にマージする。
+
+ただし、
+
+natural-japanese-rewriterの既存の「項」の概念や、
+/home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/agent-skills/skills/natural-japanese/japanese-kwja-analyze/SKILL.md
+の、KWJA での解析（分かち書き、単語正規化、形態素解析、固有表現認識、言語素性、係り受け、述語項構造、橋渡し照応、共参照、談話関係）
+などの言語学的概念を上位の概念とし、
+rewrite-japanese-with-iwabuchi-rulesのルールを、これらの概念で、上位に昇華するような形にする。
+
+また、「これは、`sentence.keep-subject-and-predicate-close` だ」などのように、
+rewrite-japanese-with-iwabuchi-rules は、エージェントが作業しやすい形で利用できるようにする。
+
+あくまで、natural-japanese-rewriter単独で、rewrite-japanese-with-iwabuchi-rulesのルールがマージされているような形にしたい。
+natural-japanese-rewriter内から、rewrite-japanese-with-iwabuchi-rulesを呼び出す形にはしない。
