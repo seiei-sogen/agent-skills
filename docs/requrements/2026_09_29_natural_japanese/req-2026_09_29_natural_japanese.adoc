@@ -149,6 +149,7 @@ natural-japanese-rewriter 内から rewrite-japanese-with-iwabuchi-rules を呼�
 48規則の ID 表を `natural-japanese-rewriter/SKILL.md` 本体に置く。
 表は既存の形式（`| ID | 規則 |` の Markdown 表をカテゴリ見出しごとに置き、ID をバッククォートで囲む）を保ちつつ、FR-03 の上位概念と手がかりの出所を列として加える。
 規則本文は旧スキルの一文をそのまま移す。
+ただし `output.line-break-each-line` の本文にある「指定がなければ `needs-confirmation` とし」は、D-08 に合わせて `not-applicable` に置き換える。置き換えはこの1か所に限る。
 
 新しい参照ファイルは作らない。
 `references/detailed-rules.md` は現状どおり Phase 3 で条件付きにだけ読む。
@@ -466,11 +467,15 @@ Phase 3 の完了条件に「48個の ID すべてに状態が付き、`actionab
 
 Phase 5「候補文を検査する」に、両モード共通で「候補文に対して48規則を再照合し、新たな `actionable` を作っていないことを確認する」を加える。
 新たな `actionable` が見つかった場合は候補を修正して再照合する。
+再照合は意味回帰検査と同じく最大3巡とし、3巡で解消しない `actionable` は `needs-confirmation` に変えて Phase 6 の `要確認` に ID 付きで出す。
 セーフモードの意味回帰検査（KWJA 再解析、`SEMANTIC_DRIFT`）は変更しない。
 
 Phase 5 の完了条件に「候補文で `actionable` の規則が0件」を加える。
 
 === FR-07 出力形式を統合する
+
+「岩淵ルールで直して」「ルールID付きで推敲して」のように規則や ID を名指しする依頼、および適用した規則の提示を求める依頼は、`diagnostic` の要求として扱う。
+この判定は「入力と出力モード」の出力モードの定義に書く。
 
 `polish`（既定）は現状どおり本文中心とし、`要確認` の各項目を規則 ID 付き（``- `{ID}`: {原文だけでは判断できない点}``）にする。
 規則に対応しない `要確認`（KWJA と本文の食い違いなど）は ID なしで出す。
@@ -611,6 +616,7 @@ stub を残すと二つのスキルが同じ依頼に反応し、ユーザーが
 
 旧スキルは単位未指定なら `needs-confirmation` として現状維持としていたが、この解釈では毎回 `要確認` が出て `polish` が騒がしくなる。
 現状維持という結果は同じなので、状態だけを `not-applicable` に変える。
+FR-02 で移す規則本文もこの既定に合わせて書き換え、表と例外の記述が食い違わないようにする。
 `references/detailed-rules.md:214` の「一文ごとに改行する」との整合は未確定事項とし、本件では当該行を変更しない。
 
 === D-09 `references/detailed-rules.md` への注記は任意にする
@@ -755,7 +761,7 @@ diff <(grep -oE "$ID_RE" "$OLD" | sort) <(grep -oE "$ID_RE" "$NEW" | sort)   # �
 test ! -d skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules && echo removed
 git grep -n rewrite-japanese-with-iwabuchi-rules -- skills | wc -l           # 0
 
-# AC-06, AC-07, AC-09
+# AC-06, AC-07, AC-09（description に限定した AC-06 の確認と AC-03、AC-11 は実装計画の検査スクリプトで行う）
 for w in 岩淵ルール 48規則 ルールID 監査; do
   printf '%s ' "$w"; grep -c "$w" "$NEW"                   # それぞれ1以上
 done
