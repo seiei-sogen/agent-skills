@@ -1,0 +1,372 @@
+{
+  "meta": {
+    "schema_version": 2,
+    "subject": "rewrite-japanese-with-iwabuchi-rules の48規則を natural-japanese-rewriter へ上位概念付きでマージする",
+    "generated_at": "2026-09-29T18:33:59+09:00",
+    "repo_root": "/home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/agent-skills",
+    "git_ref": "main@344ffc4ca4f2384d76935a169fcd9f8f3df23fa1",
+    "investigations": [
+      {
+        "skill": "pstack:how",
+        "question": "natural-japanese-rewriter が Phase 1〜6 で分析メモのどのフィールドを作り、どこで消費し、detailed-rules.md をいつ読み、diagnostic で何を出すか。マージ先の構造と ID を置ける場所を確定するために選んだ。単純経路として1本の読み取り専用レーンを派遣し、本体の調査と照合した。"
+      },
+      {
+        "skill": "pstack:why",
+        "question": "48規則が意味 ID で管理される理由、旧スキルが一般的な校正依頼を除外している理由、analyzer から問題コード表が消えた経緯、デストロイモード既定化の経緯。マージ後に維持すべき設計判断を切り分けるために選んだ。ソース管理の証拠は本体で直接収集し、他の情報源は sources_consulted に記録した。"
+      }
+    ],
+    "omitted": "natural-japanese-rewriter-line-break（1462行の旧版）、sentence-linebreak-skill、bullet-list-rewriter の本文は、今回の統合対象外のため要点のみ確認し、詳細を省いた。"
+  },
+  "problem": {
+    "summary": "48個の安定 ID を持つ岩淵ルール専用スキルを、KWJA 解析と述語項グラフを土台にした natural-japanese-rewriter へ統合し、規則を項・係り受け・照応・談話・敬語などの上位概念に対応づけたうえで、エージェントが ID で診断・報告できる形にする。統合後は natural-japanese-rewriter 単独で完結し、旧スキルを呼び出さない。",
+    "scope": "対象は natural-japanese-rewriter の SKILL.md、references/detailed-rules.md、agents/openai.yaml、manifest.json と、旧スキル rewrite-japanese-with-iwabuchi-rules ディレクトリの扱い。natural-japanese-rewrite-analyzer と japanese-kwja-analyze は契約を読むだけで変更対象にしない。README の一覧更新、旧版スキル群、外部インストール手順は対象外として記録のみ行う。"
+  },
+  "related_files": [
+    {
+      "path": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md",
+      "relevance": "high",
+      "role": "マージ先。209行。モード判定、Phase 1〜6、出力形式を持つ親スキル。",
+      "key_symbols": [
+        { "name": "description", "kind": "config", "location": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:3", "note": "起動トリガー語。264文字。岩淵ルール系の語は含まない" },
+        { "name": "入力と出力モード", "kind": "section", "location": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:34", "note": "safe 引数によるセーフ/デストロイ判定と polish/diagnostic の定義" },
+        { "name": "Phase 3: 修復箇所を決める", "kind": "section", "location": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:117", "note": "修復トリガー一覧。detailed-rules.md を条件付きで読む(142行目)。各 rewrite_target を修復する/意図的に残す/要確認へ分類(145行目)" },
+        { "name": "Phase 5: 候補文を検査する", "kind": "section", "location": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:164", "note": "セーフモードのみ KWJA 再解析で意味回帰検査。SEMANTIC_DRIFT(188行目)" },
+        { "name": "Phase 6: 出力する", "kind": "section", "location": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:195", "note": "polish は本文と要確認、diagnostic は問題のある述語・不明な項・修復した関係の3点を追加(200〜204行目)" }
+      ]
+    },
+    {
+      "path": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md",
+      "relevance": "high",
+      "role": "マージ元。172行。48規則の ID 表、4状態、作業手順、出力形式を持つ単独スキル。",
+      "key_symbols": [
+        { "name": "description", "kind": "config", "location": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:3", "note": "239文字。トリガー語は岩淵ルールで直して、48規則で悪文をチェック、ルールID付きで推敲、文の組み立て・用語・敬語を網羅的に点検。一般的な校正・自然化依頼は除外" },
+        { "name": "IDの扱い", "kind": "section", "location": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:34", "note": "ID は公開識別子。省略・改名・再利用しない。pass / not-applicable / actionable / needs-confirmation の4状態" },
+        { "name": "作業手順", "kind": "section", "location": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:48", "note": "8手順。全48規則を照合し actionable のみ最小修正、修正後に再照合。59〜60行目で単独実行を宣言" },
+        { "name": "ID 表", "kind": "const", "location": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:62", "note": "output.* 1件(66行目)、sentence.* 21件(72〜92行目)、word-choice.* 16件(98〜113行目)、honorific.* 10件(119〜128行目)。計48件、重複なし(スクリプトで検証)" },
+        { "name": "出力形式", "kind": "section", "location": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:130", "note": "推敲後 / 適用ルール / 要確認 の順。レビューのみは ID / 対象箇所 / 問題 / 修正案。監査一覧は48行の status 表(157〜163行目)" }
+      ]
+    },
+    {
+      "path": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/agents/openai.yaml",
+      "relevance": "high",
+      "role": "旧スキルの UI メタデータ。ディレクトリ削除時に一緒に消える。",
+      "key_symbols": [
+        { "name": "interface.default_prompt", "kind": "config", "location": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/agents/openai.yaml:4", "note": "$rewrite-japanese-with-iwabuchi-rules を名指しする。マージ先の openai.yaml には default_prompt キーがない" }
+      ]
+    },
+    {
+      "path": "skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md",
+      "relevance": "medium",
+      "role": "1422行の参照資料。項・付加部・骨格の概念定義と修正観点、典型例を持つ。Phase 3 で条件付きにだけ読まれる。",
+      "key_symbols": [
+        { "name": "中心方針: 述語を中心に、項と付加部を分ける", "kind": "section", "location": "skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md:83", "note": "述語(87)、項(118)、付加部(140)、助詞だけで決めない注意(164)、骨格(190)" },
+        { "name": "改行と段落", "kind": "section", "location": "skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md:210", "note": "214行目に「一文ごとに改行する」。旧スキルの output.line-break-each-line と方針が異なる" },
+        { "name": "修正観点 1〜6", "kind": "section", "location": "skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md:448", "note": "主語と述語、目的語と動詞、助詞、曖昧さ、自然な省略、長大な修飾。sentence.* の多くと重なる" },
+        { "name": "出力形式", "kind": "section", "location": "skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md:1064", "note": "修正案 / 主な修正点 / 要確認 と、ファイル編集時の 変更内容 / 変更しなかった内容 / 要確認" },
+        { "name": "最終チェックリスト", "kind": "section", "location": "skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md:1391", "note": "30項目。Markdown 構造の項目が重複(1415, 1417, 1421行目)" }
+      ]
+    },
+    {
+      "path": "skills/natural-japanese/natural-japanese-rewriter/agents/openai.yaml",
+      "relevance": "medium",
+      "role": "マージ先の UI メタデータ。",
+      "key_symbols": [
+        { "name": "interface.short_description", "kind": "config", "location": "skills/natural-japanese/natural-japanese-rewriter/agents/openai.yaml:3", "note": "「原意を保って自然に整える」。既定がデストロイモードになった現状(SKILL.md:8, 58)と食い違う" }
+      ]
+    },
+    {
+      "path": "skills/natural-japanese/natural-japanese-rewriter/manifest.json",
+      "relevance": "medium",
+      "role": "配布ファイル一覧。SKILL.md、agents/openai.yaml、references/detailed-rules.md の3件。",
+      "key_symbols": [
+        { "name": "files", "kind": "config", "location": "skills/natural-japanese/natural-japanese-rewriter/manifest.json:2", "note": "参照ファイルを増やす場合はここへ追加が必要。旧スキルには manifest.json がない" }
+      ]
+    },
+    {
+      "path": "skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md",
+      "relevance": "medium",
+      "role": "Phase 1 の子スキル。KWJA 出力を分析メモ(YAML)へ整理する。読むだけで変更しない。",
+      "key_symbols": [
+        { "name": "出力契約", "kind": "type", "location": "skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md:83", "note": "schema_version 2。rewrite_targets(90)は要素の形が未定義。issues(138〜142)は code / predicate_ids / evidence / repairability" },
+        { "name": "問題コード参照", "kind": "section", "location": "skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md:74", "note": "「スキーマの問題コードから該当するものを付ける」とあるが、スキーマ内に問題コードの列挙がない" },
+        { "name": "KWJA の事実と LLM 判断の区別", "kind": "section", "location": "skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md:25", "note": "KWJA 出力はモデル予測として扱い、LLM の修復案・語用論・文体と区別する(25〜27, 76行目)" }
+      ]
+    },
+    {
+      "path": "skills/natural-japanese/japanese-kwja-analyze/SKILL.md",
+      "relevance": "medium",
+      "role": "KWJA 実行と KNP 出力の読み方。上位概念の語彙の出典。",
+      "key_symbols": [
+        { "name": "解析結果の読み方", "kind": "section", "location": "skills/natural-japanese/japanese-kwja-analyze/SKILL.md:23", "note": "11処理: タイポ修正、分かち書き、単語正規化、形態素解析、固有表現認識、言語素性付与、係り受け、述語項構造、橋渡し照応、共参照、談話関係。rel タグ(34行目)と談話関係素性(35行目)" }
+      ]
+    },
+    {
+      "path": "docs/sample/iwabuchi-akubun/memo.md",
+      "relevance": "medium",
+      "role": "48規則の元メモ。番号付き47項目(8〜54)と番号なし1項目(一行ごとに改行する)。",
+      "key_symbols": [
+        { "name": "番号ずれの注記", "kind": "const", "location": "docs/sample/iwabuchi-akubun/memo.md:65", "note": "通し番号が原本と1〜4個ずれている可能性を明記。旧スキルが番号を使わない根拠" }
+      ]
+    },
+    {
+      "path": "docs/backups/2026_09_29/natural-japanese",
+      "relevance": "medium",
+      "role": "変更前スナップショット。diff -rq で skills/natural-japanese と完全一致。ロールバック先であり、48 ID の比較基準として使える。",
+      "key_symbols": [
+        { "name": "rewrite-japanese-with-iwabuchi-rules/SKILL.md", "kind": "const", "location": "docs/backups/2026_09_29/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:62", "note": "ID 表の基準コピー。旧ディレクトリを削除しても ID の綴りをここと照合できる" }
+      ]
+    },
+    {
+      "path": "skills/oshigoto-sagashi/mendan-junbi/SKILL.md",
+      "relevance": "low",
+      "role": "natural-japanese-rewriter を名前で参照する利用側スキル。スキル名は維持が必要。",
+      "key_symbols": [
+        { "name": "natural-japanese-rewriter 参照", "kind": "const", "location": "skills/oshigoto-sagashi/mendan-junbi/SKILL.md:131", "note": "15行目と131行目で名指し。旧スキル名の参照はない" }
+      ]
+    },
+    {
+      "path": "README.md",
+      "relevance": "low",
+      "role": "スキル一覧とインストール手順。natural-japanese 配下へ移動する前の平坦パスのまま。旧スキルも japanese-kwja-analyze も未掲載。",
+      "key_symbols": [
+        { "name": "Available Skills", "kind": "section", "location": "README.md:98", "note": "skills/natural-japanese-rewriter などの旧パス。今回の統合で更新必須の参照はない" }
+      ]
+    },
+    {
+      "path": "docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc",
+      "relevance": "low",
+      "role": "前回の同系統要件定義書。見出し構造(FR / AC / T / D)の手本。",
+      "key_symbols": [
+        { "name": "FR-03 問題を分類する", "kind": "section", "location": "docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc:215", "note": "9種の問題コードを定義していたが、現行 analyzer には残っていない" }
+      ]
+    },
+    {
+      "path": ".claude/settings.local.json",
+      "relevance": "low",
+      "role": "権限許可リスト。旧平坦パス skills/rewrite-japanese-with-iwabuchi-rules を含む Bash 許可文字列があるだけで、機能的な参照ではない。",
+      "key_symbols": [
+        { "name": "permissions.allow", "kind": "config", "location": ".claude/settings.local.json:8", "note": "削除しても動作に影響しない。読み取り専用" }
+      ]
+    }
+  ],
+  "responsibilities": [
+    {
+      "component": "natural-japanese-rewriter",
+      "path": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md",
+      "responsibility": "モードを決め、子スキルで分析メモを得て、上位レイヤーの制約を固定し、修復箇所を決め、生成し、検査し、出力する親スキル。",
+      "collaborators": ["skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md", "skills/natural-japanese/japanese-kwja-analyze/SKILL.md", "skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md"]
+    },
+    {
+      "component": "rewrite-japanese-with-iwabuchi-rules",
+      "path": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md",
+      "responsibility": "48規則を文章に照合して4状態へ分類し、actionable だけを最小修正し、ID 付きで報告する単独スキル。",
+      "collaborators": ["docs/sample/iwabuchi-akubun/memo.md"]
+    },
+    {
+      "component": "natural-japanese-rewrite-analyzer",
+      "path": "skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md",
+      "responsibility": "KWJA の KNP 出力から述語項グラフの分析メモを作り、issues と ambiguities を記録する。KWJA の事実と LLM の判断を分ける。",
+      "collaborators": ["skills/natural-japanese/japanese-kwja-analyze/SKILL.md"]
+    },
+    {
+      "component": "japanese-kwja-analyze",
+      "path": "skills/natural-japanese/japanese-kwja-analyze/SKILL.md",
+      "responsibility": "KWJA を実行して11処理の結果を KNP 形式で保存する。",
+      "collaborators": ["skills/natural-japanese/japanese-kwja-analyze/scripts/analyze.sh"]
+    }
+  ],
+  "how": {
+    "overview": "マージ先は KWJA 解析ファイルを分析メモへ整理し、談話・情報構造・語用論・対人関係・文体の制約を固定してから修復箇所を決めて生成する6 Phase 構成である。マージ元は解析器を使わず、48規則を文章へ直接照合して4状態へ分類し、ID 付きで報告する。両者を接続する自然な位置は、Phase 3 の修復判断(規則の状態判定)、Phase 5 の再照合、Phase 6 の ID 付き出力である。",
+    "key_concepts": [
+      { "name": "項 / 付加部 / 骨格", "meaning": "項は述語が要求する参加者、付加部は述語が要求しない補足、骨格は項と述語の中心的な組み合わせ。助詞だけで項か付加部かを決めない。", "evidence": "skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md:118" },
+      { "name": "述語項グラフ", "meaning": "述語ノード、指示対象ノード、項スロット、意味属性からなる内部表現。日本語推敲を文字列整形ではなくグラフ修復として扱う基礎理論。", "evidence": "skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md:12" },
+      { "name": "分析メモ", "meaning": "schema_version 2 の YAML。protected_ranges、rewrite_targets、entities、predicates、adjuncts、issues、ambiguities、graph_invariants、rewrite_policy を持つ。", "evidence": "skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md:83" },
+      { "name": "KWJA の11処理", "meaning": "タイポ修正、分かち書き、単語正規化、形態素解析、固有表現認識、言語素性付与、係り受け、述語項構造、橋渡し照応、共参照、談話関係。上位概念の語彙の出典。", "evidence": "skills/natural-japanese/japanese-kwja-analyze/SKILL.md:25" },
+      { "name": "上位レイヤー", "meaning": "Phase 2 で固定する談話構造、情報構造、語用論、対人関係、文体の5層。", "evidence": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:95" },
+      { "name": "セーフモード / デストロイモード", "meaning": "第一引数が safe のときだけ原意を厳密に保つ。既定はデストロイモードで自然さを優先し、細部の意味変化を許容する。両モードで保護範囲と事実の非捏造は共通。", "evidence": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:37" },
+      { "name": "polish / diagnostic", "meaning": "polish は本文中心で内部分析を出さない既定。diagnostic はユーザーが分析・理由・問題箇所を求めたときだけ、述語・項・修復関係を簡潔に追加する。", "evidence": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:48" },
+      { "name": "規則 ID と4状態", "meaning": "category.kebab-case 形式の安定 ID(output 1、sentence 21、word-choice 16、honorific 10)。各規則を pass / not-applicable / actionable / needs-confirmation に分類する。", "evidence": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:34" }
+    ],
+    "flows": [
+      {
+        "trigger": "natural-japanese-rewriter へテキストまたはファイルパスを渡す",
+        "steps": [
+          { "location": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:36", "symbol": "入力と出力モード", "action": "第一引数 safe の有無でモードを決め、対象範囲・出力先・媒体・出力モードを確定する" },
+          { "location": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:79", "symbol": "Phase 1", "action": "analyzer へ原文を渡し、kwja を実行させて分析メモを得る。解析ファイルの実読を確認する" },
+          { "location": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:95", "symbol": "Phase 2", "action": "談話・情報構造・語用論・対人関係・文体を保持制約または unknown として整理する" },
+          { "location": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:119", "symbol": "Phase 3", "action": "修復トリガー一覧に照らして rewrite_target を修復する / 意図的に残す / 要確認 に分類する。長文や既存ルール照合が必要なときだけ detailed-rules.md を読む(142行目)" },
+          { "location": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:149", "symbol": "Phase 4", "action": "セーフモードは優先順位に沿って、デストロイモードは自然さ最優先で生成する。文書構造を壊さない" },
+          { "location": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:166", "symbol": "Phase 5", "action": "デストロイモードは自然さと保護範囲を確認。セーフモードは候補文を KWJA で再解析し意味不変条件を比較、不一致は SEMANTIC_DRIFT" },
+          { "location": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:197", "symbol": "Phase 6", "action": "本文と要確認を出す。diagnostic では問題のある述語、不明・競合した項、修復で明確になった関係を追加し、解析ファイルのパスを示す" }
+        ],
+        "result": "リライト本文、要確認、必要なら診断3点。ファイル対象なら編集反映と変更概要。"
+      },
+      {
+        "trigger": "rewrite-japanese-with-iwabuchi-rules へテキストを渡す(統合前の挙動)",
+        "steps": [
+          { "location": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:50", "symbol": "作業手順 1〜4", "action": "推敲 / レビューのみ / ファイル編集のモード、用途・読み手・媒体・文体、保護範囲、主体・述語・否定範囲を把握する" },
+          { "location": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:54", "symbol": "作業手順 5", "action": "48規則を全て照合し、各 ID を4状態へ分類する" },
+          { "location": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:55", "symbol": "作業手順 6〜8", "action": "actionable だけを最小修正し、修正後に全規則を再確認し、原文と保護対象・条件・敬意の向きを比較する" },
+          { "location": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:132", "symbol": "出力形式", "action": "推敲後 / 適用ルール(ID) / 要確認(ID) を出す。レビューのみは ID / 対象箇所 / 問題 / 修正案。監査要求時のみ48行の status 表" }
+        ],
+        "result": "ID 付きの推敲結果、または ID 付きのレビュー一覧、または監査一覧。"
+      }
+    ],
+    "gotchas": [
+      { "description": "analyzer の issues[].code は語彙が未定義。9種の問題コード表はコミット f8f85a4 で削除され、74行目の「スキーマの問題コード」が宙に浮いている。マージ先で残るのは Phase 5 の SEMANTIC_DRIFT だけ。", "evidence": ["skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md:74", "skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md:139", "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:188"] },
+      { "description": "行配置の方針が3か所で食い違う。detailed-rules.md は「一文ごとに改行する」を既定とし、旧スキルの output.line-break-each-line は単位未指定なら needs-confirmation として現状維持、マージ先 SKILL.md は改行方針を書いていない。", "evidence": ["skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md:214", "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:66", "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:160"] },
+      { "description": "旧スキル内で「最終版だけ」指定時は推敲後だけを出すと書きつつ、どのモードでも needs-confirmation は省略しないと書いており、両立しない。", "evidence": ["skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:149", "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:154"] },
+      { "description": "rewrite_targets は analyzer の契約で空配列として現れるだけで、要素の形も、それを埋める手順も analyzer 側にない。親スキルは Phase 3 で各 rewrite_target(単数表記)に3値の決定を割り当てるが、決定理由や規則との対応を持つ欄がない。実質的な生産者は親の Phase 3 である。", "evidence": ["skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md:90", "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:145"] },
+      { "description": "issues[].repairability(safe / contextual / blocked)を親スキルのどの Phase も読んでいない。Phase 3 のセーフモード判定が本来の読み手になり得る。", "evidence": ["skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md:142", "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:119"] },
+      { "description": "Phase 3 の「既存ルールとの照合が必要な場合」は detailed-rules.md を指すが、48規則の ID はマージ先・analyzer・detailed-rules.md のどこにも現れない。", "evidence": ["skills/natural-japanese/natural-japanese-rewriter/SKILL.md:142"] },
+      { "description": "detailed-rules.md はモードを知らない。最優先ルールが自然さより意味保持を置き(22行目)、問題がない文は直さない(30行目)とするため、デストロイモードの方針(SKILL.md 58行目)と衝突する。衝突時の優先順位は SKILL.md 31行目だけが決める。", "evidence": ["skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md:22", "skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md:30", "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:31"] },
+      { "description": "旧スキルは単独実行を宣言し、自然化スキルとの併用を明示要求時に限っている。統合後はこの宣言が矛盾するため引き継がない。", "evidence": ["skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:59"] },
+      { "description": "マージ先は KWJA の実行・読み取りに失敗したらリライトを止め、LLM による言語解析で代行しない。KWJA の手がかりに依存する規則判定も同じ停止条件に従う。", "evidence": ["skills/natural-japanese/natural-japanese-rewriter/SKILL.md:28"] },
+      { "description": "旧スキルには manifest.json がなく、agents/openai.yaml だけがある。default_prompt は旧スキル名を名指しする。", "evidence": ["skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/agents/openai.yaml:4"] },
+      { "description": "frontmatter の description は validator で1024文字上限、name は64文字上限。現状は 264 文字と 239 文字で、単純合算でも上限内。", "evidence": ["/mnt/c/Users/agir/.claude/plugins/marketplaces/claude-plugins-official/plugins/skill-creator/skills/skill-creator/scripts/quick_validate.py:83"] },
+      { "description": "~/.claude/skills 配下の各スキルは nix store のスナップショットへの symlink で、skills/natural-japanese/* を平坦に写している。旧ディレクトリを削除しても、利用者が nix を再ビルドするまで旧スキルは起動し得る。", "evidence": ["/home/agir_wsl/.claude/skills/rewrite-japanese-with-iwabuchi-rules"] }
+    ]
+  },
+  "why": {
+    "findings": [
+      {
+        "id": "why-1",
+        "decision": "規則 ID を元メモの通し番号ではなく category.kebab-case の意味 ID にした",
+        "rationale": "元メモは番号が原本と1〜4個ずれている可能性を注記しており、番号は安定識別子にならない。旧スキルは ID を省略・改名・再利用しない公開識別子と定義した。",
+        "confidence": "direct",
+        "evidence": [
+          { "source": "docs/sample/iwabuchi-akubun/memo.md:65", "supports": "通し番号が原本とずれている可能性の明記" },
+          { "source": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:37", "supports": "元メモの不確かな通し番号は使わない、ID を改名・再利用しないという明記" }
+        ],
+        "reasoning": null,
+        "alternatives": []
+      },
+      {
+        "id": "why-2",
+        "decision": "旧スキルは岩淵ルール・48規則・ルール ID を名指しした依頼だけで起動し、一般的な校正・自然化依頼を除外した",
+        "rationale": "description が除外条件を明記している。natural-japanese-rewriter のトリガー語(自然にして、校正して、読みやすくして)と重ならないよう分離したと読める。",
+        "confidence": "supported",
+        "evidence": [
+          { "source": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:9", "supports": "一般的な校正・自然化依頼には使わないという明記" },
+          { "source": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:9", "supports": "同じ語がマージ先のトリガーになっている" }
+        ],
+        "reasoning": "両スキルのトリガー語が排他になっていることから、起動競合の回避が目的だと判断した。作者の明記はない。",
+        "alternatives": []
+      },
+      {
+        "id": "why-3",
+        "decision": "analyzer から9種の問題コード表が消えた",
+        "rationale": "コミット f8f85a4(KWJA を使う形へ更新)で表が削除されたが、コミットメッセージに理由がなく、74行目の参照文は残っている。",
+        "confidence": "speculative",
+        "evidence": [
+          { "source": "f8f85a4 skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md", "supports": "差分で9行の問題コード表が削除され、代わりに KWJA 由来の整理手順が追加された" },
+          { "source": "skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md:74", "supports": "削除後も「スキーマの問題コードから該当するものを付ける」が残る" }
+        ],
+        "reasoning": "参照文が残っていることから、意図的な廃止ではなく書き換え時の巻き添えの可能性がある。ただし KWJA の事実と LLM 判断の分離を強めた同コミットの方針上、判断語彙を analyzer から外した可能性も否定できない。",
+        "alternatives": [
+          { "explanation": "KWJA 出力に根拠を持たない判断コードを analyzer から意図的に外した", "evidence_for": ["同コミットで追加された25〜27行目の KWJA 事実と LLM 判断の区別"], "evidence_against_or_missing": ["74行目の参照文が残っている", "コミットメッセージに言及がない"] }
+        ]
+      },
+      {
+        "id": "why-4",
+        "decision": "natural-japanese-rewriter の既定をデストロイモードにした",
+        "rationale": "コミット f997a2c の件名が「デストロイモードをデフォルトに」と明記している。",
+        "confidence": "direct",
+        "evidence": [
+          { "source": "f997a2c skills/natural-japanese/natural-japanese-rewriter/SKILL.md", "supports": "件名で既定変更を明記" },
+          { "source": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:58", "supports": "デストロイモードでは意味保持より自然さを優先する" }
+        ],
+        "reasoning": null,
+        "alternatives": []
+      },
+      {
+        "id": "why-5",
+        "decision": "detailed-rules.md は分割前の SKILL.md の保存版で、条件付きにだけ読む",
+        "rationale": "ファイル冒頭が 2026-06-25 の分割前の内容の保存版だと明記し、通常は SKILL.md だけで実行すると書いている。改行方針など一部は現行 SKILL.md と整合していない。",
+        "confidence": "direct",
+        "evidence": [
+          { "source": "skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md:3", "supports": "分割前の保存版であることの明記" },
+          { "source": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:142", "supports": "Phase 3 で条件付きにだけ読む" }
+        ],
+        "reasoning": null,
+        "alternatives": []
+      },
+      {
+        "id": "why-6",
+        "decision": "analyzer は KWJA の解析事実と LLM の判断を分けて記録する",
+        "rationale": "KWJA 出力をモデル予測として扱い、未出力の関係を LLM で補わず、修復案・語用論・文体の判断と区別すると明記している。",
+        "confidence": "direct",
+        "evidence": [
+          { "source": "skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md:25", "supports": "KWJA の結果はモデルの予測、LLM の判断と区別する" },
+          { "source": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:32", "supports": "デストロイモードの意味変更も KWJA の解析事実と分けて扱う" }
+        ],
+        "reasoning": null,
+        "alternatives": []
+      }
+    ],
+    "sources_consulted": [
+      { "category": "source_control", "source": "git log / git show / git diff / git grep(ローカル)", "status": "searched", "scope": "skills/natural-japanese 配下の全履歴、コミット 79ec1e5、e8cc998、f997a2c、f8f85a4、344ffc4、-S UNRESOLVED_CORE_ARGUMENT、追跡ファイル全体での iwabuchi 検索", "result_or_reason": "旧スキルは 79ec1e5 で新規作成、e8cc998 で natural-japanese 配下へ移動。問題コード表は f8f85a4 で削除。既定モード変更は f997a2c。バックアップ 344ffc4 は現行と一致。追跡ファイルで iwabuchi を含むのは旧スキル自身、docs/backups、docs/requrements だけで、他の参照は0件。" },
+      { "category": "issue_tracker", "source": null, "status": "unavailable", "scope": null, "result_or_reason": "親の指示で GitHub CLI を使わない。旧スキルの2コミットと f8f85a4 の件名に PR・issue 番号がなく、参照先もない。" },
+      { "category": "documents", "source": "リポジトリ内文書(docs/sample/iwabuchi-akubun/memo.md、docs/requrements/2026_09_01_natural_japanese、README.md)", "status": "searched", "scope": "iwabuchi、問題コード、natural-japanese-rewriter の参照", "result_or_reason": "元メモの番号ずれ注記、前回要件の9問題コード、README の旧パス一覧を確認。" },
+      { "category": "documents", "source": "Google Drive MCP", "status": "unavailable", "scope": null, "result_or_reason": "利用者の個人ドライブは本タスクの範囲外のため検索していない。" },
+      { "category": "team_chat", "source": "Slack MCP", "status": "unavailable", "scope": null, "result_or_reason": "未認証で、かつ本タスクの範囲外のため検索していない。" },
+      { "category": "observability", "source": null, "status": "unavailable", "scope": null, "result_or_reason": "該当 MCP がない。対象はスキル文書で実行時計測もない。" },
+      { "category": "error_tracking", "source": null, "status": "unavailable", "scope": null, "result_or_reason": "該当 MCP がない。" },
+      { "category": "analytics", "source": null, "status": "unavailable", "scope": null, "result_or_reason": "該当 MCP がない。" }
+    ],
+    "confidence_summary": "ID の設計理由、既定モード、detailed-rules.md の位置づけ、KWJA 事実と LLM 判断の分離は一次資料で確定している。旧スキルの起動条件の分離理由は状況証拠からの判断。問題コード表の削除理由は不明で、要件では analyzer を変更しない前提を置く。"
+  },
+  "constraints": [
+    { "type": "business", "description": "統合後は natural-japanese-rewriter 単独で完結し、内部から rewrite-japanese-with-iwabuchi-rules を呼び出さない。", "evidence": "docs/requrements/2026_09_29_natural_japanese/req-2026_09_29_natural_japanese.adoc:28" },
+    { "type": "business", "description": "規則は項の概念や KWJA の言語学的概念を上位概念として、その下に昇華する形で組み込む。ID でエージェントが参照できる形にする。", "evidence": "docs/requrements/2026_09_29_natural_japanese/req-2026_09_29_natural_japanese.adoc:19" },
+    { "type": "business", "description": "作業は main で完結し、ブランチ・PR を作らない。", "evidence": "docs/requrements/2026_09_29_natural_japanese/req-2026_09_29_natural_japanese.adoc:3" },
+    { "type": "convention", "description": "48個の ID は公開識別子で、省略・改名・再利用しない。", "evidence": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:36" },
+    { "type": "convention", "description": "スキル名 natural-japanese-rewriter は他スキルが名指しするため維持する。", "evidence": "skills/oshigoto-sagashi/mendan-junbi/SKILL.md:131" },
+    { "type": "technical", "description": "frontmatter の description は1024文字以下、name は64文字以下。許可キーは name、description、license、allowed-tools、metadata、compatibility。", "evidence": "/mnt/c/Users/agir/.claude/plugins/marketplaces/claude-plugins-official/plugins/skill-creator/skills/skill-creator/scripts/quick_validate.py:42" },
+    { "type": "technical", "description": "analyzer の分析メモは既存トップレベルキーを維持し、KWJA の事実と LLM 判断を区別する。issues[].code の語彙は未定義。", "evidence": "skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md:81" },
+    { "type": "technical", "description": "KWJA の実行・読み取りに失敗したらリライトを止め、LLM による言語解析で代行しない。", "evidence": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:28" },
+    { "type": "technical", "description": "両モードでコード、コマンド、パス、API 名、設定値、数値、固有名詞、引用、リンク、構造化データを保護し、原文にない事実を作らない。", "evidence": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:60" },
+    { "type": "convention", "description": "manifest.json は配布ファイルを列挙する。参照ファイルを増やす場合は追記が必要。", "evidence": "skills/natural-japanese/natural-japanese-rewriter/manifest.json:2" },
+    { "type": "dependency", "description": "利用環境のスキルは nix store のスナップショットへの symlink で提供される。リポジトリの削除は再ビルドまで反映されない。", "evidence": "/home/agir_wsl/.claude/skills/rewrite-japanese-with-iwabuchi-rules" }
+  ],
+  "existing_patterns": [
+    { "name": "Phase ごとの完了条件", "description": "各 Phase の末尾に「完了条件:」で観測可能な状態を書く。", "examples": ["skills/natural-japanese/natural-japanese-rewriter/SKILL.md:91", "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:145", "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:193"], "applies_to": "規則照合を追加する Phase 3、5、6 の完了条件" },
+    { "name": "ID 表は Markdown の2列表", "description": "| ID | 規則 | の表をカテゴリ見出しごとに置く。ID はバッククォートで囲む。", "examples": ["skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:64", "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:70"], "applies_to": "マージ先へ移す ID 表の形式。列を増やす場合も ID 列の形式を保つ" },
+    { "name": "優先順位は番号付きリスト", "description": "判断が衝突したときの優先順位を番号付きリストで明記する。", "examples": ["skills/natural-japanese/natural-japanese-rewriter/SKILL.md:152", "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:26"], "applies_to": "セーフモードでの規則衝突時の順序の書き方" },
+    { "name": "要確認が未解決事項の唯一の出口", "description": "確定できない点は本文を変えず、要確認として短く報告する。旧スキルは規則 ID を先頭に付ける。", "examples": ["skills/natural-japanese/natural-japanese-rewriter/SKILL.md:75", "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:145"], "applies_to": "needs-confirmation の報告形式" },
+    { "name": "出力形式はコードブロックで提示", "description": "出力の見出し構成を markdown コードブロックで示し、省略条件を直後に書く。", "examples": ["skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:134", "skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md:1068"], "applies_to": "diagnostic と監査一覧の形式" },
+    { "name": "上位レイヤーは番号付きの層一覧", "description": "Phase 2 で談話構造、情報構造、語用論、対人関係、文体を番号付きで列挙し、各層に確認項目を箇条書きする。", "examples": ["skills/natural-japanese/natural-japanese-rewriter/SKILL.md:97"], "applies_to": "規則カテゴリを層へ対応づける記述" },
+    { "name": "要件定義書の構成", "description": "背景、目的、用語、対象範囲、FR-xx、例外、非機能、互換性、D-xx 意思決定、AC-xx、T-xx 検証シナリオ、品質確認、未確定事項の順。", "examples": ["docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc:7"], "applies_to": "今回の要件定義書の見出し構造" },
+    { "name": "変更前バックアップ", "description": "大きな変更の直前に docs/backups/<日付>/ へ対象ディレクトリを丸ごとコピーして commit する。", "examples": ["docs/backups/2026_09_29/natural-japanese"], "applies_to": "ロールバックと ID 比較基準" }
+  ],
+  "change_guidance": [
+    { "action": "preserve", "description": "48個の ID の綴りと件数(1 / 21 / 16 / 10)を変更前バックアップと完全一致させる。", "basis": ["why-1", "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:36"], "confidence": "direct" },
+    { "action": "preserve", "description": "スキル名、polish / diagnostic、セーフ / デストロイの既定、Phase 1〜6 の順序、KWJA 失敗時の停止を維持する。", "basis": ["why-4", "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:28", "skills/oshigoto-sagashi/mendan-junbi/SKILL.md:131"], "confidence": "direct" },
+    { "action": "preserve", "description": "analyzer と japanese-kwja-analyze の SKILL.md は変更しない。規則の状態判定は親の Phase 3 の判断として記録し、KWJA の事実と混ぜない。", "basis": ["why-6", "why-3"], "confidence": "supported" },
+    { "action": "change", "description": "マージ先の description に旧スキルのトリガー語(岩淵ルール、48規則、ルール ID 付き、網羅的な点検、監査)を加え、除外文は引き継がない。", "basis": ["why-2", "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:6"], "confidence": "supported" },
+    { "action": "change", "description": "ID 表を SKILL.md 本体に置き、各 ID に上位概念、手がかり、適用 Phase を併記する。SKILL.md は現状209行で、48行の表を加えても validator の制限と500行の目安に収まる。", "basis": ["skills/natural-japanese/natural-japanese-rewriter/SKILL.md:142", "/mnt/c/Users/agir/.claude/plugins/marketplaces/claude-plugins-official/plugins/skill-creator/skills/skill-creator/scripts/quick_validate.py:83"], "confidence": "inferred" },
+    { "action": "change", "description": "旧ディレクトリ(SKILL.md、agents/openai.yaml)を同じ変更で削除し、他の参照がないことを grep で確認する。", "basis": ["why-2", "README.md:98"], "confidence": "supported" },
+    { "action": "avoid", "description": "旧スキル名の stub や薄い転送スキルを残さない。マージ先から旧スキルを呼び出さない。", "basis": ["docs/requrements/2026_09_29_natural_japanese/req-2026_09_29_natural_japanese.adoc:28"], "confidence": "direct" },
+    { "action": "avoid", "description": "この変更で analyzer の issues[].code に9種コードを復活させたり、規則 ID を入れたりしない。契約変更は別件にする。", "basis": ["why-3"], "confidence": "inferred" },
+    { "action": "risk", "description": "output.line-break-each-line を旧スキルの意味(単位未指定なら needs-confirmation)で入れると、毎回の要確認が増えて polish 出力が騒がしくなる。既定は not-applicable が安全。", "basis": ["skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:66", "skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md:214"], "confidence": "inferred" },
+    { "action": "risk", "description": "削除後も利用環境の symlink は nix 再ビルドまで旧スキルを指す。運用手順として再ビルドを案内する。", "basis": ["/home/agir_wsl/.claude/skills/rewrite-japanese-with-iwabuchi-rules"], "confidence": "direct" },
+    { "action": "risk", "description": "honorific.* と word-choice.* の一部は KWJA 出力に直接の手がかりがない可能性がある。手がかり欄を LLM 判断と明記しないと、KWJA の事実として誤認される。", "basis": ["why-6", "skills/natural-japanese/japanese-kwja-analyze/SKILL.md:25"], "confidence": "inferred" },
+    { "action": "risk", "description": "長文で actionable が多数あると、旧スキル式に適用ルールを全部列挙する出力は文数と規則数に比例して伸びる。polish は本文と要確認だけに固定し、監査一覧は文書単位の48行に固定する必要がある。", "basis": ["skills/natural-japanese/natural-japanese-rewriter/SKILL.md:50", "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:157"], "confidence": "inferred" },
+    { "action": "risk", "description": "旧スキルは修正後に全規則を再確認する手順を持つが、マージ先の Phase 5 はデストロイモードで意味回帰検査を行わない。再照合を両モード共通にしないと、セーフモードの出力へ再適用したときに新たな actionable が出て収束しない。", "basis": ["skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:56", "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:166"], "confidence": "inferred" }
+  ],
+  "open_questions": [
+    "KWJA の言語素性に敬語、語種(外来語)、話し言葉を示す素性があるかは未確認。影響: honorific.* と word-choice.limit-loanwords-and-foreign-words、話し言葉系2規則の手がかりが KWJA 由来か LLM 判断かが決まらない。調査済み範囲: skills/natural-japanese/japanese-kwja-analyze/SKILL.md には素性名の列挙がない。次の確認先: scripts/analyze.sh を敬語と外来語を含む短文で実行し、素性タグを読む。要件では両規則を LLM 判断でも成立する形で定義する。",
+    "analyzer の issues[].code から9種の問題コード表が消えた理由(f8f85a4)が意図的か不明。影響: 規則 ID を issues に載せるか、別欄に置くかの根拠。調査済み範囲: why.sources_consulted の source_control。次の確認先: 作者への確認。要件ではこの変更で analyzer を触らず、規則 ID は親の Phase 3 の記録に置く。",
+    "detailed-rules.md 214行目の「一文ごとに改行する」を現行の既定として維持する意図があるか不明。影響: output.line-break-each-line の既定状態。調査済み範囲: マージ先 SKILL.md には改行方針の記述がなく、行分割は別スキルに分かれている。次の確認先: ユーザーの意図。要件では規則側の既定を not-applicable とし、detailed-rules.md の当該行は変更しない。",
+    "利用環境の nix 再ビルドは誰がいつ行うか不明。影響: 旧スキルの symlink が残り、削除後も起動し得る。調査済み範囲: ~/.claude/skills の symlink 先。次の確認先: ユーザーの nix 設定。要件では運用上の注意として記載する。",
+    "README.md の一覧が natural-japanese 配下移動前のパスのままで、旧スキルも japanese-kwja-analyze も未掲載。影響: 今回の統合には影響しないが、一覧更新を同時に行うかどうか。次の確認先: ユーザー。要件では対象外と明記する。"
+  ],
+  "suggested_entry_points": [
+    { "path": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:117", "reason": "Phase 3 が修復判断の中心で、規則の4状態判定と ID の付与を差し込む位置" },
+    { "path": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:195", "reason": "Phase 6 の polish / diagnostic に適用ルールと監査一覧を統合する位置" },
+    { "path": "skills/natural-japanese/natural-japanese-rewriter/SKILL.md:3", "reason": "トリガー語を取り込む description" },
+    { "path": "skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:62", "reason": "移設する48行の ID 表の原本" },
+    { "path": "docs/backups/2026_09_29/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:62", "reason": "旧ディレクトリ削除後も残る ID の比較基準" },
+    { "path": "skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md:138", "reason": "issues の形と語彙欠落。触らない根拠を確認する位置" }
+  ]
+}

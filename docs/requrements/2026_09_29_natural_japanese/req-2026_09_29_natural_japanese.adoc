@@ -1,0 +1,793 @@
+= 岩淵48規則の natural-japanese-rewriter への統合 要件定義書
+:toc: left
+:toclevels: 3
+:sectnums:
+
+== 前置き
+
+pipe-requirements-to-prスキルで、これを実行する時、
+この要件は、全部mainで完結させたいので、
+ブランチを作ったり、PRを上げたり更新したりしなくてよいです。
+
+== 概要
+
+スキル
+`/home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/agent-skills/skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md`
+を、
+`/home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/agent-skills/skills/natural-japanese/natural-japanese-rewriter/SKILL.md`
+にマージする。
+
+ただし、natural-japanese-rewriter の既存の「項」の概念や、
+`/home/agir_wsl/develop/ghq_repos/github.com/seiei-sogen/agent-skills/skills/natural-japanese/japanese-kwja-analyze/SKILL.md`
+の KWJA での解析（分かち書き、単語正規化、形態素解析、固有表現認識、言語素性、係り受け、述語項構造、橋渡し照応、共参照、談話関係）などの言語学的概念を上位の概念とし、
+rewrite-japanese-with-iwabuchi-rules のルールを、これらの概念で上位に昇華するような形にする。
+
+また、「これは `sentence.keep-subject-and-predicate-close` だ」のように、
+rewrite-japanese-with-iwabuchi-rules の規則をエージェントが作業しやすい形で利用できるようにする。
+
+あくまで natural-japanese-rewriter 単独で、rewrite-japanese-with-iwabuchi-rules のルールがマージされている形にする。
+natural-japanese-rewriter 内から rewrite-japanese-with-iwabuchi-rules を呼び出す形にはしない。
+
+== 背景
+
+現行の `natural-japanese-rewriter` は、KWJA の解析ファイルから述語項グラフの分析メモを作り、談話・情報構造・語用論・対人関係・文体の制約を固定してから修復箇所を決めて生成する6 Phase 構成である
+（`skills/natural-japanese/natural-japanese-rewriter/SKILL.md:77-209`）。
+
+一方の `rewrite-japanese-with-iwabuchi-rules` は、岩淵「悪文」メモ由来の48規則を文章へ直接照合し、各規則を `pass` / `not-applicable` / `actionable` / `needs-confirmation` の4状態に分類して、規則 ID 付きで報告する単独スキルである
+（`skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md:34-60`）。
+起動条件は「岩淵ルールで直して」など規則を名指しする依頼に限られ、一般的な「校正して」「自然にして」からは除外されている（同 `:9-10`）。
+
+両者は同じ悪文を別の語彙で扱っている。
+たとえば `sentence.keep-subject-and-predicate-close` は、分析メモではガ格の項と述語の基本句距離として観測でき、`sentence.minimize-passive-voice` は `voice: passive` と動作主の復元可能性として観測できる。
+規則を文字列照合のチェックリストのまま残すと、同じ判断を二つのスキルが別々に行い、ID による説明責任と KWJA の根拠が結びつかない。
+
+調査で確認した事実（`pre-investigation-report-2026_09_29_natural_japanese.json`）のうち、要件に影響するものは次のとおりである。
+
+* 48個の ID は `output` 1件、`sentence` 21件、`word-choice` 16件、`honorific` 10件で重複がない（スクリプトで検証済み）。
+* 旧スキルは ID を「省略、改名、再利用しない」公開識別子と定めている（`rewrite-japanese-with-iwabuchi-rules/SKILL.md:36-37`）。元メモは通し番号が原本とずれている可能性を注記しており（`docs/sample/iwabuchi-akubun/memo.md:65`）、番号は識別子にならない。
+* 追跡ファイルの中で旧スキルを参照するのは旧スキル自身、`docs/backups`、本要件だけで、README にも他スキルにも参照がない（`git grep` 0件）。
+* 分析メモの `rewrite_targets` は analyzer 側では空配列としてしか現れず、要素の形も埋める手順もない（`natural-japanese-rewrite-analyzer/SKILL.md:90`）。実質的な生産者は親の Phase 3 である（`natural-japanese-rewriter/SKILL.md:145`）。
+* analyzer の `issues[].code` は語彙が未定義である。9種の問題コード表はコミット `f8f85a4` で削除され、参照文だけが残っている（`natural-japanese-rewrite-analyzer/SKILL.md:74`）。
+* analyzer は KWJA の解析事実と LLM の判断を区別して記録する（同 `:25-27`）。
+* `references/detailed-rules.md` は分割前の保存版で Phase 3 の条件付き読み込みに限られ（`natural-japanese-rewriter/SKILL.md:142`）、48規則の ID はどこにも現れない。
+* 変更前スナップショット `docs/backups/2026_09_29/natural-japanese/` は現行と完全一致し、ID の比較基準とロールバック先になる。
+
+== 目的
+
+`natural-japanese-rewriter` を、次の状態にする。
+
+. 48規則を、項・付加部・骨格、KWJA の11処理、Phase 2 の5層という既存の上位概念に対応づけて内蔵する。規則は「文字列に照らすチェック項目」ではなく、「分析メモと上位レイヤーのどの観測から判定する規範か」として定義される。
+. 各規則を安定 ID で参照でき、エージェントが判定、修正理由、`要確認`、診断出力で ID をそのまま使える。
+. 旧スキルのトリガー語、出力形式、監査機能を引き継ぎ、`natural-japanese-rewriter` 単独で完結する。旧スキルは削除し、内部から呼び出さない。
+
+== 利用者と利用シナリオ
+
+主な利用者は、README、仕様書、技術記事、コードコメント、UI 文言、issue、PR 説明、業務連絡、職務経歴書などの日本語を推敲する Claude Code / Codex の利用者と、その依頼を受けるエージェントである。
+
+代表的な利用シナリオは次のとおりである。
+
+* 「自然にして」と頼まれ、既定のデストロイモードで書き直す。内部では48規則を照合し、確定できない点だけを ID 付きの `要確認` で返す。
+* 「岩淵ルールで直して」「ルールID付きで推敲して」と頼まれ、`diagnostic` モードで適用した規則 ID と対象箇所を示す。
+* 「48規則で監査して」と頼まれ、本文を変えずに48行の判定一覧を返す。
+* 「safe で校正して」と頼まれ、原意を保つ範囲で `actionable` の規則だけを最小修正する。
+* エージェントが分析メモの述語項構造を読み、「これは `sentence.state-changed-subject-explicitly` だ」と判断して修復理由に ID を残す。
+
+== 用語
+
+[cols="1,2,3",options="header"]
+|===
+|用語
+|定義
+|出典
+
+|規則 ID
+|`<カテゴリ>.<kebab-case>` 形式の安定識別子。カテゴリは `output`、`sentence`、`word-choice`、`honorific` の4種
+|`rewrite-japanese-with-iwabuchi-rules/SKILL.md:62-128`
+
+|規則の状態
+|`pass`（適用でき問題なし）、`not-applicable`（媒体や内容から対象外）、`actionable`（原意を変えず安全に修正できる問題）、`needs-confirmation`（原文にない情報や意図が必要）
+|同 `:41-46`
+
+|上位概念
+|規則を判定する観測の層。`述語項構造`、`係り受け`、`節構造・談話関係`、`共参照・照応`、`形態素・語彙`、`固有表現・保護範囲`、`語用論・モダリティ`、`対人関係`、`文体`、`文書構造` の10種。Phase 2 の情報構造（topic / focus）に対応する規則は48規則にないため語彙に含めない
+|KWJA の11処理（`japanese-kwja-analyze/SKILL.md:25-35`）と Phase 2 の5層（`natural-japanese-rewriter/SKILL.md:97-110`）
+
+|手がかりの出所
+|規則を判定する材料をどこで得るか。`P1`（Phase 1 の分析メモと KWJA 出力）、`P2`（Phase 2 の上位レイヤー）、`P4`（Phase 4 の生成時の文書構造）、`LLM`（KWJA 出力に直接の手がかりがなく、原文と文脈から LLM が判断する）
+|本書 D-01
+
+|項 / 付加部 / 骨格
+|項は述語が要求する参加者、付加部は述語が要求しない補足、骨格は項と述語の中心的な組み合わせ
+|`references/detailed-rules.md:118-207`
+
+|分析メモ
+|analyzer が出力する `schema_version: 2` の YAML。`rewrite_targets`、`predicates`、`issues`、`ambiguities`、`graph_invariants`、`rewrite_policy` などを持つ
+|`natural-japanese-rewrite-analyzer/SKILL.md:83-146`
+
+|セーフモード / デストロイモード
+|第一引数が `safe` のときだけ原意を厳密に保つ。既定はデストロイモードで自然さを優先する
+|`natural-japanese-rewriter/SKILL.md:37, 58-75`
+
+|polish / diagnostic
+|`polish` は本文中心で内部分析を出さない既定。`diagnostic` はユーザーが分析・理由・問題箇所を求めたときだけ診断を追加する
+|同 `:48-52`
+|===
+
+== 対象範囲
+
+=== 対象
+
+* `skills/natural-japanese/natural-japanese-rewriter/SKILL.md` の frontmatter、モード定義、Phase 3・5・6、規則 ID 表
+* `skills/natural-japanese/natural-japanese-rewriter/agents/openai.yaml` の `short_description`
+* `skills/natural-japanese/natural-japanese-rewriter/manifest.json`（配布ファイルが変わる場合のみ）
+* `skills/natural-japanese/natural-japanese-rewriter/references/detailed-rules.md` への規則 ID の注記（任意。FR-09）
+* `skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/` ディレクトリの削除
+
+=== 対象外
+
+* `natural-japanese-rewrite-analyzer` と `japanese-kwja-analyze` の SKILL.md、スクリプト、出力契約の変更
+* analyzer の `issues[].code` への問題コードや規則 ID の追加
+* `references/detailed-rules.md` の規則本文の削除や再編
+* README.md のスキル一覧の更新（現状も移動前のパスのままで、本件とは独立）
+* `natural-japanese-rewriter-line-break`、`sentence-linebreak-skill`、`bullet-list-rewriter` の変更
+* 利用環境側のインストール（nix 再ビルド、`~/.claude/skills` の symlink 更新）
+* 元メモの原本照合や規則の追加・削除・改名
+
+== 機能要件
+
+=== FR-01 トリガー語と起動条件を引き継ぐ
+
+`natural-japanese-rewriter` の `description` に、旧スキルのトリガー語を加える。
+少なくとも「岩淵ルールで直して」「48規則で悪文をチェックして」「ルールID付きで推敲して」「文の組み立て・用語・敬語を網羅的に点検して」「監査」を含める。
+旧スキルの「一般的な校正・自然化依頼には使わない」という除外文は引き継がない。
+既存のトリガー語（「自然にして」「翻訳調を直して」「読みやすくして」「LLMっぽさを消して」「リライトして」「校正して」）と、`safe` 引数の説明は維持する。
+
+`description` は validator の上限である1024文字以内に収める（現状264文字と239文字）。`name` は `natural-japanese-rewriter` のまま変えない。
+
+=== FR-02 規則 ID 表を SKILL.md 本体に置く
+
+48規則の ID 表を `natural-japanese-rewriter/SKILL.md` 本体に置く。
+表は既存の形式（`| ID | 規則 |` の Markdown 表をカテゴリ見出しごとに置き、ID をバッククォートで囲む）を保ちつつ、FR-03 の上位概念と手がかりの出所を列として加える。
+規則本文は旧スキルの一文をそのまま移す。
+
+新しい参照ファイルは作らない。
+`references/detailed-rules.md` は現状どおり Phase 3 で条件付きにだけ読む。
+SKILL.md の行数は400行以下を目安とし、超える場合は表以外の重複記述を削って収める。
+
+=== FR-03 規則を上位概念へ対応づける
+
+各規則に、上位概念（用語の10種から1つ）と手がかりの出所（`P1` / `P2` / `P4` / `LLM` から1つ）を対応づける。
+推奨する対応表を次に示す（D-01）。実装者は「主な手がかり」の文言を分析メモの実フィールド名に合わせて調整してよいが、ID、件数、上位概念と出所の語彙は変えない。
+
+`LLM` を出所とする規則は、KWJA の出力に直接の根拠がないことを意味する。
+これらの判定は分析メモの解析事実と混ぜず、`diagnostic` では LLM の判断であることが分かる形で示す。
+
+==== 出力・行配置
+
+[cols="3,2,4,1",options="header"]
+|===
+|ID |上位概念 |主な手がかり |出所
+
+|`output.line-break-each-line`
+|文書構造
+|出力先の行構造、保護範囲（表、箇条書き、コード、front matter）。改行の単位が指定されたときだけ判定する
+|P4
+|===
+
+==== 文の組み立て
+
+[cols="3,2,4,1",options="header"]
+|===
+|ID |上位概念 |主な手がかり |出所
+
+|`sentence.split-overlong-sentences`
+|節構造・談話関係
+|1文中の述語数と節境界（係り受け、談話関係）
+|P1
+
+|`sentence.keep-one-topic-per-sentence`
+|節構造・談話関係
+|1文中の独立した述語項構造の数と談話関係
+|P1
+
+|`sentence.preserve-context-consistency`
+|共参照・照応
+|共参照、橋渡し照応、談話関係の参照先と `entities` の一致。前提と結論の食い違い
+|P2
+
+|`sentence.limit-suspensive-clause-chains`
+|節構造・談話関係
+|連用中止で連なる述語の数（係り受け、活用形）
+|P1
+
+|`sentence.avoid-ambiguous-suspensive-clauses`
+|節構造・談話関係
+|中止節の係り先候補が複数ある（係り受け、`ambiguities`）
+|P1
+
+|`sentence.clarify-suspensive-clause-attachment`
+|係り受け
+|中止節の係り先（文節・基本句の係り先）
+|P1
+
+|`sentence.use-punctuation-to-clarify-attachment`
+|係り受け
+|`sentence.clarify-suspensive-clause-attachment` と同じ手がかり。修正手段が句読点
+|P1
+
+|`sentence.clarify-subject-predicate-correspondence`
+|述語項構造
+|各述語のガ格の項（`arguments` の `role`、`referent`、`recoverability`）
+|P1
+
+|`sentence.retain-required-predicates`
+|述語項構造
+|項があるのに述語が欠ける節（`predicates` と係り受け）
+|P1
+
+|`sentence.keep-subject-and-predicate-close`
+|係り受け
+|ガ格の項と述語の基本句距離
+|P1
+
+|`sentence.state-changed-subject-explicitly`
+|述語項構造
+|並列述語または文間でガ格の `referent` が切り替わる箇所（共有項と主体切り替えの検査）
+|P1
+
+|`sentence.clarify-parallel-elements`
+|係り受け
+|並列関係と同形の助詞（係り受け、`surface_particle`）
+|P1
+
+|`sentence.avoid-repeating-equivalent-particles`
+|述語項構造
+|同一述語の `arguments` と `adjuncts` で `surface_particle` が重複する
+|P1
+
+|`sentence.retain-required-particles`
+|述語項構造
+|`realization: overt` なのに `surface_particle` が欠ける項
+|P1
+
+|`sentence.ensure-adverb-predicate-concord`
+|係り受け
+|副詞の係り先述語の `polarity` と `modality`（言語素性）
+|P1
+
+|`sentence.keep-modifier-and-modified-word-close`
+|係り受け
+|修飾文節と被修飾文節の距離
+|P1
+
+|`sentence.clarify-modifier-scope`
+|係り受け
+|修飾文節の係り先候補が複数ある（`ambiguities`）
+|P1
+
+|`sentence.clarify-negation-scope`
+|述語項構造
+|`polarity: negative` の述語と否定が係る範囲
+|P1
+
+|`sentence.avoid-overlong-modifiers`
+|係り受け
+|連体修飾節の長さ（基本句数）と入れ子
+|P1
+
+|`sentence.split-overlong-modifiers-into-sentences`
+|節構造・談話関係
+|`sentence.avoid-overlong-modifiers` と同じ手がかり。修正手段が文分割
+|P1
+
+|`sentence.minimize-passive-voice`
+|述語項構造
+|`voice: passive` と動作主の `recoverability`
+|P1
+|===
+
+==== 語の選び方
+
+[cols="3,2,4,1",options="header"]
+|===
+|ID |上位概念 |主な手がかり |出所
+
+|`word-choice.remove-redundancy-and-clarify-ambiguity`
+|形態素・語彙
+|基本形の重複、意味の重複、多義語（単語正規化、形態素解析）
+|P1
+
+|`word-choice.avoid-roundabout-phrasing`
+|形態素・語彙
+|「〜することができる」「〜を行う」などの型（`detailed-rules.md` の LLM くさい表現）
+|LLM
+
+|`word-choice.use-precise-nonmisleading-terms`
+|形態素・語彙
+|用語の指示対象と文脈（`entities`、固有表現）
+|LLM
+
+|`word-choice.avoid-idiosyncratic-neologisms-and-phrasing`
+|形態素・語彙
+|未知語や低頻度表記（形態素解析の未知語）
+|P1
+
+|`word-choice.maintain-terminology-register-consistency`
+|形態素・語彙
+|同一概念の表記揺れ（基本形、単語正規化）
+|P1
+
+|`word-choice.choose-reader-appropriate-terms`
+|語用論・モダリティ
+|読み手と媒体（Phase 2 の語用論と文体）
+|P2
+
+|`word-choice.handle-directive-language-carefully`
+|語用論・モダリティ
+|発話行為が指示・依頼であること、requested action、`modality`
+|P2
+
+|`word-choice.match-expression-to-facts`
+|語用論・モダリティ
+|`modality`、断定の強さ、`graph_invariants`
+|P2
+
+|`word-choice.verify-metaphor-appropriateness`
+|文体
+|比喩表現と媒体
+|LLM
+
+|`word-choice.follow-established-usage`
+|形態素・語彙
+|慣用的な語法。固有の用語法は `protected_ranges` で保護
+|LLM
+
+|`word-choice.avoid-translationese`
+|文体
+|翻訳調の型（受身の連続、無生物主語、「〜に関して」）と `voice`
+|LLM
+
+|`word-choice.simplify-overly-formal-literary-or-technical-terms`
+|形態素・語彙
+|漢語・文語（形態素の品詞・語種）。固有表現と技術用語は保護
+|P1
+
+|`word-choice.limit-loanwords-and-foreign-words`
+|形態素・語彙
+|外来語・外国語（形態素の語種。素性の有無は未確定事項）。固有名称と技術的に必要な語は保護
+|P1
+
+|`word-choice.use-immediately-understandable-spoken-words`
+|文体
+|媒体が話し言葉のときだけ。読み（形態素解析）
+|P2
+
+|`word-choice.avoid-confusing-homophones-in-speech`
+|形態素・語彙
+|同じ読みで異なる基本形（形態素解析の読み）。話し言葉のときだけ
+|P1
+
+|`word-choice.avoid-unfamiliar-abbreviations`
+|固有表現・保護範囲
+|略語（固有表現認識、未知語）。技術的に必要な略語は保護
+|P1
+|===
+
+==== 敬語
+
+[cols="3,2,4,1",options="header"]
+|===
+|ID |上位概念 |主な手がかり |出所
+
+|`honorific.prefer-plain-simple-forms`
+|対人関係
+|敬語形式の複雑さ（形態素の活用、補助動詞）
+|P2
+
+|`honorific.avoid-archaic-reverential-sino-japanese-terms`
+|対人関係
+|候文体由来の漢語
+|LLM
+
+|`honorific.avoid-unnecessary-o-prefix`
+|対人関係
+|接頭辞「お」「ご」（形態素解析）
+|P1
+
+|`honorific.avoid-repeated-o-prefixes`
+|対人関係
+|同一文章内の「お」「ご」の出現密度
+|P1
+
+|`honorific.do-not-use-humble-forms-as-respectful`
+|対人関係
+|謙譲形の述語と、その主体の `referent` が敬意の対象であること
+|P2
+
+|`honorific.avoid-double-respectful-forms`
+|対人関係
+|尊敬語形式の重複（形態素、活用）
+|P1
+
+|`honorific.retain-required-forms`
+|対人関係
+|読み手、相手、場面と敬語レベル
+|P2
+
+|`honorific.keep-forms-consistent`
+|対人関係
+|文章全体の敬語形式と敬意の向き
+|P2
+
+|`honorific.avoid-mixing-polite-and-plain-styles`
+|文体
+|文末形式（です・ます / だ・である）の分布
+|P2
+
+|`honorific.allow-deliberate-style-mixing-for-effect`
+|文体
+|意図的な混用。`honorific.avoid-mixing-polite-and-plain-styles` の例外
+|P2
+|===
+
+=== FR-04 Phase 3 で規則の状態を判定する
+
+Phase 3「修復箇所を決める」に、規則の状態判定を加える。
+
+. 48規則をすべて内部で照合し、各 ID を4状態のいずれかにする。判定の材料は FR-03 の出所に従い、`P1` は分析メモと KWJA 出力、`P2` は Phase 2 で固定した制約、`LLM` は原文と文脈から判断する。`P4` の規則（`output.line-break-each-line`）は、Phase 3 で改行単位の指定の有無から状態を決め、Phase 4 の生成時に適用する。
+. `actionable` と `needs-confirmation` の規則は、分析メモの `rewrite_targets` の対応する要素に `rule_ids` として記録する。主となる ID を先頭に、関連 ID を続ける。現行 SKILL.md の Phase 3 は `rewrite_target` と単数で書いているが、分析メモのキーは `rewrite_targets` であり、統合後はキー名に合わせる。
+. `rewrite_targets` の各要素は、少なくとも `decision`（`repair` / `keep` / `confirm`）と `rule_ids`（空配列可）を持つ。既存の修復トリガー（主体の複数候補、係り先の曖昧さなど）による対象には、該当する規則 ID があれば同じ欄に付ける。要素の形は親スキルが定める記録であり、analyzer の出力契約は変えない。
+. `needs-confirmation` は `decision: confirm` とし、Phase 6 の `要確認` に ID 付きで出す。
+. `pass` と `not-applicable` は記録するだけで、出力しない。
+
+既存の修復トリガーと非トリガーの一覧（`natural-japanese-rewriter/SKILL.md:122-140`）は維持する。
+規則の判定は、これらの一覧を ID で言い換える位置づけであり、同じ判断を二重に書かない。
+
+Phase 3 の完了条件に「48個の ID すべてに状態が付き、`actionable` と `needs-confirmation` が `rewrite_targets` に `rule_ids` 付きで記録されている」を加える。
+
+=== FR-05 モードごとに規則を扱う
+
+両モードで共通する扱いは次のとおりとする。
+
+* 48規則をすべて照合する。
+* コード、コマンド、ファイルパス、API 名、設定値、数値、固有名詞、引用、リンク、構造化データを保護し、原文にない事実を作らない。規則を理由に保護範囲を変えない。
+* `needs-confirmation` は省略せず `要確認` に出す。
+
+セーフモードでは、旧スキルの最優先原則をそのまま適用する。
+`actionable` は原意・事実・仕様・技術的意味を変えずに修正できる問題に限り、規則を機械的に適用せず、読みやすさや正確さが実際に上がる変更だけを採用する。
+規則どうしの判断が衝突した場合は、原意の保持、文脈・係り受け・否定範囲・用語の正確さ、読み手にとっての明確さ、語感・敬語・簡潔さ、行配置の順に優先する。
+
+デストロイモードでは、48規則を自然さの判定基準として使う。
+既存の方針どおり文の分割・結合、構成の変更、語の置き換え、冗長な情報の削除を積極的に行い、`needs-confirmation` の箇所はもっとも自然な解釈を選んでよい。
+ただし選んだ解釈を事実として断定せず、事実に関わる `needs-confirmation`（`word-choice.match-expression-to-facts` など）は `要確認` に残す。
+規則の優先順位は、既存のデストロイモードの優先順位（自然さ最優先）を上位とし、旧スキルの順序は規則どうしの衝突を解くときだけ使う。
+
+=== FR-06 Phase 5 で再照合する
+
+Phase 5「候補文を検査する」に、両モード共通で「候補文に対して48規則を再照合し、新たな `actionable` を作っていないことを確認する」を加える。
+新たな `actionable` が見つかった場合は候補を修正して再照合する。
+セーフモードの意味回帰検査（KWJA 再解析、`SEMANTIC_DRIFT`）は変更しない。
+
+Phase 5 の完了条件に「候補文で `actionable` の規則が0件」を加える。
+
+=== FR-07 出力形式を統合する
+
+`polish`（既定）は現状どおり本文中心とし、`要確認` の各項目を規則 ID 付き（``- `{ID}`: {原文だけでは判断できない点}``）にする。
+規則に対応しない `要確認`（KWJA と本文の食い違いなど）は ID なしで出す。
+適用した規則の一覧は出さない。
+
+`diagnostic` は既存の3項目（問題のある述語、不明または競合していた項、修復で明確になった関係）に加えて「適用ルール」を出す。
+形式は旧スキルの ``- `{ID}`: {対象箇所と修正内容}`` とし、`actionable` がなければ「適用ルール: なし」と書く。
+`LLM` を出所とする規則は、KWJA の根拠がない判断であることが分かるように示す。
+
+監査一覧は、ユーザーが監査結果または全規則の判定を求めた場合だけ、規則の定義順で出す。
+形式は旧スキルの表（`| ID | status | 根拠または対象箇所 |`）をそのまま使う。
+監査だけを求められた場合はレビューのみと同じく本文を変更せず、監査と推敲の両方を求められた場合は `diagnostic` の末尾に加える。
+
+ユーザーが「レビューだけ」「直さないで」と指定した場合は、本文を変更せず、`diagnostic` の内容を ``ID / 対象箇所 / 問題 / 修正案`` の形で出す。`needs-confirmation` は修正案の代わりに判断に必要な情報を示す。
+出力モードを増やさず、開始時に確定する出力先（ファイル編集、応答本文、本文を変更しない）で扱う。
+
+ユーザーが「最終版だけ」と指定した場合は、適用ルールと診断を省略する。`要確認` は省略しない。
+
+ファイルを編集した場合は本文を再掲せず、変更ファイル、変更概要、`要確認` を報告する。`diagnostic` では適用した ID も報告する。
+
+=== FR-08 旧スキルを削除する
+
+`skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/` を、SKILL.md と `agents/openai.yaml` を含めて同じ変更で削除する。
+旧スキル名の stub、転送用スキル、alias は作らない。
+`natural-japanese-rewriter` の本文、description、openai.yaml のいずれにも旧スキル名を書かない。
+
+`natural-japanese-rewriter/agents/openai.yaml` の `short_description` は、既定がデストロイモードである現状と規則 ID 付きの診断に合わせて更新する。`display_name` は維持する。`default_prompt` は追加しなくてよい。
+
+`manifest.json` は、配布ファイルが変わらない限り変更しない。
+
+=== FR-09 detailed-rules.md に規則 ID を注記する（任意）
+
+`references/detailed-rules.md` の修正観点や典型例のうち、48規則と対応する節に「関連ID: `...`」を1行で添えてよい。
+規則本文の削除、節の並べ替え、モード方針の追記は行わない。
+注記した ID は FR-02 の表に存在するものに限る。
+この要件を実施しない場合も受け入れ条件は満たせる。
+
+== 例外と失敗時の挙動
+
+* KWJA の実行または解析ファイルの読み取りに失敗した場合は、既存どおりリライトを止めて原因を報告する。規則の判定だけを LLM で続行しない。
+* KWJA は成功したが、ある規則の手がかりとなる素性やタグが出力にない場合（たとえば語種、敬語）は、その規則を `LLM` 出所として原文から判定し、`diagnostic` ではその旨を示す。素性がないことを理由に `not-applicable` としない。
+* 分析メモの `ambiguities` に該当箇所がある規則は、セーフモードでは `needs-confirmation` とし、`actionable` にしない。
+* 規則の判定が保護範囲（コード、識別子、URL など）にかかる場合は `not-applicable` とし、保護範囲を変更しない。
+* `output.line-break-each-line` は、改行の単位が指定されていなければ `not-applicable` とし、現在の行配置を保つ。指定があれば `actionable` として、表・箇条書き・コード・front matter など行自体に意味がある構造を崩さずに適用する。
+* 監査一覧を求められたが規則の判定を完了できない場合（Phase 3 前の停止など）は、部分的な一覧を出さず、停止理由を報告する。
+* 長い文章で `actionable` が多数ある場合も、`polish` の出力は本文と `要確認` だけであり、規則数や文数に比例して増えない。監査一覧は文書単位の48行に固定する。
+
+== 非機能要件
+
+=== ID の安定性
+
+48個の ID の綴りは、変更前スナップショット `docs/backups/2026_09_29/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md` の ID 表と完全一致させる。
+ID を省略、改名、再利用しない。
+将来規則を追加する場合は新しい ID を付け、廃止した ID を再利用しない。
+報告に使う ID は表の定義と完全一致させ、表にない ID を作らない。
+
+=== 意味安全性
+
+規則の適用を理由に、原文にない主体、対象、原因、目的、時刻、確実性を追加しない。
+技術用語を一般語へ薄めない。`word-choice.simplify-overly-formal-literary-or-technical-terms` と `word-choice.limit-loanwords-and-foreign-words` は、固有表現と技術的に必要な語を保護したうえで適用する。
+
+=== コンテキスト効率
+
+ID 表は SKILL.md 本体に置き、毎回の起動で参照できるようにする。
+`references/detailed-rules.md` の読み込み条件は変えない。
+1〜2文や UI 文言でも48規則の照合は行うが、`not-applicable` の判定を素早く済ませ、出力を増やさない。
+
+=== 保守性
+
+同じ判断を Phase 3 の修復トリガー一覧と規則 ID 表の両方に長く書かない。
+規則の状態判定と ID の付与は Phase 3 に集約し、Phase 5 は再照合、Phase 6 は出力だけを担う。
+旧スキルの「このスキルは単独で実行する」は引き継がない。
+
+== 互換性、移行、運用
+
+* `natural-japanese-rewriter` の名前、配置、`safe` 引数、`polish` / `diagnostic` の意味、Phase 1〜6 の順序は維持する。`mendan-junbi` などが名前で参照しているため、改名しない。
+* analyzer と japanese-kwja-analyze の契約は変更しない。`rewrite_targets` への `decision` と `rule_ids` の付与は親スキル側の記録であり、analyzer の出力契約に影響しない。
+* 旧スキルの利用者は、同じ依頼文（「岩淵ルールで直して」など）で `natural-japanese-rewriter` が起動する。既定がデストロイモードになるため、旧スキルと同じ原意保持の挙動が必要な場合は `safe` を付ける。この差は description に明記する。
+* 実行コード、永続データ、外部依存を追加しないため、データ移行は不要である。
+* ロールバックは `docs/backups/2026_09_29/natural-japanese/` の `natural-japanese-rewriter` と `rewrite-japanese-with-iwabuchi-rules` を `skills/natural-japanese/` へ戻すことで行える。
+* 利用環境の `~/.claude/skills/` は nix store のスナップショットへの symlink であり、リポジトリで旧ディレクトリを削除しても再ビルドまで旧スキルが残る。再ビルドは利用者の作業とし、本件の完了条件に含めない。
+
+== 採用した意思決定
+
+各決定は自動壁打ちの推奨案であり、根拠と不確実性を併記する。
+
+=== D-01 48規則を10の上位概念と4つの出所に対応づけ、判定を Phase 3 に集約する
+
+規則ごとに「どの層の、どの観測から判定するか」を FR-03 の表で固定する。
+上位概念の語彙は KWJA の11処理と Phase 2 の5層、`detailed-rules.md` の項・付加部・骨格から取り、新しい概念を持ち込まない。48規則が使わない層（情報構造）は語彙に含めない。
+判定の位置は既存の修復判断がある Phase 3 に集約し、Phase ごとに判定を分散させない。
+
+根拠は、ユーザーが「項の概念や KWJA の解析を上位概念とする」と明示していること、Phase 3 が実質的に `rewrite_targets` の生産者であること（`natural-japanese-rewriter/SKILL.md:145`）である。
+不確実性は、KWJA の言語素性に敬語や語種の素性があるかを未確認である点で、該当する規則は `LLM` 出所へ倒しても要件を満たす形にした。
+
+代替案として「カテゴリ単位（sentence / word-choice / honorific）で層に対応づけ、規則ごとの手がかりは実装者に委ねる」を検討したが、受け入れ条件を検証できず、「これは `sentence.keep-subject-and-predicate-close` だ」と判断するための手がかりが定義されないため採らない。
+
+=== D-02 ID 表は SKILL.md 本体に置き、参照ファイルを増やさない
+
+ID は `polish` の `要確認` にも使うため、毎回の起動で参照できる必要がある。
+条件付きにしか読まれない参照ファイルへ置くと、読んでいない実行で ID を誤って綴る。
+SKILL.md は現状209行で、48行の表と Phase 3・5・6 の追記を加えても validator の制限内に収まる。
+
+不確実性は行数の目安（400行）が慣行に基づく値である点で、超えた場合は表以外の重複を削る。
+代替案「`references/iwabuchi-rules.md` を新設し、SKILL.md にはカテゴリ表だけ置く」は、ID の定義が二か所に分かれ、`manifest.json` の更新も要るため採らない。
+
+=== D-03 ID の綴りと件数を変更前スナップショットと一致させる
+
+旧スキルが ID を公開識別子と定義し（`rewrite-japanese-with-iwabuchi-rules/SKILL.md:36-37`）、リポジトリ内で参照がなくても利用者の過去の出力に ID が残り得る。
+綴りを保つコストはゼロで、変更前スナップショットが commit 済みのため機械的に照合できる。
+
+=== D-04 規則 ID は親スキルの `rewrite_targets` と出力に置き、analyzer の `issues[].code` には載せない
+
+analyzer は KWJA の解析事実と LLM の判断を分けて記録する方針を明記しており（`natural-japanese-rewrite-analyzer/SKILL.md:25-27`）、規則の状態は判断に属する。
+`issues[].code` は語彙が未定義で、その経緯（コミット `f8f85a4`）も不明のため、この変更で analyzer の契約に触らない。
+`rewrite_targets` は analyzer が空配列で渡し、親が埋める欄であり、ここに `decision` と `rule_ids` を持たせても子スキルの契約は変わらない。
+
+不確実性は、`issues[].code` の空白が意図的かどうかで、未確定事項に残す。
+
+=== D-05 セーフモードは旧スキルの原則、デストロイモードは自然さの基準として規則を使う
+
+旧スキルの最優先原則はセーフモードの制約と一致する。
+デストロイモードにそのまま持ち込むと「問題のない文は変更しない」が既定方針（`natural-japanese-rewriter/SKILL.md:58`）と衝突する。
+両モードで共通する保護範囲と事実の非捏造、`needs-confirmation` の報告は維持し、優先順位だけをモードで切り替える。
+
+=== D-06 旧ディレクトリを同じ変更で削除し、stub を残さない
+
+追跡ファイルに旧スキルの参照がなく、トリガー語を description へ移せば起動経路が途切れない。
+stub を残すと二つのスキルが同じ依頼に反応し、ユーザーが「呼び出す形にしない」とした意図に反する。
+不確実性は利用環境の symlink で、運用上の注意として記載した。
+
+=== D-07 出力モードを増やさず、レビューのみと最終版だけを既存の枠で扱う
+
+「レビューだけ」は `diagnostic` で本文を変更しない場合、「最終版だけ」は `polish` で診断を省く場合として扱う。
+旧スキル内で「最終版だけなら推敲後だけを出す」と「どのモードでも `needs-confirmation` は省略しない」が両立していなかったため（同 `:149, :154`）、安全側の後者を採る。
+
+=== D-08 `output.line-break-each-line` の既定を `not-applicable` にする
+
+旧スキルは単位未指定なら `needs-confirmation` として現状維持としていたが、この解釈では毎回 `要確認` が出て `polish` が騒がしくなる。
+現状維持という結果は同じなので、状態だけを `not-applicable` に変える。
+`references/detailed-rules.md:214` の「一文ごとに改行する」との整合は未確定事項とし、本件では当該行を変更しない。
+
+=== D-09 `references/detailed-rules.md` への注記は任意にする
+
+修正観点の多くが `sentence.*` と重なるため注記は有用だが、1422行の参照資料を変更しなくても目的は達成できる。
+実施する場合も規則本文の削除と再編は行わない。
+
+== 判断から学べること
+
+. *規則集を既存の解析層へ昇華するときは、規則 ID を安定識別子として残し、規則ごとに「どの観測から判定するか」を表で固定する。*
+兆候は、チェックリスト型のスキルと解析パイプライン型のスキルが同じ問題を別の語彙で扱っていること。
+使える条件は、解析側に観測できるフィールド（項、係り受け、共参照など）が既にあること。
+使わないほうがよい条件は、規則が解析結果に対応せず主観的な好みだけで決まる場合で、そのときは `LLM` 出所として分けて扱う。
+参照は D-01、D-04、`natural-japanese-rewrite-analyzer/SKILL.md:25-27`。
+今後調べる概念名と検索語は「rule-to-feature mapping」「predicate-argument structure」「KWJA 言語素性」。
+. *スキルをマージするときは、呼び出し委譲ではなく、トリガー語と出力契約を移して旧スキルを同じ変更で削除する。*
+兆候は、二つのスキルが同じ依頼に反応し得る状態や、片方が他方を呼ぶだけの薄いスキル。
+使える条件は、追跡ファイルに旧スキルの参照がなく、description の上限内でトリガー語を吸収できること。
+使わないほうがよい条件は、外部の利用者が旧スキル名に依存している場合で、そのときは期限付きの alias を検討する。
+参照は D-06、`README.md:98`、`git grep` の結果。
+検索語は「migrate callers then delete」「skill description triggers」。
+. *契約に宙に浮いた参照（列挙されていない語彙を指す文）を見つけても、マージのついでに別スキルの契約を直さず、未確定事項として残す。*
+兆候は、`issues[].code` のように値の語彙がなく、参照文だけが残っている状態。
+使える条件は、当該契約が今回の変更対象外で、削除の経緯が履歴から読めないこと。
+使わないほうがよい条件は、宙に浮いた参照が今回の受け入れ条件を直接壊す場合で、そのときは同じ変更で直す。
+参照は D-04、未確定事項、コミット `f8f85a4`。
+検索語は「dangling reference」「schema enum drift」。
+
+== 受け入れ条件
+
+機械的に検証できる条件は、品質確認方法のコマンドで確認する。
+
+* AC-01: `natural-japanese-rewriter/SKILL.md` の ID 表に、規則 ID の行がちょうど48行あり、`output` 1件、`sentence` 21件、`word-choice` 16件、`honorific` 10件で、重複がない。
+* AC-02: 48個の ID の集合が、`docs/backups/2026_09_29/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md` の ID 表の集合と完全一致する。
+* AC-03: 48行のそれぞれに、上位概念（10種のいずれか）と出所（`P1` / `P2` / `P4` / `LLM` のいずれか）が付いている。
+* AC-04: `skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/` ディレクトリが存在しない。
+* AC-05: `skills/` 配下の追跡ファイルに文字列 `rewrite-japanese-with-iwabuchi-rules` が0件である。
+* AC-06: `natural-japanese-rewriter/SKILL.md` の `description` に「岩淵ルール」「48規則」「ルールID」「監査」の各語が含まれ、旧スキルの除外文（「一般的な…だけの依頼には使わない」）を含まない。
+* AC-07: `natural-japanese-rewriter/SKILL.md` の `name` が `natural-japanese-rewriter` のままで、`description` が1024文字以内である。
+* AC-08: `natural-japanese-rewriter` が skill-creator の `quick_validate.py` を通過する。
+* AC-09: `natural-japanese-rewriter/SKILL.md` が400行以下である。
+* AC-10: `natural-japanese-rewrite-analyzer/` と `japanese-kwja-analyze/` に差分がない。
+* AC-11: `natural-japanese-rewriter/manifest.json` に列挙されたファイルがすべて存在し、ディレクトリ内の配布対象ファイルがすべて列挙されている。
+* AC-12: Phase 3 の記述に、48規則の4状態判定、`rewrite_targets` の `decision` と `rule_ids`、`needs-confirmation` から `要確認` への経路が書かれている。
+* AC-13: Phase 5 の記述に、両モード共通の48規則再照合と「`actionable` が0件」の完了条件が書かれている。
+* AC-14: Phase 6 の記述に、`polish` の ID 付き `要確認`、`diagnostic` の適用ルール、要求時のみの監査一覧（規則の定義順、`| ID | status | 根拠または対象箇所 |`）、レビューのみと最終版だけの扱いが書かれている。
+* AC-15: SKILL.md に、セーフモードの規則衝突時の優先順位（原意、文脈・係り受け・否定範囲・用語、明確さ、語感・敬語・簡潔さ、行配置）と、デストロイモードでの規則の位置づけが書かれている。
+* AC-16: `output.line-break-each-line` の既定が `not-applicable` で、単位の指定があるときだけ適用すると書かれている。
+* AC-17: `natural-japanese-rewriter/agents/openai.yaml` の `short_description` が、既定のデストロイモードと規則 ID 付き診断に言及し、旧スキル名を含まない。
+* AC-18: FR-09 を実施した場合、`references/detailed-rules.md` に注記した ID がすべて FR-02 の表に存在し、規則本文の削除がない。
+
+== 検証シナリオ
+
+[cols="1,3,3",options="header"]
+|===
+|ID
+|入力上の論点
+|期待する判定
+
+|T-01
+|「岩淵ルールで直して」と本文
+|`natural-japanese-rewriter` が起動し、`diagnostic` として適用ルールを ID 付きで出す
+
+|T-02
+|「自然にして」と本文（既定のデストロイモード）
+|48規則を内部で照合し、出力は本文と ID 付き `要確認` だけ
+
+|T-03
+|「safe で校正して」と、主語と述語が離れた文
+|`sentence.keep-subject-and-predicate-close` を `actionable` とし、ガ格の項と述語の距離を根拠に語順を整える。原意は変えない
+
+|T-04
+|並列述語の途中で動作主が切り替わるが、新しい主語が書かれていない文
+|`sentence.state-changed-subject-explicitly` を判定し、`referent` が一意なら明示、複数候補なら `needs-confirmation` として主体を捏造しない
+
+|T-05
+|受身で動作主が復元できない文
+|`sentence.minimize-passive-voice` を `needs-confirmation` または `not-applicable` とし、動作主を補わない
+
+|T-06
+|「お」が連続する依頼メール
+|`honorific.avoid-repeated-o-prefixes` を `actionable` とし、`honorific.retain-required-forms` により必要な敬語は落とさない
+
+|T-07
+|「監査して」と本文
+|本文を変えず、規則の定義順に48行の判定表を出す。`pass` と `not-applicable` も含む
+
+|T-08
+|「レビューだけ」と本文
+|本文を変えず、`ID / 対象箇所 / 問題 / 修正案` を出す。`needs-confirmation` は判断に必要な情報を示す
+
+|T-09
+|「最終版だけ」と本文
+|推敲後の本文と `要確認` だけを出し、適用ルールと診断を省く
+
+|T-10
+|改行の単位を指定しない Markdown 文書
+|`output.line-break-each-line` を `not-applicable` とし、行配置を変えない。`要確認` にも出さない
+
+|T-11
+|コードブロックと API 名を含む技術文で、`word-choice.limit-loanwords-and-foreign-words` に該当しそうな語
+|保護範囲と技術用語を `not-applicable` とし、変更しない
+
+|T-12
+|KWJA の出力に敬語や語種の素性がない文
+|`honorific.*` と該当する `word-choice.*` を `LLM` 出所として判定し、`diagnostic` で KWJA の根拠がない判断だと示す。停止しない
+
+|T-13
+|KWJA の実行に失敗した入力
+|既存どおり停止し、規則の判定だけを続行しない
+
+|T-14
+|セーフモードの出力に同じスキルを `safe` で再適用
+|`actionable` が0件で本文が変わらない
+
+|T-15
+|`actionable` が多数ある長文の `polish`
+|出力は本文と `要確認` だけで、規則の一覧や pass の列挙を含まない
+|===
+
+== 品質確認方法
+
+次のコマンドはリポジトリルートで実行する。`ID_RE` は Markdown 表の ID 行を抽出する正規表現である。
+
+[source,bash]
+----
+ID_RE='^\| `(output|sentence|word-choice|honorific)\.[a-z0-9-]+` \|'
+NEW=skills/natural-japanese/natural-japanese-rewriter/SKILL.md
+OLD=docs/backups/2026_09_29/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md
+
+# AC-01: 件数と重複
+grep -cE "$ID_RE" "$NEW"                                   # 48
+grep -oE "$ID_RE" "$NEW" | sort | uniq -d | wc -l          # 0
+for c in output sentence word-choice honorific; do
+  printf '%s ' "$c"; grep -cE "^\| \`$c\." "$NEW"          # 1 21 16 10
+done
+
+# AC-02: 変更前スナップショットと集合が一致
+diff <(grep -oE "$ID_RE" "$OLD" | sort) <(grep -oE "$ID_RE" "$NEW" | sort)   # 差分なし
+
+# AC-04, AC-05: 旧ディレクトリと参照の不在
+test ! -d skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules && echo removed
+git grep -n rewrite-japanese-with-iwabuchi-rules -- skills | wc -l           # 0
+
+# AC-06, AC-07, AC-09
+for w in 岩淵ルール 48規則 ルールID 監査; do
+  printf '%s ' "$w"; grep -c "$w" "$NEW"                   # それぞれ1以上
+done
+grep -c 'だけの依頼には使わない' "$NEW"                    # 0
+wc -l < "$NEW"                                             # 400以下
+
+# AC-08: validator
+python3 <quick_validate.py のパス> skills/natural-japanese/natural-japanese-rewriter
+
+# AC-10: 子スキルの不変
+git diff --stat HEAD -- skills/natural-japanese/natural-japanese-rewrite-analyzer \
+  skills/natural-japanese/japanese-kwja-analyze                             # 出力なし
+----
+
+AC-03 は、48行それぞれの上位概念列と出所列を目視または短いスクリプトで確認する。
+AC-11 は `manifest.json` の `files` を読み、各パスの存在とディレクトリ内の未列挙ファイルの有無を確認する。
+AC-12 から AC-18 は SKILL.md と openai.yaml を読んでレビューする。
+検証シナリオは、スキル指示から期待する判定と失敗時挙動を一意に説明できるかをレビューで確認する。実際に KWJA を実行できる環境では、T-03、T-10、T-12、T-14 を実行して確認する。
+
+== 未確定事項
+
+いずれも実装を止めない。要件は未確定のまま安全側に倒した形で書いている。
+
+* KWJA の言語素性に敬語、語種（外来語）、話し言葉を示す素性があるかは未確認である。確認方法は `skills/natural-japanese/japanese-kwja-analyze/scripts/analyze.sh` を敬語と外来語を含む短文で実行し、素性タグを読むこと。素性がなければ該当規則は `LLM` 出所として判定する（例外と失敗時の挙動を参照）。
+* analyzer の `issues[].code` の語彙がコミット `f8f85a4` で消えた理由が意図的か不明である。確認方法は作者への確認。本件では analyzer を変更せず、規則 ID は親の `rewrite_targets` に置く（D-04）。
+* `references/detailed-rules.md:214` の「一文ごとに改行する」を既定として維持する意図があるか不明である。確認方法はユーザーへの確認。本件では当該行を変更せず、`output.line-break-each-line` の既定を `not-applicable` とする（D-08）。
+* 利用環境の nix 再ビルドの時期は不明である。旧スキルの symlink が残る間は旧スキルも起動し得る。運用上の注意として記載した。
+* README.md のスキル一覧は移動前のパスのままで、旧スキルも `japanese-kwja-analyze` も未掲載である。本件の対象外とし、更新の要否はユーザーに委ねる。
+
+== 参考資料
+
+* 調査レポート: `docs/requrements/2026_09_29_natural_japanese/pre-investigation-report-2026_09_29_natural_japanese.json`
+* 元メモ: `docs/sample/iwabuchi-akubun/memo.md`
+* 変更前スナップショット: `docs/backups/2026_09_29/natural-japanese/`
+* 前回の同系統要件: `docs/requrements/2026_09_01_natural_japanese/req-2026_09_01_natural-japanese.adoc`
