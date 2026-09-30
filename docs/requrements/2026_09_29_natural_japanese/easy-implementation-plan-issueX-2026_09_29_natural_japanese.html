@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>岩淵48規則の統合 やさしい解説</title>
+<style>
+:root{
+  --bg:#f4f6f9;
+  --card:#ffffff;
+  --ink:#1f2933;
+  --muted:#5b6b7a;
+  --line:#d9dee5;
+  --accent:#1f6feb;
+  --accent-soft:#eaf2ff;
+  --ok:#15803d;
+  --ok-soft:#ecfdf5;
+  --warn:#b45309;
+  --warn-soft:#fff7ed;
+  --del:#b91c1c;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI","Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",Meiryo,sans-serif;
+  font-size:16px;
+  line-height:1.7;
+  overflow-wrap:anywhere;
+}
+main{max-width:900px;margin:0 auto;padding:24px 16px 64px}
+header.hero{padding:8px 4px 4px}
+header.hero h1{font-size:1.55rem;line-height:1.4;margin:0 0 10px}
+header.hero p{margin:0 0 6px;color:var(--muted)}
+nav.toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:16px 0}
+nav.toc ol{margin:6px 0 0;padding-left:1.4em}
+nav.toc a{color:var(--accent);text-decoration:none}
+nav.toc a:hover{text-decoration:underline}
+section{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:20px;
+  margin:20px 0;
+}
+section.summary{background:var(--accent-soft);border-color:#b9d1fb}
+h2{font-size:1.3rem;line-height:1.4;margin:0 0 14px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 8px;padding-left:10px;border-left:4px solid var(--accent)}
+p{margin:0 0 12px}
+ul,ol{margin:0 0 12px;padding-left:1.5em}
+li{margin:4px 0}
+code{font-family:var(--mono);font-size:.9em;background:#eef2f7;padding:1px 5px;border-radius:4px}
+pre{background:#eef2f7;border-radius:8px;padding:12px 14px;overflow-x:auto;font-size:.88rem;line-height:1.55;margin:0 0 12px}
+pre code{background:none;padding:0}
+dl.terms{margin:0 0 12px}
+dl.terms dt{font-weight:700;margin-top:12px}
+dl.terms dd{margin:2px 0 0 0;padding-left:1em;border-left:3px solid var(--line)}
+.note{background:var(--warn-soft);border-left:4px solid var(--warn);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.good{background:var(--ok-soft);border-left:4px solid var(--ok);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.tag{display:inline-block;padding:0 9px;border-radius:999px;font-size:.82em;font-weight:700;line-height:1.6;vertical-align:middle}
+.tag.ok{background:#dcfce7;color:var(--ok)}
+.tag.warn{background:#ffedd5;color:var(--warn)}
+.tag.del{background:#fee2e2;color:var(--del)}
+.tag.info{background:#dbeafe;color:#1e40af}
+figure{margin:20px 0}
+figure .svg-wrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px}
+figure svg{display:block;width:100%;min-width:720px;height:auto}
+figure svg text{font-family:inherit}
+figure svg .mono{font-family:var(--mono)}
+figcaption{font-size:.92rem;color:var(--muted);margin-top:8px}
+.table-wrap{overflow-x:auto;margin:0 0 12px}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{border:1px solid var(--line);padding:7px 10px;vertical-align:top;text-align:left}
+th{background:#eef2f7;white-space:nowrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}}
+.box{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fafbfc}
+.box h4{margin:0 0 6px;font-size:1rem}
+footer{color:var(--muted);font-size:.88rem;padding:8px 4px}
+</style>
+</head>
+<body>
+<main>
+
+<header class="hero">
+  <h1>「岩淵48規則」を natural-japanese-rewriter に統合した話 <br>— 予備知識なしで読める解説</h1>
+  <p>元の文書: 実装計画 <code>docs/requrements/2026_09_29_natural_japanese/implementation-plan-issueX-2026_09_29_natural_japanese.adoc</code>（1158行）と、要件定義書 <code>req-2026_09_29_natural_japanese.adoc</code>。</p>
+  <p>この解説は、元の文書に書かれている事実だけを、短い文と日常の言葉で言い直したものです。数字、ID、ファイル名は元のままです。</p>
+</header>
+
+<nav class="toc" aria-label="目次">
+  <strong>読む順番</strong>
+  <ol>
+    <li><a href="#s1">30秒でわかるまとめ</a></li>
+    <li><a href="#s2">そもそも何の話？</a></li>
+    <li><a href="#s3">何が変わる？（図1）</a></li>
+    <li><a href="#s4">規則はどう仕組みに結びつく？（図2）</a></li>
+    <li><a href="#s5">エージェントは実際にどう使う？（図3）</a></li>
+    <li><a href="#s6">どういう順番で作った？（図4）</a></li>
+    <li><a href="#s7">どうやって正しさを確かめた？</a></li>
+    <li><a href="#s8">やらないと決めたこと</a></li>
+    <li><a href="#s9">まだ分かっていないこと</a></li>
+  </ol>
+</nav>
+
+<!-- ============================================================ -->
+<section class="summary" id="s1">
+  <h2>1. 30秒でわかるまとめ</h2>
+  <ul>
+    <li>日本語の文章を直す「スキル」（AI エージェント用の手順書）が2つありました。</li>
+    <li>1つは <code>natural-japanese-rewriter</code>。文章を自然に書き直すスキルです。</li>
+    <li>もう1つは <code>rewrite-japanese-with-iwabuchi-rules</code>。岩淵「悪文」メモ由来の <strong>48規則</strong> で文章をチェックするスキルです。</li>
+    <li>この2つは、同じ悪文を別々の言葉で扱っていました。そこで <strong>48規則を前者に取り込み、後者を削除</strong> しました。</li>
+    <li>取り込むとき、48規則の1つ1つを「どの観測から判定するか」に結びつけました。使う語彙は <strong>上位概念10種</strong> と <strong>出所4種</strong>（<code>P1</code> / <code>P2</code> / <code>P4</code> / <code>LLM</code>）です。</li>
+    <li>エージェントは各規則を <strong>4状態</strong>（<code>pass</code> / <code>not-applicable</code> / <code>actionable</code> / <code>needs-confirmation</code>）に分け、必要なときだけ規則 ID 付きで報告します。</li>
+    <li>変えたファイルは3か所だけ。<code>SKILL.md</code> は 209行 → <strong>330行</strong>、<code>agents/openai.yaml</code> は1行、旧ディレクトリは削除。</li>
+    <li>作業は <strong>Task 1〜9</strong>。確認は受け入れ条件 <strong>AC-01〜AC-18</strong> と検証シナリオ <strong>T-01〜T-15</strong>。すべて通り、レビューも <strong>2巡</strong> しました。</li>
+  </ul>
+</section>
+
+<!-- ============================================================ -->
+<section id="s2">
+  <h2>2. そもそも何の話？</h2>
+
+  <h3>まず言葉の説明</h3>
+  <dl class="terms">
+    <dt>スキル</dt>
+    <dd>Claude Code や Codex などの AI エージェントに渡す「作業の手順書」。<code>SKILL.md</code> というファイルに書きます。エージェントは依頼文を見て、合うスキルを選んで動きます。</dd>
+
+    <dt>natural-japanese-rewriter</dt>
+    <dd>日本語を自然で読みやすく書き直すスキル。文章を機械で解析した結果をもとに、Phase 1〜6 の6段階で作業します。</dd>
+
+    <dt>rewrite-japanese-with-iwabuchi-rules（旧スキル）</dt>
+    <dd>岩淵「悪文」メモ由来の48規則を文章に照らし、各規則を4状態に分け、規則 ID 付きで報告する単独スキル。「岩淵ルールで直して」のように規則を名指しした依頼でだけ起動し、一般的な「校正して」「自然にして」では起動しませんでした。</dd>
+
+    <dt>KWJA</dt>
+    <dd>日本語の文を機械で細かく解析するツール。分かち書き、単語正規化、形態素解析、固有表現認識、言語素性、係り受け、述語項構造、橋渡し照応、共参照、談話関係などの11処理を行います。ざっくり言うと「この語はどの語にかかるか」「誰が何をしたか」を機械が読み取る道具です。</dd>
+
+    <dt>分析メモ</dt>
+    <dd>KWJA の結果を analyzer（子スキル）がまとめた YAML。<code>rewrite_targets</code>、<code>predicates</code>、<code>ambiguities</code> などの項目を持ちます。</dd>
+
+    <dt>Phase 1〜6</dt>
+    <dd>natural-japanese-rewriter の作業の6段階。Phase 1 で分析メモを作り、Phase 2 で談話・情報構造・語用論・対人関係・文体の制約を固定し、Phase 3 で修復箇所を決め、Phase 4 で制約に沿って生成し、Phase 5 で候補文を検査し、Phase 6 で出力します。</dd>
+
+    <dt>規則 ID</dt>
+    <dd><code>&lt;カテゴリ&gt;.&lt;kebab-case&gt;</code> の形の安定した名前。カテゴリは <code>output</code>、<code>sentence</code>、<code>word-choice</code>、<code>honorific</code> の4種。例: <code>sentence.keep-subject-and-predicate-close</code>。件数は <code>output</code> 1、<code>sentence</code> 21、<code>word-choice</code> 16、<code>honorific</code> 10 の合計48です。</dd>
+
+    <dt>4状態</dt>
+    <dd>規則1つの判定結果。<code>pass</code>（適用でき問題なし）、<code>not-applicable</code>（媒体や内容から対象外）、<code>actionable</code>（原意を変えず安全に修正できる問題）、<code>needs-confirmation</code>（原文にない情報や意図が必要）。</dd>
+
+    <dt>セーフモード / デストロイモード</dt>
+    <dd>第一引数が <code>safe</code> のときだけ原意を厳密に保つ（セーフモード）。既定はデストロイモードで、自然さを優先して大胆に書き直します。</dd>
+
+    <dt>polish / diagnostic</dt>
+    <dd>出力モード。<code>polish</code> は本文中心で内部分析を出さない既定。<code>diagnostic</code> は分析・理由・問題箇所を求められたときだけ診断を追加します。</dd>
+
+    <dt>要確認</dt>
+    <dd>原文だけでは判断できない点を、出力の最後にユーザーへ聞き返す欄。</dd>
+  </dl>
+
+  <h3>なぜ統合したのか</h3>
+  <p>2つのスキルは、同じ悪文を別々の語彙で扱っていました。</p>
+  <ul>
+    <li>たとえば規則 <code>sentence.keep-subject-and-predicate-close</code>（主語と述語を近くに置く）は、分析メモでは「ガ格の項と述語の基本句距離」として観測できます。</li>
+    <li>規則 <code>sentence.minimize-passive-voice</code>（受身を減らす）は、<code>voice: passive</code> と動作主の復元可能性として観測できます。</li>
+  </ul>
+  <p>つまり、旧スキルの「規則」は、natural-japanese-rewriter が KWJA から得ている「観測」と同じものを見ていました。規則を文字列照合のチェックリストのまま残すと、同じ判断を2つのスキルが別々に行い、ID による説明責任と KWJA の根拠が結びつきません。</p>
+
+  <h3>目指した状態（目的）</h3>
+  <ol>
+    <li>48規則を、既存の上位概念（項・付加部・骨格、KWJA の11処理、Phase 2 の5層）に対応づけて内蔵する。規則は「文字列に照らすチェック項目」ではなく「分析メモと上位レイヤーのどの観測から判定する規範か」として定義される。</li>
+    <li>各規則を安定 ID で参照でき、エージェントが判定、修正理由、<code>要確認</code>、診断出力で ID をそのまま使える。</li>
+    <li>旧スキルのトリガー語、出力形式、監査機能を引き継ぎ、natural-japanese-rewriter 単独で完結する。旧スキルは削除し、内部から呼び出さない。</li>
+  </ol>
+</section>
+
+<!-- ============================================================ -->
+<section id="s3">
+  <h2>3. 何が変わる？（図1）</h2>
+
+  <figure>
+    <div class="svg-wrap">
+<svg viewBox="0 0 900 470" role="img" aria-labelledby="fig1-title">
+  <title id="fig1-title">図1 2つのスキルが1つに合流する</title>
+  <defs>
+    <marker id="ar1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <!-- 旧スキル -->
+  <rect x="30" y="30" width="340" height="180" rx="12" fill="#fff7ed" stroke="#d97706" stroke-width="2" stroke-dasharray="8 5"/>
+  <rect x="262" y="42" width="96" height="26" rx="13" fill="#b91c1c"/>
+  <text x="310" y="60" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">削除される</text>
+  <text x="50" y="62" font-size="16" font-weight="700" fill="#9a3412">旧スキル</text>
+  <text x="50" y="88" font-size="13" class="mono" fill="#1f2933">rewrite-japanese-with-iwabuchi-rules</text>
+  <text x="50" y="116" font-size="14" fill="#1f2933">岩淵「悪文」メモ由来の 48規則</text>
+  <text x="50" y="140" font-size="14" fill="#1f2933">規則 ID・4状態・監査一覧を持つ</text>
+  <text x="50" y="164" font-size="14" fill="#1f2933">「岩淵ルールで直して」などで起動</text>
+  <text x="50" y="188" font-size="14" fill="#1f2933">一般的な「校正して」では起動しない</text>
+
+  <!-- 変更前 -->
+  <rect x="30" y="260" width="340" height="180" rx="12" fill="#eff6ff" stroke="#1f6feb" stroke-width="2"/>
+  <text x="50" y="292" font-size="15" font-weight="700" fill="#1e40af">natural-japanese-rewriter（変更前）</text>
+  <text x="50" y="318" font-size="14" fill="#1f2933">SKILL.md は 209行</text>
+  <text x="50" y="342" font-size="14" fill="#1f2933">KWJA の解析結果をもとに</text>
+  <text x="50" y="366" font-size="14" fill="#1f2933">Phase 1〜6 の6段階で書き直す</text>
+  <text x="50" y="390" font-size="14" fill="#1f2933">セーフ / デストロイ、polish / diagnostic</text>
+  <text x="50" y="414" font-size="14" fill="#1f2933">規則 ID はどこにも持っていない</text>
+
+  <!-- 変更後 -->
+  <rect x="530" y="80" width="340" height="330" rx="12" fill="#ecfdf5" stroke="#15803d" stroke-width="2"/>
+  <text x="550" y="112" font-size="15" font-weight="700" fill="#166534">natural-japanese-rewriter（変更後）</text>
+  <text x="550" y="138" font-size="14" fill="#1f2933">SKILL.md は 330行（上限 400行）</text>
+  <text x="550" y="170" font-size="14" font-weight="700" fill="#1f2933">追加されたもの</text>
+  <text x="560" y="194" font-size="14" fill="#1f2933">・48規則の ID 表（5列、表本体67行）</text>
+  <text x="560" y="218" font-size="14" fill="#1f2933">・各規則に上位概念と出所を対応づけ</text>
+  <text x="560" y="242" font-size="14" fill="#1f2933">・Phase 3・5・6 に規則の判定と出力</text>
+  <text x="560" y="266" font-size="14" fill="#1f2933">・「岩淵ルールで直して」などの起動語</text>
+  <text x="560" y="290" font-size="14" fill="#1f2933">・ID 付きの「要確認」と監査一覧</text>
+  <text x="550" y="326" font-size="14" font-weight="700" fill="#1f2933">変わらないもの</text>
+  <text x="560" y="350" font-size="14" fill="#1f2933">・Phase 1・2・4、safe 引数、子スキル</text>
+  <text x="560" y="374" font-size="14" fill="#1f2933">・manifest.json、detailed-rules.md</text>
+
+  <!-- 矢印 -->
+  <path d="M370,120 C450,120 450,170 530,170" fill="none" stroke="#475569" stroke-width="2.5" marker-end="url(#ar1)"/>
+  <text x="450" y="106" text-anchor="middle" font-size="13" fill="#475569" font-weight="700">48規則を移す</text>
+  <path d="M370,350 C450,350 450,300 530,300" fill="none" stroke="#475569" stroke-width="2.5" marker-end="url(#ar1)"/>
+  <text x="450" y="376" text-anchor="middle" font-size="13" fill="#475569" font-weight="700">本体はそのまま</text>
+
+  <text x="30" y="462" font-size="13" fill="#5b6b7a">変更は3点だけ: SKILL.md の更新、agents/openai.yaml の1行、旧ディレクトリの削除</text>
+</svg>
+    </div>
+    <figcaption>図1: 旧スキルの48規則が natural-japanese-rewriter に入り、旧スキルは削除される。</figcaption>
+  </figure>
+
+  <h3>変更は3か所だけ</h3>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>ファイル</th><th>種別</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td><code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code></td><td><span class="tag info">更新</span></td><td>description、入力と出力モード、リライトの優先順位、ID 表の新設、Phase 3・5・6（Task 1〜6）</td></tr>
+      <tr><td><code>skills/natural-japanese/natural-japanese-rewriter/agents/openai.yaml</code></td><td><span class="tag info">更新</span></td><td><code>short_description</code> の1行（Task 7）</td></tr>
+      <tr><td><code>skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/</code></td><td><span class="tag del">削除</span></td><td><code>SKILL.md</code> と <code>agents/openai.yaml</code> を <code>git rm -r</code> でディレクトリごと削除（Task 8）</td></tr>
+      <tr><td><code>manifest.json</code>、<code>references/detailed-rules.md</code>、analyzer、<code>japanese-kwja-analyze</code></td><td><span class="tag ok">変更なし</span></td><td>配布ファイルが変わらないため。子スキルの契約も変えない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>SKILL.md の中身はこう変わった</h3>
+  <p>現行209行が330行になりました（レビュー前は347行、見積もりは約360行、上限は400行）。</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>節</th><th>変更</th></tr></thead>
+    <tbody>
+      <tr><td>frontmatter の <code>description</code></td><td>差し替え。458文字で、「岩淵ルール」「48規則」「ルールID」「監査」を含む。旧スキルの「一般的な校正・自然化依頼には使わない」という除外文は引き継がない。<code>name</code> は変えない</td></tr>
+      <tr><td>冒頭説明</td><td>「岩淵『悪文』メモ由来の48規則を規則 ID 付きで内蔵し、規則の判定は KWJA の解析結果と上位レイヤーの観測から行う」の1文を追加</td></tr>
+      <tr><td>入力と出力モード</td><td>出力先に「本文を変更しない（レビューだけ、監査だけ）」を追加。規則や ID を名指しした依頼は <code>diagnostic</code> として扱う判定を追加</td></tr>
+      <tr><td>リライトの優先順位</td><td>末尾に、両モード共通・セーフモード・デストロイモードでの規則の扱いと、規則どうしが衝突したときの順序（5項目）を追加</td></tr>
+      <tr><td>岩淵48規則の ID 表（新設）</td><td>ID の扱い、4状態の意味、4カテゴリの5列表（表本体67行）。上位概念と出所の意味も1段落で添えた</td></tr>
+      <tr><td>Phase 3</td><td>48規則の状態判定、<code>rewrite_targets</code> への記録、<code>LLM</code> 出所と保護範囲の扱い、完了条件を追加</td></tr>
+      <tr><td>Phase 5</td><td>両モード共通の再照合（最大3巡）と完了条件を追加</td></tr>
+      <tr><td>Phase 6</td><td>ID 付き <code>要確認</code>、適用ルール、監査一覧、レビューだけ、最終版だけ、ファイル編集時の報告を追加</td></tr>
+      <tr><td>Phase 1、Phase 2、Phase 4、子スキルと優先順位</td><td>変更なし</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>使う人にとって何が変わるか</h3>
+  <ul>
+    <li>「岩淵ルールで直して」「48規則で悪文をチェックして」「ルールID付きで推敲して」「文の組み立て・用語・敬語を網羅的に点検して」「監査して」と頼むと、natural-japanese-rewriter が起動します。</li>
+    <li>既定はデストロイモード（自然さ優先）です。旧スキルと同じように原意を厳密に保ちたいときは <code>safe</code> を付けます。この差は <code>description</code> に書いてあります。</li>
+    <li>過去の出力に残っている規則 ID は綴りが変わらないので、そのまま新しい表で引けます。</li>
+  </ul>
+  <div class="note">
+    <strong>注意:</strong> 利用環境の <code>~/.claude/skills/</code> は nix store への symlink です。リポジトリで旧ディレクトリを削除しても、再ビルドするまで旧スキルが残り、同じ依頼に2つのスキルが反応することがあります。再ビルドは利用者の作業です。
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="s4">
+  <h2>4. 規則はどう仕組みに結びつく？（図2）</h2>
+
+  <p>ここが今回の中心です。旧スキルの規則は「文章にこの規則を当てはめてチェックせよ」という項目でした。統合後は、規則1つ1つに「何を見て判定するか」を3つの情報で添えました。</p>
+
+  <figure>
+    <div class="svg-wrap">
+<svg viewBox="0 0 900 590" role="img" aria-labelledby="fig2-title">
+  <title id="fig2-title">図2 規則1つが上位概念・手がかり・出所に結びつく仕組み</title>
+  <defs>
+    <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <!-- 行1: 規則 ID -->
+  <rect x="30" y="54" width="160" height="36" rx="18" fill="#1f6feb"/>
+  <text x="110" y="78" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">① 規則 ID</text>
+  <rect x="210" y="24" width="660" height="96" rx="10" fill="#eff6ff" stroke="#1f6feb" stroke-width="2"/>
+  <text x="230" y="54" font-size="15" font-weight="700" class="mono" fill="#1e40af">sentence.keep-subject-and-predicate-close</text>
+  <text x="230" y="80" font-size="14" fill="#1f2933">カテゴリは sentence（文の組み立て）。48規則のうちの1つ</text>
+  <text x="230" y="104" font-size="14" fill="#1f2933">ID を日本語にすると「主語と述語を近くに置く」</text>
+  <path d="M540,120 L540,150" stroke="#475569" stroke-width="2.5" marker-end="url(#ar2)"/>
+
+  <!-- 行2: 上位概念 -->
+  <rect x="30" y="172" width="160" height="36" rx="18" fill="#1f6feb"/>
+  <text x="110" y="196" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">② 上位概念</text>
+  <rect x="210" y="150" width="660" height="80" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="230" y="182" font-size="18" font-weight="700" fill="#1f2933">係り受け</text>
+  <text x="230" y="210" font-size="13.5" fill="#1f2933">10種のうちの1つ。語と語の「かかる／受ける」の関係（KWJA が解析して出す）</text>
+  <path d="M540,230 L540,260" stroke="#475569" stroke-width="2.5" marker-end="url(#ar2)"/>
+
+  <!-- 行3: 主な手がかり -->
+  <rect x="30" y="282" width="160" height="36" rx="18" fill="#1f6feb"/>
+  <text x="110" y="306" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">③ 主な手がかり</text>
+  <rect x="210" y="260" width="660" height="80" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+  <text x="230" y="292" font-size="16" font-weight="700" fill="#1f2933">ガ格の項と述語の基本句距離</text>
+  <text x="230" y="320" font-size="13.5" fill="#1f2933">「〜が」にあたる語と、その述語が、どれだけ離れているか。分析メモから読める</text>
+  <path d="M540,340 L540,370" stroke="#475569" stroke-width="2.5" marker-end="url(#ar2)"/>
+
+  <!-- 行4: 出所 -->
+  <rect x="30" y="392" width="160" height="36" rx="18" fill="#1f6feb"/>
+  <text x="110" y="416" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">④ 出所</text>
+  <rect x="210" y="370" width="660" height="80" rx="10" fill="#ecfdf5" stroke="#15803d" stroke-width="2"/>
+  <text x="230" y="402" font-size="18" font-weight="700" class="mono" fill="#166534">P1</text>
+  <text x="230" y="430" font-size="13.5" fill="#1f2933">4種のうちの1つ。Phase 1 の分析メモと KWJA 出力から判定する（KWJA の根拠がある）</text>
+
+  <!-- 凡例 -->
+  <rect x="30" y="478" width="840" height="96" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="50" y="504" font-size="13" font-weight="700" fill="#1f2933">出所の4種</text>
+  <text x="50" y="528" font-size="13" fill="#1f2933">P1: Phase 1 の分析メモと KWJA 出力　　P2: Phase 2 で固定した上位レイヤーの制約</text>
+  <text x="50" y="552" font-size="13" fill="#1f2933">P4: Phase 4 の生成時の文書構造　　LLM: KWJA に直接の手がかりがなく、原文と文脈から LLM が判断</text>
+</svg>
+    </div>
+    <figcaption>図2: 規則 <code>sentence.keep-subject-and-predicate-close</code> の例。規則 → 上位概念（係り受け）→ 主な手がかり（ガ格の項と述語の基本句距離）→ 出所（P1）の順に結びつく。</figcaption>
+  </figure>
+
+  <h3>ID 表は5列</h3>
+  <p>SKILL.md の中に <code>## 岩淵48規則の ID 表</code> という節を新設し、4つのカテゴリ見出し（出力・行配置、文の組み立て、語の選び方、敬語）ごとに、次の5列の Markdown 表を置きました。表本体は67行です。</p>
+  <pre><code>| ID | 規則 | 上位概念 | 主な手がかり | 出所 |</code></pre>
+  <ul>
+    <li><strong>ID</strong>: 規則の名前。省略、改名、再利用しない。元メモの通し番号は使わない。表にない ID を作らない。</li>
+    <li><strong>規則</strong>: 旧スキルの一文をそのまま移す。例外は1か所だけ（下の「表はどう作ったか」を参照）。</li>
+    <li><strong>上位概念</strong>: 10種から1つ。</li>
+    <li><strong>主な手がかり</strong>: 分析メモのどの項目を見るか。要件 FR-03 の文言をそのまま使った（平均31字、最長64字）。</li>
+    <li><strong>出所</strong>: 4種から1つ。</li>
+  </ul>
+
+  <h3>上位概念の10種</h3>
+  <p>「規則を判定するとき、どの層の観測を見るか」の名前です。KWJA の11処理と Phase 2 の5層から作られています。</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>上位概念</th><th>ざっくり言うと</th></tr></thead>
+    <tbody>
+      <tr><td>述語項構造</td><td>「誰が・何を・どうした」の組み合わせ</td></tr>
+      <tr><td>係り受け</td><td>語と語の「かかる／受ける」の関係</td></tr>
+      <tr><td>節構造・談話関係</td><td>文の中の区切りと、文どうしのつながり</td></tr>
+      <tr><td>共参照・照応</td><td>「それ」「この件」などが何を指すか</td></tr>
+      <tr><td>形態素・語彙</td><td>単語の切れ目、品詞、表記</td></tr>
+      <tr><td>固有表現・保護範囲</td><td>人名・製品名・コードなど、触ってはいけない範囲</td></tr>
+      <tr><td>語用論・モダリティ</td><td>読み手や場面、断定の強さ</td></tr>
+      <tr><td>対人関係</td><td>敬語の向きや上下関係</td></tr>
+      <tr><td>文体</td><td>です・ます／だ・である、翻訳調など</td></tr>
+      <tr><td>文書構造</td><td>行、表、箇条書きなどの並び</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Phase 2 の情報構造（topic / focus）に対応する規則は48規則にないため、語彙には含めていません。</p>
+
+  <h3>ほかの例</h3>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>規則 ID</th><th>上位概念</th><th>主な手がかり</th><th>出所</th></tr></thead>
+    <tbody>
+      <tr><td><code>sentence.minimize-passive-voice</code></td><td>述語項構造</td><td><code>voice: passive</code> と動作主の <code>recoverability</code></td><td><code>P1</code></td></tr>
+      <tr><td><code>sentence.state-changed-subject-explicitly</code></td><td>述語項構造</td><td>並列述語または文間でガ格の <code>referent</code> が切り替わる箇所</td><td><code>P1</code></td></tr>
+      <tr><td><code>word-choice.avoid-translationese</code></td><td>文体</td><td>翻訳調の型（受身の連続、無生物主語、「〜に関して」）と <code>voice</code></td><td><code>LLM</code></td></tr>
+      <tr><td><code>honorific.retain-required-forms</code></td><td>対人関係</td><td>読み手、相手、場面と敬語レベル</td><td><code>P2</code></td></tr>
+      <tr><td><code>output.line-break-each-line</code></td><td>文書構造</td><td>出力先の行構造、保護範囲。改行の単位が指定されたときだけ判定する</td><td><code>P4</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><code>LLM</code> が出所の規則は、KWJA の出力に直接の根拠がありません。だから <code>diagnostic</code> では「LLM の判断である」と分かる形で示します（後述の「（LLM 判断）」）。</p>
+
+  <h3>表はどう作ったか</h3>
+  <ul>
+    <li>手で書き写していません。変更前のバックアップ <code>docs/backups/2026_09_29/natural-japanese/</code> にある旧スキルの ID 表と、要件 FR-03 の対応表から、短い Python スクリプトで生成しました。</li>
+    <li>スクリプトは、ID が48件あること、定義順がバックアップと一致することを <code>assert</code> で確かめます。</li>
+    <li>規則本文で置き換えたのは1か所だけです。<code>output.line-break-each-line</code> の「指定がなければ <code>needs-confirmation</code> とし」を「指定がなければ <code>not-applicable</code> とし」に変えました。理由は、改行の単位が指定されていない普通の依頼で、毎回「要確認」が出るのを防ぐためです。</li>
+    <li>旧スキルにあった「このスキルは単独で実行する」「一般的な自然化スキルとの併用」の文は移していません。</li>
+  </ul>
+</section>
+
+<!-- ============================================================ -->
+<section id="s5">
+  <h2>5. エージェントは実際にどう使う？（図3）</h2>
+
+  <p>規則の判定は Phase 3 に集めました。Phase 5 は「もう一度照合する」だけ、Phase 6 は「出す」だけを担当します。</p>
+
+  <figure>
+    <div class="svg-wrap">
+<svg viewBox="0 0 900 800" role="img" aria-labelledby="fig3-title">
+  <title id="fig3-title">図3 Phase 3 から Phase 6 へ規則の判定（4状態）が流れる</title>
+  <defs>
+    <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <!-- Phase 3 -->
+  <rect x="30" y="20" width="840" height="84" rx="10" fill="#eff6ff" stroke="#1f6feb" stroke-width="2"/>
+  <text x="50" y="50" font-size="16" font-weight="700" fill="#1e40af">Phase 3 修復箇所を決める</text>
+  <text x="50" y="78" font-size="14" fill="#1f2933">48規則をすべて照合し、各 ID に4状態のどれか1つを付ける。材料は出所（P1 / P2 / P4 / LLM）に従う</text>
+
+  <path d="M127,104 L127,150" stroke="#475569" stroke-width="2" marker-end="url(#ar3)"/>
+  <path d="M337,104 L337,150" stroke="#475569" stroke-width="2" marker-end="url(#ar3)"/>
+  <path d="M547,104 L547,150" stroke="#475569" stroke-width="2" marker-end="url(#ar3)"/>
+  <path d="M765,104 L765,150" stroke="#475569" stroke-width="2" marker-end="url(#ar3)"/>
+
+  <!-- 4状態 -->
+  <rect x="30" y="150" width="195" height="56" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+  <text x="127" y="173" text-anchor="middle" font-size="14" font-weight="700" class="mono" fill="#1f2933">pass</text>
+  <text x="127" y="194" text-anchor="middle" font-size="12.5" fill="#1f2933">問題なし</text>
+
+  <rect x="240" y="150" width="195" height="56" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+  <text x="337" y="173" text-anchor="middle" font-size="14" font-weight="700" class="mono" fill="#1f2933">not-applicable</text>
+  <text x="337" y="194" text-anchor="middle" font-size="12.5" fill="#1f2933">対象外（媒体や内容から）</text>
+
+  <rect x="450" y="150" width="195" height="56" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+  <text x="547" y="173" text-anchor="middle" font-size="14" font-weight="700" class="mono" fill="#166534">actionable</text>
+  <text x="547" y="194" text-anchor="middle" font-size="12.5" fill="#1f2933">原意を変えず直せる</text>
+
+  <rect x="660" y="150" width="210" height="56" rx="8" fill="#ffedd5" stroke="#d97706" stroke-width="2"/>
+  <text x="765" y="173" text-anchor="middle" font-size="14" font-weight="700" class="mono" fill="#9a3412">needs-confirmation</text>
+  <text x="765" y="194" text-anchor="middle" font-size="12.5" fill="#1f2933">原文にない情報や意図が必要</text>
+
+  <path d="M127,206 L127,250" stroke="#475569" stroke-width="2" marker-end="url(#ar3)"/>
+  <path d="M337,206 L337,250" stroke="#475569" stroke-width="2" marker-end="url(#ar3)"/>
+  <path d="M547,206 L547,250" stroke="#475569" stroke-width="2" marker-end="url(#ar3)"/>
+  <path d="M765,206 L765,250" stroke="#475569" stroke-width="2" marker-end="url(#ar3)"/>
+
+  <!-- 判定後の扱い -->
+  <rect x="30" y="250" width="405" height="64" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="232" y="278" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2933">記録するだけ</text>
+  <text x="232" y="300" text-anchor="middle" font-size="13" fill="#5b6b7a">出力には出さない</text>
+
+  <rect x="450" y="250" width="195" height="64" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+  <text x="547" y="277" text-anchor="middle" font-size="13" font-weight="700" class="mono" fill="#166534">decision: repair</text>
+  <text x="547" y="300" text-anchor="middle" font-size="12.5" fill="#1f2933">rule_ids に ID を記録</text>
+
+  <rect x="660" y="250" width="210" height="64" rx="8" fill="#ffedd5" stroke="#d97706" stroke-width="2"/>
+  <text x="765" y="277" text-anchor="middle" font-size="13" font-weight="700" class="mono" fill="#9a3412">decision: confirm</text>
+  <text x="765" y="300" text-anchor="middle" font-size="12.5" fill="#1f2933">rule_ids に ID を記録</text>
+
+  <!-- Phase 4 -->
+  <path d="M547,314 L547,350" stroke="#475569" stroke-width="2" marker-end="url(#ar3)"/>
+  <rect x="250" y="350" width="400" height="44" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="450" y="377" text-anchor="middle" font-size="13.5" fill="#1f2933">Phase 4 制約に沿って候補文を生成する（変更なし）</text>
+  <path d="M450,394 L450,430" stroke="#475569" stroke-width="2" marker-end="url(#ar3)"/>
+
+  <!-- confirm は Phase 6 の要確認へ -->
+  <path d="M765,314 L765,560" stroke="#d97706" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ar3)"/>
+  <text x="775" y="460" font-size="12.5" fill="#9a3412" font-weight="700">confirm は</text>
+  <text x="775" y="480" font-size="12.5" fill="#9a3412" font-weight="700">Phase 6 の</text>
+  <text x="775" y="500" font-size="12.5" fill="#9a3412" font-weight="700">「要確認」へ</text>
+
+  <!-- Phase 5 -->
+  <rect x="30" y="430" width="660" height="100" rx="10" fill="#eff6ff" stroke="#1f6feb" stroke-width="2"/>
+  <text x="50" y="460" font-size="16" font-weight="700" fill="#1e40af">Phase 5 候補文を検査する</text>
+  <text x="50" y="486" font-size="14" fill="#1f2933">候補文に48規則を再照合する（最大3巡）</text>
+  <text x="50" y="510" font-size="14" fill="#1f2933">3巡で消えない actionable は needs-confirmation に変え「要確認」へ</text>
+  <path d="M360,530 L360,560" stroke="#475569" stroke-width="2" marker-end="url(#ar3)"/>
+
+  <!-- Phase 6 -->
+  <rect x="30" y="560" width="840" height="60" rx="10" fill="#eff6ff" stroke="#1f6feb" stroke-width="2"/>
+  <text x="50" y="585" font-size="16" font-weight="700" fill="#1e40af">Phase 6 出力する</text>
+  <text x="50" y="607" font-size="13.5" fill="#1f2933">依頼のしかたで出す形が変わる。規則や ID を名指しした依頼は diagnostic として扱う</text>
+
+  <path d="M162,620 L162,650" stroke="#475569" stroke-width="2" marker-end="url(#ar3)"/>
+  <path d="M450,620 L450,650" stroke="#475569" stroke-width="2" marker-end="url(#ar3)"/>
+  <path d="M738,620 L738,650" stroke="#475569" stroke-width="2" marker-end="url(#ar3)"/>
+
+  <!-- 出力の形 -->
+  <rect x="30" y="650" width="265" height="136" rx="8" fill="#ffffff" stroke="#1f6feb" stroke-width="2"/>
+  <text x="50" y="676" font-size="15" font-weight="700" fill="#1e40af">polish（既定）</text>
+  <text x="50" y="700" font-size="13" fill="#1f2933">・書き直した本文</text>
+  <text x="50" y="722" font-size="13" fill="#1f2933">・要確認は ID 付き</text>
+  <text x="50" y="744" font-size="13" class="mono" fill="#1f2933">  - `{ID}`: 判断できない点</text>
+  <text x="50" y="766" font-size="13" fill="#1f2933">・適用ルールの一覧は出さない</text>
+
+  <rect x="318" y="650" width="265" height="136" rx="8" fill="#ffffff" stroke="#15803d" stroke-width="2"/>
+  <text x="338" y="676" font-size="15" font-weight="700" fill="#166534">diagnostic</text>
+  <text x="338" y="700" font-size="13" fill="#1f2933">・本文 + 診断3項目</text>
+  <text x="338" y="722" font-size="13" fill="#1f2933">・4. 適用ルール</text>
+  <text x="338" y="744" font-size="13" class="mono" fill="#1f2933">  - `{ID}`: 対象箇所と修正内容</text>
+  <text x="338" y="766" font-size="13" fill="#1f2933">・LLM 出所は（LLM 判断）と明示</text>
+
+  <rect x="606" y="650" width="264" height="136" rx="8" fill="#ffffff" stroke="#d97706" stroke-width="2"/>
+  <text x="626" y="676" font-size="15" font-weight="700" fill="#9a3412">監査一覧（求めた時だけ）</text>
+  <text x="626" y="700" font-size="13" fill="#1f2933">・表の列: ID、status、</text>
+  <text x="626" y="722" font-size="13" fill="#1f2933">　根拠または対象箇所</text>
+  <text x="626" y="744" font-size="13" fill="#1f2933">・規則の定義順に48行</text>
+  <text x="626" y="766" font-size="13" fill="#1f2933">・監査だけなら本文は変えない</text>
+</svg>
+    </div>
+    <figcaption>図3: Phase 3 で48規則を4状態に分け、<code>actionable</code> と <code>needs-confirmation</code> だけが先へ進む。Phase 5 で再照合し、Phase 6 で依頼に合った形で出す。</figcaption>
+  </figure>
+
+  <h3>Phase 3: 判定する</h3>
+  <ul>
+    <li>48規則をすべて照合し、各 ID を4状態のどれかにします。1〜2文や UI 文言でも照合しますが、<code>not-applicable</code> の判定は素早く済ませて出力を増やしません。</li>
+    <li>判定の材料は出所に従います。<code>P1</code> は分析メモと KWJA 出力、<code>P2</code> は Phase 2 で固定した制約、<code>LLM</code> は原文と文脈。<code>P4</code> の <code>output.line-break-each-line</code> は、改行の単位が指定されていなければ <code>not-applicable</code>、指定があれば <code>actionable</code> にして Phase 4 で適用します。</li>
+    <li>分析メモの <code>rewrite_targets</code> の各要素に、少なくとも <code>decision</code>（<code>repair</code> / <code>keep</code> / <code>confirm</code>）と <code>rule_ids</code>（主となる ID を先頭に、関連 ID を続ける。空配列でもよい）を記録します。<code>actionable</code> は <code>repair</code>、<code>needs-confirmation</code> は <code>confirm</code>、「項を無理に補わない」一覧に当たる箇所など意図的に残す箇所は <code>keep</code> です。</li>
+    <li>既存の修復トリガー一覧（主体の複数候補、係り先の曖昧さなど）は変えません。トリガーに当たる箇所は、該当する規則 ID で言い換えて <code>rule_ids</code> に書きます。同じ判断を二重には書きません。</li>
+    <li>要素の形は親スキル側の記録です。analyzer の出力契約は変えていません。</li>
+  </ul>
+
+  <h3>困ったときの決まり（例外）</h3>
+  <ul>
+    <li>出所が <code>P1</code> でも、手がかりとなる素性やタグが KWJA 出力にない規則は、<code>LLM</code> 出所として原文から判定し、その旨を記録します。素性がないことを理由に <code>not-applicable</code> にはしません。</li>
+    <li>分析メモの <code>ambiguities</code>（曖昧な箇所）に当たる規則は、セーフモードでは <code>needs-confirmation</code> にし、<code>actionable</code> にしません。</li>
+    <li>KWJA の実行や解析ファイルの読み取りに失敗したら、既存どおり止めて原因を報告します。規則の判定だけを LLM で続けることはしません。</li>
+    <li>保護範囲（コード、識別子、URL など）にかかる箇所は、箇所単位で <code>not-applicable</code> にします。保護範囲の外には同じ規則を普通に適用します。</li>
+  </ul>
+
+  <h3>モードで扱いが違う</h3>
+  <div class="grid2">
+    <div class="box">
+      <h4>両モード共通</h4>
+      <ul>
+        <li>48規則をすべて照合する。</li>
+        <li>規則を理由に保護範囲を変えず、原文にない事実を作らない。</li>
+        <li><code>needs-confirmation</code> は省略せず <code>要確認</code> に出す。</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h4>セーフモード（<code>safe</code>）</h4>
+      <ul>
+        <li><code>actionable</code> は、原意・事実・仕様・技術的意味を変えずに修正できる問題に限る。</li>
+        <li>規則を機械的に当てず、読みやすさや正確さが実際に上がる変更だけ採用する。</li>
+        <li>規則どうしが衝突したら、次の順に優先する。
+          <ol>
+            <li>原意・事実・仕様・技術的意味の保持</li>
+            <li>文脈、係り受け、否定範囲、用語の正確さ</li>
+            <li>読み手にとっての明確さ</li>
+            <li>語感、敬語、簡潔さ</li>
+            <li>行配置</li>
+          </ol>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="box" style="margin-top:12px">
+    <h4>デストロイモード（既定）</h4>
+    <ul>
+      <li>48規則を「自然さの判定基準」として使う。<code>actionable</code> の判定と修正も、デストロイモードが許容する意味の変化の範囲で行う。</li>
+      <li><code>needs-confirmation</code> の箇所は、もっとも自然な解釈を選んで <code>actionable</code> として扱ってよい。ただし選んだ解釈を事実として断定せず、事実に関わるもの（<code>word-choice.match-expression-to-facts</code> など）は <code>needs-confirmation</code> のまま <code>要確認</code> に残す。</li>
+      <li>優先順位は、既存のデストロイモードの順位（自然さ最優先）が上。上の5項目の順序は、規則どうしの衝突を解くときだけ使う。</li>
+      <li><code>word-choice.simplify-overly-formal-literary-or-technical-terms</code> と <code>word-choice.limit-loanwords-and-foreign-words</code> は、固有表現と技術的に必要な語を保護したうえで適用する。</li>
+    </ul>
+  </div>
+
+  <h3>Phase 5: もう一度照合する</h3>
+  <ul>
+    <li>両モード共通で、候補文に48規則を再照合し、新たな <code>actionable</code> を作っていないか確かめます。見つかったら候補を直して再照合します。</li>
+    <li>再照合は最大3巡。3巡で消えない <code>actionable</code> は <code>needs-confirmation</code> に変えて、Phase 6 の <code>要確認</code> に ID 付きで出します。</li>
+    <li>デストロイモードは候補文を再解析しないので <code>LLM</code> 出所で再照合します。セーフモードは意味回帰検査で再解析した分析メモを使います。</li>
+    <li>セーフモードの既存の意味回帰検査（KWJA 再解析、<code>SEMANTIC_DRIFT</code>）は変えていません。</li>
+    <li>完了条件に「候補文で <code>actionable</code> の規則が0件」が加わりました。</li>
+  </ul>
+
+  <h3>Phase 6: 出す</h3>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>依頼のしかた</th><th>出るもの</th></tr></thead>
+    <tbody>
+      <tr><td>普通の依頼（<code>polish</code>、既定）</td><td>本文と <code>要確認</code> だけ。<code>要確認</code> の各項目は <code>- `{ID}`: {原文だけでは判断できない点}</code> の形。規則に対応しない <code>要確認</code>（KWJA と本文の食い違いなど）は ID なし。適用した規則の一覧は出さない。長い文章で <code>actionable</code> が多くても、出力は規則数や文数に比例して増えない</td></tr>
+      <tr><td>「岩淵ルールで直して」「ルールID付きで推敲して」など規則や ID を名指しした依頼（<code>diagnostic</code>）</td><td>既存の3項目（問題のある述語、不明または競合していた項、修復で明確になった関係）に加えて「4. 適用ルール」。形式は <code>- `{ID}`: {対象箇所と修正内容}</code>。<code>actionable</code> がなければ「適用ルール: なし」。<code>LLM</code> 出所の判定と、素性がなくて <code>LLM</code> に倒した判定には、行末に <code>（LLM 判断）</code> を付ける（<code>polish</code> では付けない）</td></tr>
+      <tr><td>「監査して」「全規則の判定を見せて」</td><td>規則の定義順に48行の表 <code>| ID | status | 根拠または対象箇所 |</code>。監査だけなら本文を変えない。監査と推敲の両方なら <code>diagnostic</code> の末尾に加える。判定を完了できないとき（Phase 3 前の停止など）は部分的な一覧を出さず、停止理由を報告する</td></tr>
+      <tr><td>「レビューだけ」「直さないで」</td><td>本文を変えず、<code>actionable</code> と <code>needs-confirmation</code> の判定を <code>ID / 対象箇所 / 問題 / 修正案</code> の形で出す。<code>needs-confirmation</code> は修正案の代わりに、判断に必要な情報を示す</td></tr>
+      <tr><td>「最終版だけ」</td><td>適用ルールと診断を省く。<code>要確認</code> は省かない</td></tr>
+      <tr><td>ファイルを編集した場合</td><td>本文を再掲せず、変更ファイル、変更概要、<code>要確認</code> を報告する。<code>diagnostic</code> では適用した ID も報告する</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>出力モードは増やしていません。「レビューだけ」「監査だけ」は、開始時に確定する出力先（ファイル編集、応答本文、本文を変更しない）の枠で扱います。</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="s6">
+  <h2>6. どういう順番で作った？（図4）</h2>
+
+  <p>作業は Task 1〜9 の9つに分けました。すべて完了しています。</p>
+
+  <figure>
+    <div class="svg-wrap">
+<svg viewBox="0 0 900 640" role="img" aria-labelledby="fig4-title">
+  <title id="fig4-title">図4 作業手順 Task 1〜9 の順序と依存関係</title>
+  <defs>
+    <marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <!-- 帯1 -->
+  <rect x="20" y="20" width="860" height="130" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="36" y="46" font-size="14" font-weight="700" fill="#1f2933">① 依存なし。先に着手できる</text>
+
+  <rect x="40" y="66" width="260" height="64" rx="8" fill="#eff6ff" stroke="#1f6feb" stroke-width="2"/>
+  <text x="56" y="90" font-size="14" font-weight="700" fill="#1e40af">Task 1</text>
+  <text x="56" y="114" font-size="13" fill="#1f2933">ID 表を SKILL.md に新設</text>
+
+  <rect x="320" y="66" width="260" height="64" rx="8" fill="#eff6ff" stroke="#1f6feb" stroke-width="2"/>
+  <text x="336" y="90" font-size="14" font-weight="700" fill="#1e40af">Task 2</text>
+  <text x="336" y="114" font-size="13" fill="#1f2933">description と出力モードの判定</text>
+
+  <rect x="600" y="66" width="260" height="64" rx="8" fill="#eff6ff" stroke="#1f6feb" stroke-width="2"/>
+  <text x="616" y="90" font-size="14" font-weight="700" fill="#1e40af">Task 7</text>
+  <text x="616" y="114" font-size="13" fill="#1f2933">openai.yaml の説明文1行を更新</text>
+
+  <!-- 帯2 -->
+  <rect x="20" y="170" width="860" height="300" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="36" y="196" font-size="14" font-weight="700" fill="#1f2933">② Task 1 のあと、この順に</text>
+
+  <path d="M170,130 L170,216" stroke="#475569" stroke-width="2" marker-end="url(#ar4)"/>
+
+  <rect x="40" y="216" width="260" height="64" rx="8" fill="#eff6ff" stroke="#1f6feb" stroke-width="2"/>
+  <text x="56" y="240" font-size="14" font-weight="700" fill="#1e40af">Task 3</text>
+  <text x="56" y="264" font-size="13" fill="#1f2933">モード別に規則をどう扱うか</text>
+
+  <path d="M170,280 L170,310" stroke="#475569" stroke-width="2" marker-end="url(#ar4)"/>
+
+  <rect x="40" y="310" width="260" height="64" rx="8" fill="#eff6ff" stroke="#1f6feb" stroke-width="2"/>
+  <text x="56" y="334" font-size="14" font-weight="700" fill="#1e40af">Task 4</text>
+  <text x="56" y="358" font-size="13" fill="#1f2933">Phase 3 に4状態の判定を追加</text>
+
+  <path d="M170,374 L170,404" stroke="#475569" stroke-width="2" marker-end="url(#ar4)"/>
+  <path d="M300,342 L450,342 L450,404" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#ar4)"/>
+
+  <rect x="40" y="404" width="260" height="56" rx="8" fill="#eff6ff" stroke="#1f6feb" stroke-width="2"/>
+  <text x="56" y="428" font-size="14" font-weight="700" fill="#1e40af">Task 5</text>
+  <text x="56" y="450" font-size="13" fill="#1f2933">Phase 5 に再照合を追加</text>
+
+  <rect x="320" y="404" width="260" height="56" rx="8" fill="#eff6ff" stroke="#1f6feb" stroke-width="2"/>
+  <text x="336" y="428" font-size="14" font-weight="700" fill="#1e40af">Task 6</text>
+  <text x="336" y="450" font-size="13" fill="#1f2933">Phase 6 に出力形式を統合</text>
+
+  <text x="600" y="240" font-size="13" fill="#5b6b7a">依存関係</text>
+  <text x="600" y="264" font-size="13" fill="#5b6b7a">Task 3: Task 1 を参照</text>
+  <text x="600" y="288" font-size="13" fill="#5b6b7a">Task 4: Task 1・3 を参照</text>
+  <text x="600" y="312" font-size="13" fill="#5b6b7a">Task 5・6: Task 4 を参照</text>
+
+  <!-- 帯3 -->
+  <rect x="20" y="490" width="860" height="130" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="36" y="516" font-size="14" font-weight="700" fill="#1f2933">③ SKILL.md の編集がすべて終わってから</text>
+
+  <path d="M170,460 L170,536" stroke="#475569" stroke-width="2" marker-end="url(#ar4)"/>
+
+  <rect x="40" y="536" width="260" height="64" rx="8" fill="#fff7ed" stroke="#d97706" stroke-width="2"/>
+  <text x="56" y="560" font-size="14" font-weight="700" fill="#9a3412">Task 8</text>
+  <text x="56" y="584" font-size="13" fill="#1f2933">旧ディレクトリを git rm -r で削除</text>
+
+  <path d="M300,568 L320,568" stroke="#475569" stroke-width="2" marker-end="url(#ar4)"/>
+
+  <rect x="320" y="536" width="260" height="64" rx="8" fill="#ecfdf5" stroke="#15803d" stroke-width="2"/>
+  <text x="336" y="560" font-size="14" font-weight="700" fill="#166534">Task 9</text>
+  <text x="336" y="584" font-size="13" fill="#1f2933">全体を検証し、文書に反映</text>
+
+  <text x="600" y="560" font-size="13" fill="#5b6b7a">Task 8: Task 1・2 のあと</text>
+  <text x="600" y="584" font-size="13" fill="#5b6b7a">Task 9: Task 1〜8 のあと</text>
+</svg>
+    </div>
+    <figcaption>図4: Task 1、2、7 は独立して始められる。Task 3 → 4 → 5・6 は順番に。編集が終わってから Task 8 で旧ディレクトリを削除し、Task 9 で全体を検証する。</figcaption>
+  </figure>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Task</th><th>やったこと</th><th>結果</th></tr></thead>
+    <tbody>
+      <tr><td>Task 1</td><td>ID 表を SKILL.md 本体に新設する。「リライトの優先順位」の直後、Phase 1 の直前に置く</td><td><span class="tag ok">完了</span> AC-01 48件 / 重複0 / 1・21・16・10、AC-02 差分なし、AC-03 rows=48 bad=[]</td></tr>
+      <tr><td>Task 2</td><td><code>description</code> と出力モードの判定を更新する</td><td><span class="tag ok">完了</span> description 458文字、AC-06 4語 True / 除外文なし、AC-07 name 維持、AC-08 <code>Skill is valid!</code></td></tr>
+      <tr><td>Task 3</td><td>モードごとの規則の扱いを書く</td><td><span class="tag ok">完了</span> 番号付きリスト5項目（行配置まで）を確認</td></tr>
+      <tr><td>Task 4</td><td>Phase 3 に規則の状態判定を加える</td><td><span class="tag ok">完了</span> AC-16 旧文言0 / 新文言1</td></tr>
+      <tr><td>Task 5</td><td>Phase 5 に再照合を加える</td><td><span class="tag ok">完了</span> 再照合（最大3巡）と <code>actionable</code> 0件の完了条件を追加</td></tr>
+      <tr><td>Task 6</td><td>Phase 6 に出力形式を統合する</td><td><span class="tag ok">完了</span> AC-01 は48件のまま</td></tr>
+      <tr><td>Task 7</td><td><code>openai.yaml</code> の <code>short_description</code> を更新する。<code>display_name</code> は維持、<code>default_prompt</code> は追加しない</td><td><span class="tag ok">完了</span> YAML 読み込み OK</td></tr>
+      <tr><td>Task 8</td><td>旧ディレクトリを <code>git rm -r</code> で削除する。stub、alias、転送スキルは作らない</td><td><span class="tag ok">完了</span> AC-04 ok、AC-05 0件</td></tr>
+      <tr><td>Task 9</td><td>全体を検証し、要件定義書と実装計画に反映する</td><td><span class="tag ok">完了</span> 検証コマンドと検査スクリプトを全件実行</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>道具として使ったスクリプト</h3>
+  <p>2つの短い Python スクリプトを使いました。どちらもファイルとしては追加せず、実装計画から貼り付けて実行します。</p>
+  <ul>
+    <li><strong>生成スクリプト（Task 1）</strong>: バックアップの旧 ID 表と要件 FR-03 の対応表から、5列の Markdown 表を出力する。48件、定義順の一致、置き換え対象の文言があることを <code>assert</code> する。</li>
+    <li><strong>検査スクリプト（AC-03、AC-06、AC-07、AC-09、AC-11）</strong>: 表の各行に上位概念（10種）と出所（4種）があるか、<code>description</code> の語と文字数、<code>name</code>、行数、<code>manifest.json</code> の一致を調べ、すべて満たせば <code>RESULT PASS</code> を返す。計画時に、正しいモックで PASS、表なしの現行で FAIL、わざと誤記したモックで FAIL になることを確かめてある。</li>
+  </ul>
+
+  <h3>設計上の判断（自動壁打ち P-01〜P-15 から主なもの）</h3>
+  <ul>
+    <li><strong>P-01</strong> ID 表の位置は「リライトの優先順位」の直後、Phase 1 の前。Phase 3 の中に置くと Phase 3 が80行以上に膨らむ。</li>
+    <li><strong>P-02</strong> 表は5列の1表。「主な手がかり」を別の一覧に分けると ID が2か所に現れ、綴りの不一致が起こり得る。</li>
+    <li><strong>P-03</strong> 規則本文はそのまま移し、置き換えは <code>output.line-break-each-line</code> の1か所だけ。</li>
+    <li><strong>P-07</strong> 規則を名指しする依頼は <code>diagnostic</code> として扱う。<code>polish</code> では適用ルールを出さないので ID が見えないため。</li>
+    <li><strong>P-09</strong> <code>rewrite_targets</code> の要素に必須なのは <code>decision</code> と <code>rule_ids</code> だけ。Phase 4 は編集しない。</li>
+    <li><strong>P-11</strong> 任意の FR-09（<code>detailed-rules.md</code> への ID 注記）は実施しない。同じ対応を2か所に持つことになるため。</li>
+    <li><strong>P-12</strong> 旧ディレクトリの削除は、すべての SKILL.md 編集の後に行う。</li>
+    <li><strong>P-13</strong> KWJA はモデル重みが未取得で実行できない前提。検証シナリオはスキル指示のレビューで確認する。</li>
+    <li><strong>P-14</strong> 400行を超えたら「主な手がかり」の短縮 → 監査一覧のコードブロックを1行に → 4状態の定義を各1行に、の順で削る。表の行と完了条件は削らない（結果は330行で、削る必要はなかった）。</li>
+    <li><strong>P-15</strong> <code>main</code> 上で作業し、ブランチと PR は作らない。commit と push は親パイプラインが行う。</li>
+  </ul>
+</section>
+
+<!-- ============================================================ -->
+<section id="s7">
+  <h2>7. どうやって正しさを確かめた？</h2>
+
+  <p>確認は2種類です。機械で数える確認（bash と短い Python）と、人（エージェント）が SKILL.md の文を読んで「この記述から期待する判定を1通りに説明できるか」を見るレビューです。比較の基準はコミット <code>0d6c6cf</code>、実装時の HEAD は <code>8845b02</code> です。</p>
+
+  <h3>受け入れ条件 AC-01〜AC-18 の結果</h3>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>AC</th><th>何を確かめるか</th><th>結果</th></tr></thead>
+    <tbody>
+      <tr><td>AC-01</td><td>ID 表の行数と重複、カテゴリ別の件数</td><td>48行、重複0、<code>output</code> 1 / <code>sentence</code> 21 / <code>word-choice</code> 16 / <code>honorific</code> 10</td></tr>
+      <tr><td>AC-02</td><td>変更前バックアップと ID の集合が一致</td><td>差分なし</td></tr>
+      <tr><td>AC-03</td><td>各行に上位概念（10種）と出所（4種）がある</td><td><code>rows=48 bad=[]</code></td></tr>
+      <tr><td>AC-04</td><td>旧ディレクトリが存在しない</td><td>ok</td></tr>
+      <tr><td>AC-05</td><td><code>skills/</code> 配下に旧スキル名の参照がない</td><td>0件</td></tr>
+      <tr><td>AC-06</td><td><code>description</code> に「岩淵ルール」「48規則」「ルールID」「監査」があり、旧除外文がない</td><td>4語すべて True、除外文なし</td></tr>
+      <tr><td>AC-07</td><td><code>name</code> が変わらず、<code>description</code> が1024文字以内</td><td><code>name=natural-japanese-rewriter</code>、458文字</td></tr>
+      <tr><td>AC-08</td><td>スキルの validator が通る</td><td><code>quick_validate.py</code> が <code>Skill is valid!</code></td></tr>
+      <tr><td>AC-09</td><td>SKILL.md が400行以下</td><td>330行</td></tr>
+      <tr><td>AC-10</td><td>子スキル（analyzer、<code>japanese-kwja-analyze</code>）に差分がない</td><td>出力なし</td></tr>
+      <tr><td>AC-11</td><td><code>manifest.json</code> の列挙と実ファイルが一致</td><td><code>missing=[] unlisted=[]</code></td></tr>
+      <tr><td>AC-12</td><td>Phase 3 に4状態判定、<code>decision</code> と <code>rule_ids</code>、<code>confirm</code> → <code>要確認</code> の経路がある</td><td>レビューで確認</td></tr>
+      <tr><td>AC-13</td><td>Phase 5 に両モード共通の再照合と <code>actionable</code> 0件の完了条件がある</td><td>レビューで確認</td></tr>
+      <tr><td>AC-14</td><td>Phase 6 に ID 付き <code>要確認</code>、適用ルール、監査一覧、レビューだけ、最終版だけがある</td><td>レビューで確認</td></tr>
+      <tr><td>AC-15</td><td>規則衝突時の順序5項目と、デストロイモードでの位置づけ</td><td>レビューで確認</td></tr>
+      <tr><td>AC-16</td><td><code>output.line-break-each-line</code> の既定が <code>not-applicable</code></td><td>旧文言0件、新文言1件</td></tr>
+      <tr><td>AC-17</td><td><code>openai.yaml</code> の <code>short_description</code></td><td>「既定」「ルールID」を含み、旧スキル名なし、YAML 読み込み OK</td></tr>
+      <tr><td>AC-18</td><td>FR-09 を実施した場合の注記の ID が表にある</td><td>FR-09 不実施のため該当なし</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>検証シナリオ T-01〜T-15</h3>
+  <p>15の場面を想定し、SKILL.md の記述から期待する判定を1通りに説明できるかをレビューしました。すべて説明できました。</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>T</th><th>場面と、見た記述</th></tr></thead>
+    <tbody>
+      <tr><td>T-01</td><td>規則を名指しした依頼が <code>diagnostic</code> になり、適用ルールが <code>- `{ID}`: {対象箇所と修正内容}</code> の形で出る</td></tr>
+      <tr><td>T-02</td><td>Phase 3 で全48規則を照合し、<code>polish</code> は本文と ID 付き <code>要確認</code> だけを出す</td></tr>
+      <tr><td>T-03 <span class="tag warn">KWJA 未実行</span></td><td><code>sentence.keep-subject-and-predicate-close</code> の行と、セーフモードの <code>actionable</code> の条件</td></tr>
+      <tr><td>T-04</td><td><code>sentence.state-changed-subject-explicitly</code> の行と、<code>ambiguities</code> に当たる規則をセーフモードで <code>needs-confirmation</code> にする段落</td></tr>
+      <tr><td>T-05</td><td><code>sentence.minimize-passive-voice</code> の行と、原文にない主体を作らない既存の制約</td></tr>
+      <tr><td>T-06</td><td><code>honorific.avoid-repeated-o-prefixes</code> と <code>honorific.retain-required-forms</code> の行と、規則衝突時の順序</td></tr>
+      <tr><td>T-07</td><td>監査一覧は求められた時だけ、定義順、<code>pass</code> と <code>not-applicable</code> も含む48行、本文は変えない</td></tr>
+      <tr><td>T-08</td><td>レビューだけ（本文不変、<code>ID / 対象箇所 / 問題 / 修正案</code>）</td></tr>
+      <tr><td>T-09</td><td>最終版だけ（適用ルールと診断を省き、<code>要確認</code> は残す）</td></tr>
+      <tr><td>T-10 <span class="tag warn">KWJA 未実行</span></td><td><code>output.line-break-each-line</code> の規則本文と、Phase 3 の <code>P4</code> の段落</td></tr>
+      <tr><td>T-11</td><td>保護範囲にかかる判定を <code>not-applicable</code> にする段落と、<code>word-choice.limit-loanwords-and-foreign-words</code> の保護条件</td></tr>
+      <tr><td>T-12 <span class="tag warn">KWJA 未実行</span></td><td>素性がない規則を <code>LLM</code> 出所へ倒す段落と、<code>（LLM 判断）</code> の表示</td></tr>
+      <tr><td>T-13</td><td>KWJA 失敗時の既存の停止と、規則判定を LLM で続行しない段落</td></tr>
+      <tr><td>T-14 <span class="tag warn">KWJA 未実行</span></td><td>両モード共通の再照合と、<code>actionable</code> 0件の完了条件</td></tr>
+      <tr><td>T-15</td><td><code>polish</code> の出力が規則数や文数に比例して増えない段落</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>「KWJA 未実行」の4件（T-03、T-10、T-12、T-14）は、要件では実行して確かめる予定でした。しかし KWJA 2.5.1 のモデル重みが未取得で本環境では動かないため、レビューで代替しています。実行できる環境が得られたら追加で実行します。</p>
+
+  <h3>レビュー2巡でなおしたこと</h3>
+  <p>実装後に <code>ponytail-review</code> によるレビューを2巡行いました（TypeScript / JavaScript を含まないため <code>anti-ai-slop-typescript-general</code> は省略）。重複の削除と矛盾の解消で、SKILL.md は347行から330行になりました。修正後に同じ検証を再実行し、AC-09 の行数以外はすべて同じ結果でした。</p>
+  <p>要件定義書を先に明確化してから SKILL.md に反映した矛盾は7件です。</p>
+  <ol>
+    <li>デストロイモードの <code>actionable</code> の意味。4状態の定義は「原意を変えず」だが、デストロイモードは細部の意味の変化を許容する。FR-05 に「<code>actionable</code> の判定と修正もデストロイモードが許容する意味の変化の範囲で行う」を追加。</li>
+    <li>解消した <code>needs-confirmation</code> の状態。デストロイモードで自然な解釈を選んだ箇所は <code>actionable</code> として扱い、事実に関わるものだけ <code>needs-confirmation</code> のまま残す。</li>
+    <li><code>keep</code> の割り当て。「補わない」一覧に当たる箇所など意図的に残す箇所を <code>keep</code> とする。</li>
+    <li>デストロイモードの Phase 5 再照合の根拠。候補文を再解析しないため <code>LLM</code> 出所で判定する。</li>
+    <li>保護範囲の判定単位。規則単位ではなく箇所単位で <code>not-applicable</code> とする。</li>
+    <li>「レビューだけ」の出力内容。<code>diagnostic</code> の3項目ではなく、<code>actionable</code> と <code>needs-confirmation</code> の判定を <code>ID / 対象箇所 / 問題 / 修正案</code> で出す。</li>
+    <li>Phase 6 の完了条件。監査だけ・レビューだけでは本文を出さないため「出力先に応じてリライト本文、判定、または監査一覧が出力され」とした。</li>
+  </ol>
+  <p>計画から調整した点は3件です。ID 表の冒頭に上位概念と出所の意味を1段落添えたこと、Phase 3 の完了条件を <code>decision</code> の値（<code>repair</code> / <code>keep</code> / <code>confirm</code>）で書いたこと、Task 3 で予定していた <code>### 48規則の扱い</code> の小見出しを外して既存のモード段落に畳み込んだことです。</p>
+
+  <h3>あらかじめ警戒した「壊れ方」3つ</h3>
+  <ul>
+    <li><strong>規則本文をそのまま移すと <code>output.line-break-each-line</code> の既定が2通りになる。</strong> 生成スクリプトが置き換え、<code>grep</code> で旧文言0件・新文言1件を確認（AC-16）。</li>
+    <li><strong>本文の形式例に実在の ID を表の行として書くと、AC-01 の48行が崩れる。</strong> AC-01 の正規表現はファイル全体を数えるため、形式例は <code>{ID}</code> のプレースホルダーだけを使い、Task 6 の後に AC-01 を再実行。</li>
+    <li><strong>「岩淵ルールで直して」が <code>polish</code> のままだと ID が出ず、T-01 が成立しない。</strong> 規則や ID を名指しする依頼を <code>diagnostic</code> として扱う判定を「入力と出力モード」節に置いた。</li>
+  </ul>
+
+  <h3>文書そのものの確認</h3>
+  <ul>
+    <li>要件定義書と実装計画を同じ変更の文書ペアとして品質ゲートにかけ、両方90点以上、重大な不整合0件を維持。</li>
+    <li><code>asciidoctor --failure-level WARN</code> で AsciiDoc の警告がないことを確認。</li>
+  </ul>
+
+  <h3>もし戻したくなったら</h3>
+  <ul>
+    <li>commit 前: <code>git restore --staged --worktree skills/natural-japanese</code> で HEAD の状態へ戻す。</li>
+    <li>commit 後: <code>git revert &lt;commit&gt;</code>。または <code>docs/backups/2026_09_29/natural-japanese/</code> の2ディレクトリを <code>skills/natural-japanese/</code> へコピーしても同じ状態になる（バックアップは変更前の現行と完全一致を確認済み）。</li>
+    <li>実行コード、永続データ、外部依存を追加していないので、データの巻き戻しは不要。</li>
+  </ul>
+</section>
+
+<!-- ============================================================ -->
+<section id="s8">
+  <h2>8. やらないと決めたこと</h2>
+  <ul>
+    <li><code>natural-japanese-rewrite-analyzer</code> と <code>japanese-kwja-analyze</code> の SKILL.md、スクリプト、出力契約は変えない。</li>
+    <li>analyzer の <code>issues[].code</code> に問題コードや規則 ID を追加しない。</li>
+    <li><code>references/detailed-rules.md</code> の規則本文の削除や再編はしない。任意の FR-09（規則 ID の注記）も実施しない（P-11）。</li>
+    <li><code>README.md</code> のスキル一覧、<code>natural-japanese-rewriter-line-break</code>、<code>sentence-linebreak-skill</code>、<code>bullet-list-rewriter</code> は変えない。</li>
+    <li>利用環境側のインストール（nix 再ビルド、<code>~/.claude/skills</code> の symlink 更新）はしない。</li>
+    <li>元メモの原本照合や、規則の追加・削除・改名はしない。</li>
+    <li>新しい参照ファイルは作らない。<code>manifest.json</code> は変えない。</li>
+    <li>旧スキル名の stub、alias、転送用スキルは作らない。</li>
+    <li>Phase 4 は編集しない。<code>P4</code> の規則は Phase 3 で状態を決め、適用方法は規則本文にあるため。</li>
+    <li>ブランチ、PR、PR 本文の更新はしない。作業は <code>main</code> 上で完結させる。</li>
+    <li>レビューで指摘されたが採らなかったもの: 旧 SKILL.md から引き継いだ既存文（冒頭の2文、「子スキルと優先順位」の最終文、Phase 3 の導入2文）の短縮。本件の変更対象外として残した。</li>
+  </ul>
+</section>
+
+<!-- ============================================================ -->
+<section id="s9">
+  <h2>9. まだ分かっていないこと</h2>
+  <p>いずれも実装を止めるものではなく、要件は安全側に倒して書かれています。</p>
+  <ul>
+    <li><strong>KWJA の素性に敬語、語種（外来語）、話し言葉を示すものがあるか未確認。</strong> KWJA 2.5.1 は導入済みですが、モデル重みが未キャッシュで、初回ダウンロード先（<code>lotus.kuee.kyoto-u.ac.jp</code>）への通信が調査環境では許可されず実行できませんでした。素性がなければ該当規則は <code>LLM</code> 出所として判定します。</li>
+    <li><strong>analyzer の <code>issues[].code</code> の語彙がコミット <code>f8f85a4</code> で消えた理由</strong> が意図的か不明。本件では analyzer を変えず、規則 ID は親の <code>rewrite_targets</code> に置きました（D-04）。</li>
+    <li><strong><code>references/detailed-rules.md:214</code> の「一文ごとに改行する」を既定として維持する意図があるか不明。</strong> 当該行は変えず、<code>output.line-break-each-line</code> の既定を <code>not-applicable</code> にしました（D-08）。</li>
+    <li><strong>利用環境の nix 再ビルドの時期が不明。</strong> 旧スキルの symlink が残る間は、同じ依頼に2つのスキルが反応し得ます。</li>
+    <li><strong><code>README.md</code> のスキル一覧</strong> は移動前のパスのままで、旧スキルも <code>japanese-kwja-analyze</code> も未掲載。更新の要否はユーザーに委ねます。</li>
+    <li><strong>実行時の挙動は保証していない。</strong> レビューは「指示から期待する判定を一意に説明できるか」を見るもので、モデルが実際にそう動くかは確かめていません（P-13、不確実性は中）。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>出典: <code>docs/requrements/2026_09_29_natural_japanese/implementation-plan-issueX-2026_09_29_natural_japanese.adoc</code>、<code>docs/requrements/2026_09_29_natural_japanese/req-2026_09_29_natural_japanese.adoc</code>。この解説は両文書に書かれた事実だけを言い直したもので、新しい判断や数値は加えていません。</p>
+</footer>
+
+</main>
+</body>
+</html>

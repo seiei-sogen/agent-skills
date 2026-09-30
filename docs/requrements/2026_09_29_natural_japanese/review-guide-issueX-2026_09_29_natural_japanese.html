@@ -1,0 +1,1629 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data: https: http:; style-src 'unsafe-inline'; font-src 'self' data:;">
+  <meta name="generator" content="asciidoc-to-colorful-html">
+  <title>岩淵48規則の natural-japanese-rewriter への統合 レビューガイド</title>
+  <style>
+/*
+ * Standalone Asciidoctor theme.
+ * The palette and document treatments are adapted from
+ * document-base/supplemental-ui/css/custom.css.
+ */
+
+:root {
+  color-scheme: light;
+  --color-ink: #23354a;
+  --color-muted: #607286;
+  --color-primary: #176b87;
+  --color-primary-dark: #123f5d;
+  --color-primary-soft: #e9f5f7;
+  --color-secondary: #6d52a3;
+  --color-secondary-soft: #f1edfa;
+  --color-accent: #d98716;
+  --color-positive: #2f805d;
+  --color-danger: #b64c55;
+  --color-border: #c9d9e3;
+  --color-code-bg: #f3f6f8;
+  --color-surface: #ffffff;
+  --shadow-page: 0 1.4rem 4rem rgb(25 64 88 / 15%);
+  --shadow-soft: 0 0.25rem 1rem rgb(31 75 98 / 9%);
+  --radius-large: 1rem;
+  --radius-medium: 0.55rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 20rem;
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--color-ink);
+  background:
+    radial-gradient(circle at 12% 8%, rgb(64 176 174 / 18%), transparent 28rem),
+    radial-gradient(circle at 88% 12%, rgb(126 93 184 / 13%), transparent 25rem),
+    linear-gradient(145deg, #eef7f8 0%, #f8f7fc 52%, #fff8ed 100%);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP",
+    "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+::selection {
+  color: #142b3c;
+  background: #bde8ed;
+}
+
+.page-frame {
+  width: min(74rem, calc(100% - 2rem));
+  margin: 2.5rem auto;
+}
+
+.doc {
+  position: relative;
+  min-width: 0;
+  padding: clamp(1.4rem, 4vw, 4rem);
+  overflow-wrap: anywhere;
+  border: 1px solid rgb(195 216 226 / 85%);
+  border-radius: var(--radius-large);
+  background: #fff;
+  box-shadow: var(--shadow-page);
+}
+
+.doc::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 0.38rem;
+  border-radius: var(--radius-large) var(--radius-large) 0 0;
+  background: linear-gradient(90deg, var(--color-primary), #43a6a1 48%, var(--color-secondary));
+  content: "";
+}
+
+.doc h1,
+.doc h2,
+.doc h3,
+.doc h4,
+.doc h5,
+.doc h6 {
+  color: var(--color-primary-dark);
+  font-weight: 750;
+  line-height: 1.4;
+  letter-spacing: 0.015em;
+  scroll-margin-top: 1.5rem;
+}
+
+.doc h1,
+.doc #header > h1 {
+  margin: 0 0 2.3rem;
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: 0.025em;
+}
+
+.doc h1::after,
+.doc #header > h1::after {
+  display: block;
+  width: 5.4rem;
+  height: 0.32rem;
+  margin-top: 0.8rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-primary), #43a6a1, var(--color-secondary));
+  content: "";
+}
+
+.doc h2 {
+  margin: 2.8rem 0 1.2rem;
+  padding: 0.68rem 1rem 0.68rem 1.1rem;
+  border-left: 0.34rem solid var(--color-primary);
+  border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
+  background: linear-gradient(90deg, var(--color-primary-soft), #f8fbfc 72%, transparent);
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+}
+
+.doc h3 {
+  margin: 2.25rem 0 0.9rem;
+  padding-bottom: 0.38rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: clamp(1.22rem, 2.3vw, 1.5rem);
+}
+
+.doc h4 {
+  margin: 1.8rem 0 0.7rem;
+  color: #285d72;
+  font-size: 1.14rem;
+}
+
+.doc h5,
+.doc h6 {
+  margin: 1.5rem 0 0.55rem;
+  font-size: 1rem;
+}
+
+.doc p,
+.doc li,
+.doc dd {
+  line-height: 1.82;
+}
+
+.doc p {
+  margin: 0.8rem 0 1rem;
+}
+
+.doc a {
+  color: #086f91;
+  text-decoration-color: #76adbd;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+.doc a:hover {
+  color: #084f70;
+  text-decoration-color: currentcolor;
+}
+
+.doc ul,
+.doc ol {
+  padding-left: 1.55rem;
+}
+
+.doc li + li {
+  margin-top: 0.28rem;
+}
+
+.doc li::marker {
+  color: var(--color-primary);
+  font-weight: 750;
+}
+
+.doc dl dt {
+  margin-top: 1rem;
+  color: var(--color-primary-dark);
+  font-weight: 750;
+}
+
+.doc hr {
+  height: 1px;
+  margin: 2.4rem 0;
+  border: 0;
+  background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+}
+
+.doc #toc,
+.doc .toc {
+  margin: 1.6rem 0 2.2rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid #cddde5;
+  border-radius: var(--radius-medium);
+  background: linear-gradient(135deg, #f1f9fa, #f7f4fc);
+  box-shadow: var(--shadow-soft);
+}
+
+.doc #toctitle {
+  margin-bottom: 0.45rem;
+  color: var(--color-primary-dark);
+  font-weight: 800;
+}
+
+.doc #toc ul {
+  margin: 0.3rem 0;
+}
+
+.doc table.tableblock {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 1.6rem 0 1.9rem;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  border-collapse: collapse;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.doc table.tableblock thead {
+  color: #fff;
+  background: linear-gradient(90deg, var(--color-primary-dark), var(--color-primary));
+}
+
+.doc table.tableblock th,
+.doc table.tableblock td {
+  padding: 0.72rem 0.85rem;
+  border: 1px solid #d7e2e8;
+  text-align: left;
+  vertical-align: top;
+}
+
+.doc table.tableblock th {
+  font-weight: 750;
+}
+
+.doc table.tableblock tbody tr:nth-child(even) {
+  background: #f5f9fa;
+}
+
+.doc table.tableblock tbody tr:hover {
+  background: #edf6f7;
+}
+
+.doc :not(pre) > code,
+.doc kbd {
+  padding: 0.12em 0.4em;
+  border: 1px solid #d6e0e6;
+  border-radius: 0.3rem;
+  color: #87421f;
+  background: var(--color-code-bg);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+.doc kbd {
+  color: #36495a;
+  background: linear-gradient(#fff, #edf1f4);
+  box-shadow: 0 0.12rem 0 #c3ced5;
+}
+
+.doc pre {
+  max-width: 100%;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid #cbd8df;
+  border-left: 0.26rem solid var(--color-primary);
+  border-radius: var(--radius-medium);
+  color: #213446;
+  background: #f4f7f9;
+  box-shadow: var(--shadow-soft);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+  line-height: 1.62;
+  tab-size: 4;
+}
+
+.doc pre code {
+  display: block;
+  padding: 1rem 1.1rem;
+  color: inherit;
+  background: transparent;
+}
+
+.doc .listingblock,
+.doc .literalblock {
+  margin: 1.35rem 0 1.65rem;
+}
+
+.doc .quoteblock blockquote {
+  margin: 1.4rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 0.32rem solid #5b9da5;
+  border-radius: 0 var(--radius-medium) var(--radius-medium) 0;
+  color: #40566a;
+  background: #f2f8f8;
+}
+
+.doc .quoteblock .attribution {
+  margin-top: -0.9rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.doc .sidebarblock,
+.doc .exampleblock > .content {
+  margin: 1.5rem 0;
+  padding: 1rem 1.2rem;
+  border: 1px solid #d8d0e8;
+  border-radius: var(--radius-medium);
+  background: linear-gradient(135deg, #faf8ff, var(--color-secondary-soft));
+  box-shadow: var(--shadow-soft);
+}
+
+.doc .admonitionblock {
+  margin: 1.5rem 0;
+  overflow: hidden;
+  border: 1px solid #c8dce2;
+  border-left: 0.32rem solid var(--color-primary);
+  border-radius: var(--radius-medium);
+  background: #f5fafb;
+  box-shadow: var(--shadow-soft);
+}
+
+.doc .admonitionblock > table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+}
+
+.doc .admonitionblock td.icon {
+  width: 7.5rem;
+  padding: 0.95rem 0.75rem;
+  color: var(--color-primary-dark);
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.doc .admonitionblock td.content {
+  padding: 0.95rem 1rem;
+  border-left: 1px solid rgb(188 211 221 / 85%);
+  background: transparent;
+}
+
+.doc .admonitionblock.tip {
+  border-left-color: var(--color-positive);
+  background: #f0faf5;
+}
+
+.doc .admonitionblock.warning,
+.doc .admonitionblock.caution {
+  border-left-color: var(--color-accent);
+  background: #fff9ed;
+}
+
+.doc .admonitionblock.important {
+  border-left-color: var(--color-danger);
+  background: #fff5f5;
+}
+
+.doc .imageblock {
+  margin: 1.75rem 0 2rem;
+  text-align: center;
+}
+
+.doc img,
+.doc svg,
+.doc video {
+  max-width: 100%;
+  height: auto;
+}
+
+.doc .imageblock img {
+  border: 1px solid #d5e0e5;
+  border-radius: var(--radius-medium);
+  background: #fff;
+  box-shadow: 0 0.4rem 1.2rem rgb(31 75 98 / 12%);
+}
+
+.doc .title,
+.doc .imageblock > .title,
+.doc .listingblock > .title,
+.doc .tableblock > .title {
+  margin: 0.45rem 0;
+  color: var(--color-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.doc mark {
+  padding: 0.08em 0.2em;
+  border-radius: 0.2rem;
+  color: inherit;
+  background: #ffeca8;
+}
+
+.doc details {
+  margin: 1rem 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: #fbfdfd;
+}
+
+.doc summary {
+  color: var(--color-primary-dark);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.doc #footnotes {
+  margin-top: 3rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 0.92rem;
+}
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 0.18rem solid #fff;
+  outline-offset: 0.12rem;
+  box-shadow: 0 0 0 0.34rem #0b5e7a;
+}
+
+@media screen and (max-width: 768px) {
+  .page-frame {
+    width: min(100% - 1rem, 74rem);
+    margin: 0.5rem auto;
+  }
+
+  .doc {
+    padding: 1.35rem 1rem 2rem;
+    border-radius: 0.75rem;
+    font-size: 0.98rem;
+  }
+
+  .doc h1,
+  .doc #header > h1 {
+    margin-bottom: 1.8rem;
+    font-size: 1.85rem;
+  }
+
+  .doc h2 {
+    margin-top: 2.2rem;
+    padding: 0.58rem 0.72rem;
+    font-size: 1.38rem;
+  }
+
+  .doc h3 {
+    font-size: 1.2rem;
+  }
+
+  .doc table.tableblock th,
+  .doc table.tableblock td {
+    min-width: 7rem;
+    padding: 0.58rem 0.65rem;
+  }
+
+  .doc .admonitionblock > table,
+  .doc .admonitionblock > table > tbody,
+  .doc .admonitionblock > table > tbody > tr,
+  .doc .admonitionblock td {
+    display: block;
+    width: 100%;
+  }
+
+  .doc .admonitionblock td.icon {
+    padding-bottom: 0.25rem;
+    text-align: left;
+  }
+
+  .doc .admonitionblock td.content {
+    border-top: 1px solid rgb(188 211 221 / 85%);
+    border-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+@media print {
+  @page {
+    margin: 15mm;
+  }
+
+  body {
+    color: #111;
+    background: #fff;
+    font-size: 10.5pt;
+  }
+
+  .page-frame {
+    width: auto;
+    margin: 0;
+  }
+
+  .doc {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .doc::before {
+    display: none;
+  }
+
+  .doc h1,
+  .doc h2,
+  .doc h3,
+  .doc h4,
+  .doc h5,
+  .doc h6 {
+    color: #111;
+    break-after: avoid;
+  }
+
+  .doc h2 {
+    border-left-color: #555;
+    background: none;
+  }
+
+  .doc table.tableblock,
+  .doc pre,
+  .doc .admonitionblock,
+  .doc .imageblock img,
+  .doc #toc,
+  .doc .sidebarblock,
+  .doc .exampleblock > .content {
+    box-shadow: none;
+  }
+
+  .doc table.tableblock thead {
+    color: #111;
+    background: #eee;
+  }
+
+  .doc pre,
+  .doc table,
+  .doc .admonitionblock,
+  .doc .imageblock {
+    break-inside: avoid;
+  }
+
+  .doc a {
+    color: inherit;
+    text-decoration: underline;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div class="page-frame">
+    <article class="doc">
+<h1>岩淵48規則の natural-japanese-rewriter への統合 レビューガイド</h1>
+<div id="toc" class="toc">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_3分で分かる変更概要">1. 3分で分かる変更概要</a>
+<ul class="sectlevel2">
+<li><a href="#_何が変わったか">1.1. 何が変わったか</a></li>
+<li><a href="#_なぜ変えたか">1.2. なぜ変えたか</a></li>
+<li><a href="#_どこに影響するか">1.3. どこに影響するか</a></li>
+<li><a href="#_レビュー対象の特定">1.4. レビュー対象の特定</a></li>
+<li><a href="#_レビュー3巡目で確定した変更">1.5. レビュー3巡目で確定した変更</a></li>
+<li><a href="#_対象外">1.6. 対象外</a></li>
+</ul>
+</li>
+<li><a href="#_最初に読む_root">2. 最初に読む root</a></li>
+<li><a href="#_推奨する読解順">3. 推奨する読解順</a></li>
+<li><a href="#_実行時フロー">4. 実行時フロー</a></li>
+<li><a href="#_難しい処理">5. 難しい処理</a>
+<ul class="sectlevel2">
+<li><a href="#_48規則の判定が_phase_3_5_6_を流れる経路">5.1. 48規則の判定が Phase 3 → 5 → 6 を流れる経路</a></li>
+<li><a href="#_出力先と出力モードの分岐">5.2. 出力先と出力モードの分岐</a></li>
+<li><a href="#_図を作らなかった変更">5.3. 図を作らなかった変更</a></li>
+</ul>
+</li>
+<li><a href="#_重要コードの解説">6. 重要コードの解説</a>
+<ul class="sectlevel2">
+<li><a href="#_frontmatter_description315行">6.1. frontmatter <code>description</code>（3〜15行）</a></li>
+<li><a href="#_入力と出力モード3961行">6.2. <code>## 入力と出力モード</code>（39〜61行）</a></li>
+<li><a href="#_リライトの優先順位6392行">6.3. <code>## リライトの優先順位</code>（63〜92行）</a></li>
+<li><a href="#_岩淵48規則の_id_表94173行">6.4. <code>## 岩淵48規則の ID 表</code>（94〜173行）</a></li>
+<li><a href="#_phase_3_修復箇所を決める215248行">6.5. <code>## Phase 3: 修復箇所を決める</code>（215〜248行）</a></li>
+<li><a href="#_phase_5_候補文を検査する267298行">6.6. <code>## Phase 5: 候補文を検査する</code>（267〜298行）</a></li>
+<li><a href="#_phase_6_出力する300330行">6.7. <code>## Phase 6: 出力する</code>（300〜330行）</a></li>
+<li><a href="#_agentsopenai_yaml3行">6.8. <code>agents/openai.yaml</code>（3行）</a></li>
+<li><a href="#_削除した旧スキル">6.9. 削除した旧スキル</a></li>
+</ul>
+</li>
+<li><a href="#_テストとの対応">7. テストとの対応</a></li>
+<li><a href="#_重点チェック">8. 重点チェック</a>
+<ul class="sectlevel2">
+<li><a href="#_48_id_の綴りがバックアップと一致するか">8.1. 48 ID の綴りがバックアップと一致するか</a></li>
+<li><a href="#_デストロイモードの_actionable_の意味が4状態の定義と整合するか">8.2. デストロイモードの <code>actionable</code> の意味が4状態の定義と整合するか</a></li>
+<li><a href="#_polish_の出力が_要確認_以外に増えていないか">8.3. <code>polish</code> の出力が <code>要確認</code> 以外に増えていないか</a></li>
+<li><a href="#_旧スキルの_description_にあった除外文が消えトリガー語が引き継がれているか">8.4. 旧スキルの description にあった除外文が消え、トリガー語が引き継がれているか</a></li>
+<li><a href="#_デストロイモードの_phase_5_再照合を_llm_出所で行うことは冒頭の禁止と矛盾しないか">8.5. デストロイモードの Phase 5 再照合を <code>LLM</code> 出所で行うことは、冒頭の禁止と矛盾しないか</a></li>
+<li><a href="#_セーフモードの技術用語保護は表の主な手がかりだけで足りるか">8.6. セーフモードの技術用語保護は表の「主な手がかり」だけで足りるか</a></li>
+<li><a href="#_rewrite_targets_の要素形を親が定めることは_analyzer_の契約と両立するか">8.7. <code>rewrite_targets</code> の要素形を親が定めることは analyzer の契約と両立するか</a></li>
+<li><a href="#_12文でも48規則を全照合するコストを許容するか">8.8. 1〜2文でも48規則を全照合するコストを許容するか</a></li>
+<li><a href="#_short_description_の長さは_codex_側の表示に収まるか">8.9. <code>short_description</code> の長さは Codex 側の表示に収まるか</a></li>
+</ul>
+</li>
+<li><a href="#_既知の制約と対象外">9. 既知の制約と対象外</a>
+<ul class="sectlevel2">
+<li><a href="#_既知の制約">9.1. 既知の制約</a></li>
+<li><a href="#_対象外_2">9.2. 対象外</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="_3分で分かる変更概要">1. 3分で分かる変更概要</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_何が変わったか">1.1. 何が変わったか</h3>
+<div class="paragraph">
+<p>日本語を自然に書き直すスキル <code>natural-japanese-rewriter</code> に、別スキル <code>rewrite-japanese-with-iwabuchi-rules</code> が持っていた「岩淵48規則」を取り込み、旧スキルを削除した。
+スキルとはプログラムではなく、LLM エージェントが上から読んで従う手順書（<code>SKILL.md</code>）である。したがって、この変更でレビューするのはコードではなく「エージェントへの指示文」である。</p>
+</div>
+<div class="paragraph">
+<p>変更後の <code>natural-japanese-rewriter/SKILL.md</code> は209行から330行になった。このスキルは Phase 1〜6 という6つの作業段階で進み、Phase 1 で KWJA（京都大学の日本語解析器）に文を解析させ、その結果を「分析メモ」という YAML にまとめてから直す。増えた主な内容は次の4つである。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>48規則の ID 表（<code>## 岩淵48規則の ID 表</code>）。旧スキルの表に「上位概念」「主な手がかり」「出所」の3列を足した。</p>
+</li>
+<li>
+<p>Phase 3 で48規則を4つの状態（<code>pass</code> / <code>not-applicable</code> / <code>actionable</code> / <code>needs-confirmation</code>）に判定し、直す候補の一覧 <code>rewrite_targets</code> に <code>decision</code> と <code>rule_ids</code> を記録する手順。</p>
+</li>
+<li>
+<p>Phase 5 で書き直した文にもう一度48規則を当て直す手順（最大3巡）。</p>
+</li>
+<li>
+<p>Phase 6 で <code>要確認</code> に ID を付け、<code>diagnostic</code> モードで「適用ルール」を出し、求められたときだけ48行の監査一覧を出す手順。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>あわせて、旧スキルのトリガー語（「岩淵ルールで直して」など）を <code>description</code> に移し、<code>agents/openai.yaml</code> の説明文を更新した。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_なぜ変えたか">1.2. なぜ変えたか</h3>
+<div class="paragraph">
+<p>旧スキルは48規則を文章に直接照合するチェックリストで、<code>natural-japanese-rewriter</code> は KWJA の解析結果（文を単語、係り受け、述語と項に分解したもの）をもとに文を直すパイプラインだった。両者は同じ悪文を別の語彙で扱っていたため、同じ判断が二重になり、規則 ID と KWJA の根拠が結びつかなかった。
+要件定義書は、48規則を「文字列に照らす項目」ではなく「分析メモと上位レイヤーのどの観測から判定する規範か」として内蔵し、旧スキルを削除して単独で完結させることを求めている（要件定義書「目的」）。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_どこに影響するか">1.3. どこに影響するか</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>影響する: <code>natural-japanese-rewriter</code> を起動するすべての依頼。既定のデストロイモードでも内部で48規則を照合し、確定できない点だけを ID 付きの <code>要確認</code> で返すようになる。</p>
+</li>
+<li>
+<p>影響する: 旧スキルの利用者。同じ依頼文で <code>natural-japanese-rewriter</code> が起動するが、既定がデストロイモード（自然さ優先、細部の意味変更を許容）になる。原意を保ちたい場合は第一引数に <code>safe</code> が必要になる。</p>
+</li>
+<li>
+<p>影響しない: 子スキル <code>natural-japanese-rewrite-analyzer</code> と <code>japanese-kwja-analyze</code>（差分なし）、<code>references/detailed-rules.md</code>、<code>manifest.json</code>。</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_レビュー対象の特定">1.4. レビュー対象の特定</h3>
+<div class="paragraph">
+<p>レビュー対象は、実装計画のチェックポイント <code>8845b02</code> から最終コミットまでの <code>main</code> 上の差分である。実装はコミット <code>26af043</code>（<code>日本語スキルアップデート</code>）で入り、レビュー3巡目の修正はコミット <code>d5373b1</code> 以降に入った。行番号はすべて最終版の <code>SKILL.md</code>（330行）を指す。</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 42.8571%;">
+<col style="width: 14.2857%;">
+<col style="width: 42.8572%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">パス</th>
+<th class="tableblock halign-left valign-top">種別</th>
+<th class="tableblock halign-left valign-top">内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">更新</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">209行から330行。description、出力モード、リライトの優先順位、ID 表の新設、Phase 3・5・6</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese/natural-japanese-rewriter/agents/openai.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">更新</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>short_description</code> の1行（87文字）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">削除</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">旧スキル本体（172行）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/natural-japanese/rewrite-japanese-with-iwabuchi-rules/agents/openai.yaml</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">削除</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">旧スキルの Codex 向け説明</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>docs/requrements/2026_09_29_natural_japanese/req-2026_09_29_natural_japanese.adoc</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">更新</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FR-03 の手がかり1件、FR-04、FR-05、FR-06、FR-07、D-07、例外、T-07、T-08 の明確化（レビュー2巡と検証ワークフロー1巡で見つかった矛盾の解消）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>docs/requrements/2026_09_29_natural_japanese/implementation-plan-issueX-2026_09_29_natural_japanese.adoc</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">更新</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Task 1〜9 の状態、「実装結果と検証結果」節の記入（レビュー3巡の記録、計画からの調整、採らなかった指摘）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同ディレクトリの <code>req-<strong>.html</code>、<code>implementation-plan-</strong>.html</code>、<code>easy-implementation-plan-*.html</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">追加</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">上記2文書の HTML 生成物と、実装計画の解説 HTML</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_レビュー3巡目で確定した変更">1.5. レビュー3巡目で確定した変更</h3>
+<div class="paragraph">
+<p>実装後のレビューは <code>ponytail-review</code> 2巡と、要件照合・実行シミュレーション・構造検査の3系統に懐疑者2名ずつを付けた検証ワークフロー1巡の計3巡で、3巡目は本文を変更しない出力先（レビューだけ、監査だけ）の扱いを中心に次を確定した。いずれも要件定義書へ先に反映してから <code>SKILL.md</code> へ反映している（実装計画「計画からの調整」）。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>SKILL.md</code> 66行: デストロイモードで <code>要確認</code> に残す基準を「原文にない主体、対象、動作主、原因、目的、数値、時刻、確実性を確定させる解釈は選ばない」と定義し、該当 ID の例に <code>sentence.state-changed-subject-explicitly</code> と <code>sentence.minimize-passive-voice</code> を加えた。本文を変更しない出力先ではこの扱いを行わず、Phase 3 の判定をそのまま出す。</p>
+</li>
+<li>
+<p>144行: <code>word-choice.avoid-roundabout-phrasing</code> の「主な手がかり」から <code>detailed-rules.md</code> への参照を外し、「適切に」を例に加えた。</p>
+</li>
+<li>
+<p>241行: <code>LLM</code> 出所の判定は <code>rule_ids</code> に記録し、KWJA 由来のフィールドには書き込まない。</p>
+</li>
+<li>
+<p>243行: 要素の追記主体を親スキルと明記。規則違反がない自然さ目的の書き直しも <code>decision: repair</code>、<code>rule_ids: []</code> で記録する。本文を変更しない出力先では <code>repair</code> は修正案の提示を意味し、<code>confirm</code> は監査一覧または判定行に含める。<code>pass</code> と <code>not-applicable</code> は監査一覧を除き出力しない。</p>
+</li>
+<li>
+<p>246行: セーフモードの <code>ambiguities</code> 判定は修復トリガーより優先する。</p>
+</li>
+<li>
+<p>269行: 再照合で検出・修正した項目も適用ルールに載せる。本文を変更しない出力先では Phase 3 で判定を終え、再照合は行わない。</p>
+</li>
+<li>
+<p>316行: 監査だけの出力は監査一覧と解析ファイルのパスだけ。<code>要確認</code> の別掲と診断は出さず、判断に必要な情報と <code>LLM</code> 出所の表示は3列目に書く。</p>
+</li>
+<li>
+<p>324〜325行: レビューだけは1件1行の <code>ID / 対象箇所 / 問題 / 修正案</code>、修正案は Phase 4 の生成方針で作り、<code>LLM</code> 出所の行に <code>（LLM 判断）</code> を付ける。最終版だけは解析ファイルのパスも省く。</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>図2の「本文を変更しない」列は、この確定内容（Phase 5 を通らず Phase 3 の判定を出す）に合わせて読む。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_対象外">1.6. 対象外</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>旧スキルの stub や alias（作らない方針。要件 D-06）</p>
+</li>
+<li>
+<p><code>references/detailed-rules.md</code> への規則 ID の注記（任意の FR-09 は不実施。計画 P-11）</p>
+</li>
+<li>
+<p>README のスキル一覧、利用環境の nix 再ビルド</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_最初に読む_root">2. 最初に読む root</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>root とは、この変更を理解し始める入口のファイルと節のことである。</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">主 root</dt>
+<dd>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code> の <code>## 岩淵48規則の ID 表</code>（94〜173行）。
+ここに4状態の定義（100〜103行）、出所 <code>P1</code> / <code>P2</code> / <code>P4</code> / <code>LLM</code> の意味（105行）、48行の表がある。Phase 3・5・6 の追記はすべてこの表の語彙で書かれているため、先にここを読むと残りが読める。</p>
+</dd>
+<dt class="hdlist1">補助 root 1</dt>
+<dd>
+<p>同ファイルの <code>## Phase 3: 修復箇所を決める</code>（215〜248行）。48規則の判定と <code>rewrite_targets</code> への記録が起こる唯一の場所である。</p>
+</dd>
+<dt class="hdlist1">補助 root 2</dt>
+<dd>
+<p>要件定義書 <code>req-2026_09_29_natural_japanese.adoc</code> の FR-04〜FR-07。SKILL.md の各追記がどの要件に対応するかを照合するときに使う。</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_推奨する読解順">3. 推奨する読解順</h2>
+<div class="sectionbody">
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 37.5%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">順</th>
+<th class="tableblock halign-left valign-top">パスと節（行）</th>
+<th class="tableblock halign-left valign-top">確認する目的</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>natural-japanese-rewriter/SKILL.md</code> frontmatter <code>description</code>（3〜15行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">旧スキルのトリガー語が入り、除外文が消えているか。<code>safe</code> の説明と「岩淵ルールでの推敲も既定はデストロイモード」の注意が読めるか</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同 <code>## 岩淵48規則の ID 表</code>（94〜173行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID の綴りが旧スキルと同じか。4状態と出所の定義が一意に読めるか。「主な手がかり」が分析メモの実フィールド名になっているか</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同 <code>## 入力と出力モード</code>（39〜61行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">出力先に「本文を変更しない」が増えたこと、<code>polish</code> が本文と <code>要確認</code> だけを出すこと、規則や ID を名指しする依頼が <code>diagnostic</code> になること</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同 <code>## リライトの優先順位</code>（63〜92行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">デストロイモードで規則を「自然さの判定基準」として使う位置づけ（65〜66行）、保護範囲と <code>not-applicable</code> の関係（68行）、セーフモードの追加項目（79行）、規則衝突時の順序（86〜92行）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同 <code>## Phase 3</code>（215〜248行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">48規則の判定、素性がないときの <code>LLM</code> 出所への倒し方（241行）、<code>rewrite_targets</code> の <code>decision</code> と <code>rule_ids</code>（243行）、セーフモードの <code>ambiguities</code> の扱い（246行）、完了条件（248行）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">6</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同 <code>## Phase 5</code>（267〜298行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">両モード共通の再照合（269行）、最大3巡、解消しない <code>actionable</code> の行き先、完了条件（298行）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">7</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">同 <code>## Phase 6</code>（300〜330行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>要確認</code> の書式（305行）、適用ルール（312行）、<code>（LLM 判断）</code> の付与（314行）、監査一覧（316〜322行）、レビューだけと最終版だけ（324〜325行）、完了条件（330行）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">8</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>natural-japanese-rewriter/agents/openai.yaml</code>（3行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">既定がデストロイモードであることと、ルール ID 付きの診断・監査ができることが1文で読めるか。旧スキル名が入っていないか</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">9</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">削除された <code>rewrite-japanese-with-iwabuchi-rules/SKILL.md</code>（バックアップ <code>docs/backups/2026_09_29/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md</code>）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">移し忘れがないか。最優先原則、ID の扱い、作業手順、出力形式、完了条件が新 SKILL.md のどこに対応するかを追う</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">10</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">実装計画 <code>implementation-plan-issueX-2026_09_29_natural_japanese.adoc</code> の「実装結果と検証結果」節</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">検証結果と、レビュー2巡で直した7つの矛盾、計画からの調整3件</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_実行時フロー">4. 実行時フロー</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>エージェントが <code>SKILL.md</code> を上から実行するときの流れである。行番号は <code>natural-japanese-rewriter/SKILL.md</code> のものである。</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">入力</dt>
+<dd>
+<p>依頼文と、リライト対象の日本語テキストまたはファイルパス（41行）。</p>
+</dd>
+<dt class="hdlist1">モード決定</dt>
+<dd>
+<p>第一引数が正確に <code>safe</code> のときだけセーフモード。それ以外はデストロイモード（42行）。開始時に対象範囲、出力先（ファイル編集、応答本文、本文を変更しない）、媒体と文体、出力モード（<code>polish</code> / <code>diagnostic</code>）を確定する（46〜58行）。</p>
+</dd>
+<dt class="hdlist1">Phase 1</dt>
+<dd>
+<p>子スキルで KWJA を実行し、分析メモ（analyzer が出す YAML。述語、項、指示対象、曖昧さなどを持つ）を作る（175〜189行）。
+早期終了: 必要なスキルが見つからない、KWJA の実行や解析ファイルの読み取りに失敗した場合は、リライトを止めて原因を報告する。規則の判定だけを LLM で続けない（33〜34行）。</p>
+</dd>
+<dt class="hdlist1">Phase 2</dt>
+<dd>
+<p>談話構造、情報構造、語用論、対人関係、文体の制約を固定する（191〜213行）。変更なし。</p>
+</dd>
+<dt class="hdlist1">Phase 3</dt>
+<dd>
+<p>修復箇所を決める。ここで48規則をすべて照合し、各 ID を4状態にする（240〜241行）。<code>actionable</code> は <code>decision: repair</code>、<code>needs-confirmation</code> は <code>decision: confirm</code>、意図的に残す箇所は <code>keep</code> として <code>rewrite_targets</code> に <code>rule_ids</code> 付きで記録する（243行）。セーフモードでは曖昧な箇所を <code>actionable</code> にしない（246行）。</p>
+</dd>
+<dt class="hdlist1">Phase 4</dt>
+<dd>
+<p>制約に沿って生成する（250〜265行）。変更なし。<code>P4</code> の規則 <code>output.line-break-each-line</code> は、改行単位の指定があるときだけここで適用する（240行）。</p>
+</dd>
+<dt class="hdlist1">Phase 5</dt>
+<dd>
+<p>候補文に48規則を再照合し、新たな <code>actionable</code> があれば修正して再照合する。最大3巡で解消しない <code>actionable</code> は <code>needs-confirmation</code> に変えて <code>要確認</code> に出す（269行）。セーフモードは従来の意味回帰検査（KWJA で候補文を再解析し、意味のずれを <code>SEMANTIC_DRIFT</code> として棄却する）も行う（273〜296行）。</p>
+</dd>
+<dt class="hdlist1">Phase 6</dt>
+<dd>
+<p>出力先と出力モードに応じて、本文、<code>要確認</code>、適用ルール、監査一覧を出す（300〜330行）。</p>
+</dd>
+<dt class="hdlist1">外部 I/O</dt>
+<dd>
+<p>KWJA の実行と解析ファイルの読み書き（子スキル経由）、対象ファイルの編集（ファイル編集が出力先のときだけ）。ネットワークやデータベースはない。</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_難しい処理">5. 難しい処理</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_48規則の判定が_phase_3_5_6_を流れる経路">5.1. 48規則の判定が Phase 3 → 5 → 6 を流れる経路</h3>
+<div class="imageblock">
+<div class="content">
+<img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMTgwIDEyNTAiIHdpZHRoPSIxMTgwIiBoZWlnaHQ9IjEyNTAiIHJvbGU9ImltZyIgYXJpYS1sYWJlbGxlZGJ5PSJ0IGQiPgogIDx0aXRsZSBpZD0idCI+NDjopo/liYfjga7liKTlrprjgYwgUGhhc2UgMyDjgYvjgokgUGhhc2UgNiDjgbjmtYHjgozjgovntYzot688L3RpdGxlPgogIDxkZXNjIGlkPSJkIj5QaGFzZSAzIOOBpzQ46KaP5YmH44KS5Ye65omA77yIUDHjgIFQMuOAgVA044CBTExN77yJ44Gr5b6T44Gj44GmNOeKtuaFi+OBq+WIpOWumuOBl+OAgXJld3JpdGVfdGFyZ2V0cyDjga4gZGVjaXNpb24g44GoIHJ1bGVfaWRzIOOBq+iomOmMsuOBmeOCi+OAglBoYXNlIDUg44Gn5YCZ6KOc5paH44Gr5YaN54Wn5ZCI44GX44CB5pyA5aSnM+W3oeOBp+ino+a2iOOBl+OBquOBhCBhY3Rpb25hYmxlIOOBryBuZWVkcy1jb25maXJtYXRpb24g44Gr5aSJ44GI44KL44CCUGhhc2UgNiDjgafopoHnorroqo3jgIHpgannlKjjg6vjg7zjg6vjgIHnm6Pmn7vkuIDopqfjgajjgZfjgablh7rlipvjgZnjgovjgII8L2Rlc2M+CiAgPGRlZnM+CiAgICA8bWFya2VyIGlkPSJhcnJvdyIgdmlld0JveD0iMCAwIDEwIDEwIiByZWZYPSI5IiByZWZZPSI1IiBtYXJrZXJXaWR0aD0iOCIgbWFya2VySGVpZ2h0PSI4IiBvcmllbnQ9ImF1dG8tc3RhcnQtcmV2ZXJzZSI+CiAgICAgIDxwYXRoIGQ9Ik0gMCAwIEwgMTAgNSBMIDAgMTAgeiIgZmlsbD0iIzMzNDE1NSIvPgogICAgPC9tYXJrZXI+CiAgICA8bWFya2VyIGlkPSJhcnJvdy1kYXNoIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9IjkiIHJlZlk9IjUiIG1hcmtlcldpZHRoPSI4IiBtYXJrZXJIZWlnaHQ9IjgiIG9yaWVudD0iYXV0by1zdGFydC1yZXZlcnNlIj4KICAgICAgPHBhdGggZD0iTSAwIDAgTCAxMCA1IEwgMCAxMCB6IiBmaWxsPSIjNjQ3NDhiIi8+CiAgICA8L21hcmtlcj4KICAgIDxzdHlsZT4KICAgICAgdGV4dCB7IGZvbnQtZmFtaWx5OiAiTm90byBTYW5zIEpQIiwgIkhpcmFnaW5vIFNhbnMiLCAiWXUgR290aGljIiwgIk1laXJ5byIsIHNhbnMtc2VyaWY7IGZpbGw6ICMxZTI5M2I7IH0KICAgICAgLnRpdGxlIHsgZm9udC1zaXplOiAyMHB4OyBmb250LXdlaWdodDogNzAwOyB9CiAgICAgIC5iYW5kLWxhYmVsIHsgZm9udC1zaXplOiAxNnB4OyBmb250LXdlaWdodDogNzAwOyBmaWxsOiAjMGYxNzJhOyB9CiAgICAgIC5ib3ggeyBmb250LXNpemU6IDE0cHg7IH0KICAgICAgLnNtYWxsIHsgZm9udC1zaXplOiAxM3B4OyB9CiAgICAgIC5tb25vIHsgZm9udC1mYW1pbHk6ICJTRk1vbm8tUmVndWxhciIsIE1lbmxvLCBDb25zb2xhcywgbW9ub3NwYWNlOyBmb250LXNpemU6IDEzcHg7IH0KICAgICAgLmVkZ2UgeyBzdHJva2U6ICMzMzQxNTU7IHN0cm9rZS13aWR0aDogMS42OyBmaWxsOiBub25lOyBtYXJrZXItZW5kOiB1cmwoI2Fycm93KTsgfQogICAgICAubGluZSB7IHN0cm9rZTogIzMzNDE1NTsgc3Ryb2tlLXdpZHRoOiAxLjY7IGZpbGw6IG5vbmU7IH0KICAgICAgLmVkZ2UtZGFzaCB7IHN0cm9rZTogIzY0NzQ4Yjsgc3Ryb2tlLXdpZHRoOiAxLjQ7IGZpbGw6IG5vbmU7IHN0cm9rZS1kYXNoYXJyYXk6IDYgNDsgbWFya2VyLWVuZDogdXJsKCNhcnJvdy1kYXNoKTsgfQogICAgICAubGFiZWwgeyBmb250LXNpemU6IDEzcHg7IGZpbGw6ICMzMzQxNTU7IH0KICAgICAgLmJhbmQgeyBmaWxsOiAjZjhmYWZjOyBzdHJva2U6ICNjYmQ1ZTE7IHN0cm9rZS13aWR0aDogMTsgfQogICAgICAubm9kZSB7IGZpbGw6ICNmZmZmZmY7IHN0cm9rZTogIzQ3NTU2OTsgc3Ryb2tlLXdpZHRoOiAxLjQ7IH0KICAgICAgLnNyYyB7IGZpbGw6ICNlMGYyZmU7IHN0cm9rZTogIzAzNjlhMTsgc3Ryb2tlLXdpZHRoOiAxLjQ7IH0KICAgICAgLnBhc3MgeyBmaWxsOiAjZGNmY2U3OyBzdHJva2U6ICMxNTgwM2Q7IHN0cm9rZS13aWR0aDogMS40OyB9CiAgICAgIC5uYSB7IGZpbGw6ICNlNWU3ZWI7IHN0cm9rZTogIzRiNTU2Mzsgc3Ryb2tlLXdpZHRoOiAxLjQ7IH0KICAgICAgLmFjdCB7IGZpbGw6ICNmZmVkZDU7IHN0cm9rZTogI2MyNDEwYzsgc3Ryb2tlLXdpZHRoOiAxLjQ7IH0KICAgICAgLmNvbmYgeyBmaWxsOiAjZWRlOWZlOyBzdHJva2U6ICM2ZDI4ZDk7IHN0cm9rZS13aWR0aDogMS40OyB9CiAgICAgIC5zYWZlIHsgZmlsbDogI2VmZjZmZjsgc3Ryb2tlOiAjMWQ0ZWQ4OyBzdHJva2Utd2lkdGg6IDEuMjsgc3Ryb2tlLWRhc2hhcnJheTogNSAzOyB9CiAgICAgIC5kZXN0cm95IHsgZmlsbDogI2ZmZmJlYjsgc3Ryb2tlOiAjYjQ1MzA5OyBzdHJva2Utd2lkdGg6IDEuMjsgc3Ryb2tlLWRhc2hhcnJheTogNSAzOyB9CiAgICAgIC5yZWNvcmQgeyBmaWxsOiAjZmVmOWMzOyBzdHJva2U6ICNhMTYyMDc7IHN0cm9rZS13aWR0aDogMS40OyB9CiAgICAgIC5vdXQgeyBmaWxsOiAjZjBmZGY0OyBzdHJva2U6ICMxNjY1MzQ7IHN0cm9rZS13aWR0aDogMS40OyB9CiAgICAgIC5ub3RlIHsgZmlsbDogI2YxZjVmOTsgc3Ryb2tlOiAjOTRhM2I4OyBzdHJva2Utd2lkdGg6IDEuMjsgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CgogIDx0ZXh0IHg9IjU5MCIgeT0iMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJ0aXRsZSI+NDjopo/liYfjga7liKTlrprjgYwgUGhhc2UgMyDihpIgUGhhc2UgNSDihpIgUGhhc2UgNiDjgpLmtYHjgozjgovntYzot688L3RleHQ+CgogIDwhLS0gUGhhc2UgMyBiYW5kIC0tPgogIDxyZWN0IHg9IjIwIiB5PSI1MCIgd2lkdGg9IjExNDAiIGhlaWdodD0iNjUwIiByeD0iMTAiIGNsYXNzPSJiYW5kIi8+CiAgPHRleHQgeD0iMzYiIHk9Ijc0IiBjbGFzcz0iYmFuZC1sYWJlbCI+UGhhc2UgMzog5L+u5b6p566H5omA44KS5rG644KB44KL77yIU0tJTEwubWQgMjE144CcMjQ46KGM77yJPC90ZXh0PgoKICA8cmVjdCB4PSIzNDAiIHk9Ijg4IiB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUyIiByeD0iOCIgY2xhc3M9Im5vZGUiLz4KICA8dGV4dCB4PSI1OTAiIHk9IjExMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJveCI+NDjopo/liYfjgpLjgZnjgbnjgabnhaflkIjjgZfjgIHlkIQgSUQg44KSNOeKtuaFi+OBruOBhOOBmuOCjOOBi+OBq+OBmeOCizwvdGV4dD4KICA8dGV4dCB4PSI1OTAiIHk9IjEzMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj7liKTlrprjga7mnZDmlpnjga8gSUQg6KGo44Gu44CM5Ye65omA44CN5YiX44Gr5b6T44GG77yIMjQw6KGM77yJPC90ZXh0PgoKICA8IS0tIGZhbi1vdXQgdG8gc291cmNlcyAtLT4KICA8cGF0aCBkPSJNIDU5MCAxNDAgTCAxNjUgMTc2IiBjbGFzcz0iZWRnZSIvPgogIDxwYXRoIGQ9Ik0gNTkwIDE0MCBMIDQ0NSAxNzYiIGNsYXNzPSJlZGdlIi8+CiAgPHBhdGggZD0iTSA1OTAgMTQwIEwgNzI1IDE3NiIgY2xhc3M9ImVkZ2UiLz4KICA8cGF0aCBkPSJNIDU5MCAxNDAgTCAxMDA1IDE3NiIgY2xhc3M9ImVkZ2UiLz4KCiAgPHJlY3QgeD0iNDAiIHk9IjE3NiIgd2lkdGg9IjI1MCIgaGVpZ2h0PSI2OCIgcng9IjgiIGNsYXNzPSJzcmMiLz4KICA8dGV4dCB4PSIxNjUiIHk9IjIwMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJveCI+UDE6IFBoYXNlIDEg44Gu5YiG5p6Q44Oh44Oi44GoPC90ZXh0PgogIDx0ZXh0IHg9IjE2NSIgeT0iMjIyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYm94Ij5LV0pBIOWHuuWKm++8iDMw6KaP5YmH77yJPC90ZXh0PgoKICA8cmVjdCB4PSIzMjAiIHk9IjE3NiIgd2lkdGg9IjI1MCIgaGVpZ2h0PSI2OCIgcng9IjgiIGNsYXNzPSJzcmMiLz4KICA8dGV4dCB4PSI0NDUiIHk9IjIwMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJveCI+UDI6IFBoYXNlIDIg44Gn5Zu65a6a44GX44GfPC90ZXh0PgogIDx0ZXh0IHg9IjQ0NSIgeT0iMjIyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYm94Ij7kuIrkvY3jg6zjgqTjg6Tjg7zjga7liLbntITvvIgxMeimj+WJh++8iTwvdGV4dD4KCiAgPHJlY3QgeD0iNjAwIiB5PSIxNzYiIHdpZHRoPSIyNTAiIGhlaWdodD0iNjgiIHJ4PSI4IiBjbGFzcz0ic3JjIi8+CiAgPHRleHQgeD0iNzI1IiB5PSIyMDIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJib3giPlA0OiDmlLnooYzljZjkvY3jga7mjIflrprjga7mnInnhKE8L3RleHQ+CiAgPHRleHQgeD0iNzI1IiB5PSIyMjQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJtb25vIj5vdXRwdXQubGluZS1icmVhay1lYWNoLWxpbmU8L3RleHQ+CgogIDxyZWN0IHg9Ijg4MCIgeT0iMTc2IiB3aWR0aD0iMjUwIiBoZWlnaHQ9IjY4IiByeD0iOCIgY2xhc3M9InNyYyIvPgogIDx0ZXh0IHg9IjEwMDUiIHk9IjE5NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJveCI+TExNOiDljp/mlofjgajmlofohIjjgYvjgonliKTmlq3vvIg26KaP5YmH77yJPC90ZXh0PgogIDx0ZXh0IHg9IjEwMDUiIHk9IjIxNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj7vvIsgUDEg44Gn44KC5omL44GM44GL44KK44Gu57Sg5oCn44GMIEtXSkE8L3RleHQ+CiAgPHRleHQgeD0iMTAwNSIgeT0iMjMyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ic21hbGwiPuWHuuWKm+OBq+OBquOBhOimj+WJh++8iDI0MeihjO+8iTwvdGV4dD4KCiAgPCEtLSBjb2xsZWN0b3IgLS0+CiAgPHBhdGggZD0iTSAxNjUgMjQ0IEwgMTY1IDI3MiIgY2xhc3M9ImxpbmUiLz4KICA8cGF0aCBkPSJNIDQ0NSAyNDQgTCA0NDUgMjcyIiBjbGFzcz0ibGluZSIvPgogIDxwYXRoIGQ9Ik0gNzI1IDI0NCBMIDcyNSAyNzIiIGNsYXNzPSJsaW5lIi8+CiAgPHBhdGggZD0iTSAxMDA1IDI0NCBMIDEwMDUgMjcyIiBjbGFzcz0ibGluZSIvPgogIDxwYXRoIGQ9Ik0gMTY1IDI3MiBMIDEwMDUgMjcyIiBjbGFzcz0ibGluZSIvPgogIDxwYXRoIGQ9Ik0gNTkwIDI3MiBMIDU5MCAzMDAiIGNsYXNzPSJlZGdlIi8+CgogIDxyZWN0IHg9IjM0MCIgeT0iMzAwIiB3aWR0aD0iNTAwIiBoZWlnaHQ9IjQwIiByeD0iOCIgY2xhc3M9Im5vZGUiLz4KICA8dGV4dCB4PSI1OTAiIHk9IjMyNSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJveCI+5ZCEIElEIOOCkjTnirbmhYvjga7jgYTjgZrjgozjgYvjgavjgZnjgovvvIgxMDDjgJwxMDPooYzvvIk8L3RleHQ+CgogIDxwYXRoIGQ9Ik0gNTkwIDM0MCBMIDE2NSAzNzYiIGNsYXNzPSJlZGdlIi8+CiAgPHBhdGggZD0iTSA1OTAgMzQwIEwgNDQ1IDM3NiIgY2xhc3M9ImVkZ2UiLz4KICA8cGF0aCBkPSJNIDU5MCAzNDAgTCA3MjUgMzc2IiBjbGFzcz0iZWRnZSIvPgogIDxwYXRoIGQ9Ik0gNTkwIDM0MCBMIDEwMDUgMzc2IiBjbGFzcz0iZWRnZSIvPgoKICA8cmVjdCB4PSI0MCIgeT0iMzc2IiB3aWR0aD0iMjUwIiBoZWlnaHQ9Ijc2IiByeD0iOCIgY2xhc3M9InBhc3MiLz4KICA8dGV4dCB4PSIxNjUiIHk9IjM5OCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9Im1vbm8iPnBhc3M8L3RleHQ+CiAgPHRleHQgeD0iMTY1IiB5PSI0MTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJib3giPumBqeeUqOOBp+OBjeOAgeWVj+mhjOOBjOOBquOBhDwvdGV4dD4KICA8dGV4dCB4PSIxNjUiIHk9IjQzOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj7oqJjpjLLjgZnjgovjgaDjgZHjgaflh7rlipvjgZfjgarjgYQ8L3RleHQ+CgogIDxyZWN0IHg9IjMyMCIgeT0iMzc2IiB3aWR0aD0iMjUwIiBoZWlnaHQ9Ijc2IiByeD0iOCIgY2xhc3M9Im5hIi8+CiAgPHRleHQgeD0iNDQ1IiB5PSIzOTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJtb25vIj5ub3QtYXBwbGljYWJsZTwvdGV4dD4KICA8dGV4dCB4PSI0NDUiIHk9IjQxOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJveCI+5a++6LGh5aSW44CC5L+d6K2356+E5Zuy44Gr44GL44GL44KL566H5omAPC90ZXh0PgogIDx0ZXh0IHg9IjQ0NSIgeT0iNDM4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ic21hbGwiPuiomOmMsuOBmeOCi+OBoOOBkeOBp+WHuuWKm+OBl+OBquOBhO+8iDY46KGM77yJPC90ZXh0PgoKICA8cmVjdCB4PSI2MDAiIHk9IjM3NiIgd2lkdGg9IjI1MCIgaGVpZ2h0PSI3NiIgcng9IjgiIGNsYXNzPSJhY3QiLz4KICA8dGV4dCB4PSI3MjUiIHk9IjM5OCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9Im1vbm8iPmFjdGlvbmFibGU8L3RleHQ+CiAgPHRleHQgeD0iNzI1IiB5PSI0MTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJib3giPuimj+WJh+OBq+WPjeOBl+OAgeWuieWFqOOBq+S/ruato+OBp+OBjeOCizwvdGV4dD4KICA8dGV4dCB4PSI3MjUiIHk9IjQ0MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9Im1vbm8iPuKGkiBkZWNpc2lvbjogcmVwYWlyPC90ZXh0PgoKICA8cmVjdCB4PSI4ODAiIHk9IjM3NiIgd2lkdGg9IjI1MCIgaGVpZ2h0PSI3NiIgcng9IjgiIGNsYXNzPSJjb25mIi8+CiAgPHRleHQgeD0iMTAwNSIgeT0iMzk4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ibW9ubyI+bmVlZHMtY29uZmlybWF0aW9uPC90ZXh0PgogIDx0ZXh0IHg9IjEwMDUiIHk9IjQxOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJveCI+5Y6f5paH44Gr44Gq44GE5oOF5aCx44KE5oSP5Zuz44GM5b+F6KaBPC90ZXh0PgogIDx0ZXh0IHg9IjEwMDUiIHk9IjQ0MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9Im1vbm8iPuKGkiBkZWNpc2lvbjogY29uZmlybTwvdGV4dD4KCiAgPCEtLSBtb2RlIG5vdGVzIC0tPgogIDx0ZXh0IHg9IjQwIiB5PSI0ODYiIGNsYXNzPSJsYWJlbCI+44Oi44O844OJ5Yil44Gu6KOc5q2j77yI5Yik5a6a44Gr5b2x6Z+/44GZ44KL77yJPC90ZXh0PgogIDxyZWN0IHg9IjQwIiB5PSI0OTYiIHdpZHRoPSIyNTUiIGhlaWdodD0iMTIyIiByeD0iOCIgY2xhc3M9InNhZmUiLz4KICA8dGV4dCB4PSI1MiIgeT0iNTE4IiBjbGFzcz0iYm94Ij7jgrvjg7zjg5Xjg6Ljg7zjg4nvvIgyNDbooYzvvIk8L3RleHQ+CiAgPHRleHQgeD0iNTIiIHk9IjUzOCIgY2xhc3M9InNtYWxsIj7liIbmnpDjg6Hjg6Ljga4gYW1iaWd1aXRpZXMg44Gr5b2T44Gf44KLPC90ZXh0PgogIDx0ZXh0IHg9IjUyIiB5PSI1NTYiIGNsYXNzPSJzbWFsbCI+566H5omA44GvIGFjdGlvbmFibGUg44Gr44Gb44GaPC90ZXh0PgogIDx0ZXh0IHg9IjUyIiB5PSI1NzQiIGNsYXNzPSJzbWFsbCI+bmVlZHMtY29uZmlybWF0aW9uIOOBq+OBl+OBpuOAgTwvdGV4dD4KICA8dGV4dCB4PSI1MiIgeT0iNTkyIiBjbGFzcz0ic21hbGwiPuWOn+aWh+OCkuS/neaMgeOBmeOCizwvdGV4dD4KCiAgPHJlY3QgeD0iMzE1IiB5PSI0OTYiIHdpZHRoPSIyNTUiIGhlaWdodD0iMTIyIiByeD0iOCIgY2xhc3M9ImRlc3Ryb3kiLz4KICA8dGV4dCB4PSIzMjciIHk9IjUxOCIgY2xhc3M9ImJveCI+44OH44K544OI44Ot44Kk44Oi44O844OJ77yINjbooYzvvIk8L3RleHQ+CiAgPHRleHQgeD0iMzI3IiB5PSI1MzgiIGNsYXNzPSJzbWFsbCI+bmVlZHMtY29uZmlybWF0aW9uIOOBrueuh+aJgOOCkuacgOOCgjwvdGV4dD4KICA8dGV4dCB4PSIzMjciIHk9IjU1NiIgY2xhc3M9InNtYWxsIj7oh6rnhLbjgarop6Pph4jjgacgYWN0aW9uYWJsZSDjgavjgZfjgabjgojjgYTjgII8L3RleHQ+CiAgPHRleHQgeD0iMzI3IiB5PSI1NzQiIGNsYXNzPSJzbWFsbCI+5LqL5a6f44Gr6Zai44KP44KL44KC44Gu77yIbWF0Y2gtPC90ZXh0PgogIDx0ZXh0IHg9IjMyNyIgeT0iNTkyIiBjbGFzcz0ic21hbGwiPmV4cHJlc3Npb24tdG8tZmFjdHMg44Gq44Gp77yJ44GvPC90ZXh0PgogIDx0ZXh0IHg9IjMyNyIgeT0iNjEwIiBjbGFzcz0ic21hbGwiPm5lZWRzLWNvbmZpcm1hdGlvbiDjga7jgb7jgb48L3RleHQ+CgogIDwhLS0ga2VlcCAtLT4KICA8cmVjdCB4PSI0MCIgeT0iNjI0IiB3aWR0aD0iNTIwIiBoZWlnaHQ9IjU2IiByeD0iOCIgY2xhc3M9Im5vdGUiLz4KICA8dGV4dCB4PSIzMDAiIHk9IjY0NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJveCI+5oSP5Zuz55qE44Gr5q6L44GZ566H5omA77yI44CM6KOc44KP44Gq44GE44CN5LiA6Kan44Gr5b2T44Gf44KL566H5omA44Gq44Gp77yJPC90ZXh0PgogIDx0ZXh0IHg9IjMwMCIgeT0iNjY2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ibW9ubyI+4oaSIGRlY2lzaW9uOiBrZWVw77yIcnVsZV9pZHMg44Gv56m66YWN5YiX5Y+v44CBMjQz6KGM77yJPC90ZXh0PgogIDxwYXRoIGQ9Ik0gNTYwIDY1MiBMIDU4MCA2NTIiIGNsYXNzPSJlZGdlIi8+CgogIDwhLS0gcmVjb3JkIC0tPgogIDxwYXRoIGQ9Ik0gNzI1IDQ1MiBMIDcyNSA2MTAiIGNsYXNzPSJlZGdlIi8+CiAgPHBhdGggZD0iTSAxMDA1IDQ1MiBMIDEwMDUgNjEwIiBjbGFzcz0iZWRnZSIvPgogIDxyZWN0IHg9IjU4MCIgeT0iNjEwIiB3aWR0aD0iNTgwIiBoZWlnaHQ9IjcwIiByeD0iOCIgY2xhc3M9InJlY29yZCIvPgogIDx0ZXh0IHg9Ijg3MCIgeT0iNjM0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYm94Ij5yZXdyaXRlX3RhcmdldHMg44Gu5ZCE6KaB57Sg44GrIGRlY2lzaW9uIOOBqCBydWxlX2lkc++8iOS4uyBJRCDjgpLlhYjpoK3vvInjgpLoqJjpjLLvvIgyNDPooYzvvIk8L3RleHQ+CiAgPHRleHQgeD0iODcwIiB5PSI2NTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJzbWFsbCI+5a6M5LqG5p2h5Lu2OiA0OOWAi+OBriBJRCDjgZnjgbnjgabjgavnirbmhYvjgYzku5jjgY3jgIFhY3Rpb25hYmxlIOOBqCBuZWVkcy1jb25maXJtYXRpb24g44GMPC90ZXh0PgogIDx0ZXh0IHg9Ijg3MCIgeT0iNjcxIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ic21hbGwiPnJ1bGVfaWRzIOS7mOOBjeOBp+iomOmMsuOBleOCjOOBpuOBhOOCi++8iDI0OOihjO+8iTwvdGV4dD4KCiAgPCEtLSBQaGFzZSA0IGJhbmQgLS0+CiAgPHJlY3QgeD0iMjAiIHk9IjcxNiIgd2lkdGg9IjExNDAiIGhlaWdodD0iNjAiIHJ4PSIxMCIgY2xhc3M9ImJhbmQiLz4KICA8dGV4dCB4PSIzNiIgeT0iNzQwIiBjbGFzcz0iYmFuZC1sYWJlbCI+UGhhc2UgNDwvdGV4dD4KICA8cGF0aCBkPSJNIDg3MCA2ODAgTCA4NzAgNzI2IiBjbGFzcz0iZWRnZSIvPgogIDxyZWN0IHg9IjU4MCIgeT0iNzI2IiB3aWR0aD0iNTgwIiBoZWlnaHQ9IjQwIiByeD0iOCIgY2xhc3M9Im5vZGUiLz4KICA8dGV4dCB4PSI4NzAiIHk9Ijc1MSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJveCI+5Yi257SE44Gr5rK/44Gj44Gm55Sf5oiQ44GZ44KL44CCUDQg6KaP5YmH44Gv5pS56KGM5Y2Y5L2N44Gu5oyH5a6a44GM44GC44KL44Go44GN44Gg44GR6YGp55So77yIMjQw6KGM77yJPC90ZXh0PgoKICA8IS0tIFBoYXNlIDUgYmFuZCAtLT4KICA8cmVjdCB4PSIyMCIgeT0iNzkyIiB3aWR0aD0iMTE0MCIgaGVpZ2h0PSIyMTgiIHJ4PSIxMCIgY2xhc3M9ImJhbmQiLz4KICA8dGV4dCB4PSIzNiIgeT0iODE2IiBjbGFzcz0iYmFuZC1sYWJlbCI+UGhhc2UgNTog5YCZ6KOc5paH44KS5qSc5p+744GZ44KL77yIMjY344CcMjk46KGM77yJPC90ZXh0PgogIDxwYXRoIGQ9Ik0gODcwIDc2NiBMIDg3MCA4MDQiIGNsYXNzPSJlZGdlIi8+CiAgPHJlY3QgeD0iNTgwIiB5PSI4MDQiIHdpZHRoPSI1ODAiIGhlaWdodD0iNjAiIHJ4PSI4IiBjbGFzcz0ibm9kZSIvPgogIDx0ZXh0IHg9Ijg3MCIgeT0iODI4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYm94Ij7lgJnoo5zmlofjgas0OOimj+WJh+OCkuWGjeeFp+WQiOOBmeOCi++8iDI2OeihjO+8iTwvdGV4dD4KICA8dGV4dCB4PSI4NzAiIHk9Ijg1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj7jg4fjgrnjg4jjg63jgqQ6IOWGjeino+aekOOBm+OBmiBMTE0g5Ye65omA44Gn5Yik5a6aIO+8jyDjgrvjg7zjg5U6IOWGjeino+aekOOBl+OBn+WIhuaekOODoeODouOBp+WIpOWumjwvdGV4dD4KCiAgPHBhdGggZD0iTSA4NzAgODY0IEwgODcwIDg3NiIgY2xhc3M9ImVkZ2UiLz4KICA8cG9seWdvbiBwb2ludHM9Ijg3MCw4NzYgMTA3MCw5MDQgODcwLDkzMiA2NzAsOTA0IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiM0NzU1NjkiIHN0cm9rZS13aWR0aD0iMS40Ii8+CiAgPHRleHQgeD0iODcwIiB5PSI5MDkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJib3giPuaWsOOBn+OBqiBhY3Rpb25hYmxlIOOBjOOBguOCi++8nzwvdGV4dD4KCiAgPHRleHQgeD0iODgwIiB5PSI5NTIiIGNsYXNzPSJsYWJlbCI+44GE44GE44GIPC90ZXh0PgogIDxwYXRoIGQ9Ik0gODcwIDkzMiBMIDg3MCA5NjAiIGNsYXNzPSJlZGdlIi8+CiAgPHJlY3QgeD0iNjgwIiB5PSI5NjAiIHdpZHRoPSIzODAiIGhlaWdodD0iNDAiIHJ4PSI4IiBjbGFzcz0ibm9kZSIvPgogIDx0ZXh0IHg9Ijg3MCIgeT0iOTg1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYm94Ij7lrozkuobmnaHku7Y6IOWAmeijnOaWh+OBpyBhY3Rpb25hYmxlIOOBjDDku7bvvIgyOTjooYzvvIk8L3RleHQ+CgogIDx0ZXh0IHg9IjYwMCIgeT0iODk2IiBjbGFzcz0ibGFiZWwiPuOBr+OBhDwvdGV4dD4KICA8cGF0aCBkPSJNIDY3MCA5MDQgTCA1NjAgOTA0IiBjbGFzcz0iZWRnZSIvPgogIDxyZWN0IHg9IjMwMCIgeT0iODc2IiB3aWR0aD0iMjYwIiBoZWlnaHQ9IjU2IiByeD0iOCIgY2xhc3M9Im5vZGUiLz4KICA8dGV4dCB4PSI0MzAiIHk9Ijg5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJveCI+5YCZ6KOc44KS5L+u5q2j44GX44Gm5YaN54Wn5ZCI44GZ44KLPC90ZXh0PgogIDx0ZXh0IHg9IjQzMCIgeT0iOTE5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ic21hbGwiPu+8iOacgOWkpzPlt6HvvIk8L3RleHQ+CiAgPHBhdGggZD0iTSA0MzAgODc2IEwgNDMwIDgzNCBMIDU4MCA4MzQiIGNsYXNzPSJlZGdlIi8+CgogIDxwYXRoIGQ9Ik0gMzAwIDkwNCBMIDI5MCA5MDQiIGNsYXNzPSJlZGdlIi8+CiAgPHJlY3QgeD0iNDAiIHk9Ijg3MCIgd2lkdGg9IjI1MCIgaGVpZ2h0PSI2OCIgcng9IjgiIGNsYXNzPSJjb25mIi8+CiAgPHRleHQgeD0iMTY1IiB5PSI4OTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJzbWFsbCI+M+W3oeOBp+ino+a2iOOBl+OBquOBhCBhY3Rpb25hYmxlIOOBrzwvdGV4dD4KICA8dGV4dCB4PSIxNjUiIHk9IjkwOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj5uZWVkcy1jb25maXJtYXRpb24g44Gr5aSJ44GI44GmPC90ZXh0PgogIDx0ZXh0IHg9IjE2NSIgeT0iOTI2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ic21hbGwiPuimgeeiuuiqjeOBuOWHuuOBme+8iDI2OeihjO+8iTwvdGV4dD4KCiAgPCEtLSBQaGFzZSA2IGJhbmQgLS0+CiAgPHJlY3QgeD0iMjAiIHk9IjEwMDgiIHdpZHRoPSIxMTQwIiBoZWlnaHQ9IjIzMCIgcng9IjEwIiBjbGFzcz0iYmFuZCIvPgogIDx0ZXh0IHg9Ijc4NSIgeT0iMTAzNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJhbmQtbGFiZWwiPlBoYXNlIDY6IOWHuuWKm+OBmeOCi++8iDMwMOOAnDMzMOihjO+8iTwvdGV4dD4KICA8cGF0aCBkPSJNIDg3MCAxMDAwIEwgODcwIDEwMTYiIGNsYXNzPSJsaW5lIi8+CiAgPHBhdGggZD0iTSAyMTAgMTAxNiBMIDk4MCAxMDE2IiBjbGFzcz0ibGluZSIvPgogIDxwYXRoIGQ9Ik0gMjEwIDEwMTYgTCAyMTAgMTA1MCIgY2xhc3M9ImVkZ2UiLz4KICA8cGF0aCBkPSJNIDU5MCAxMDE2IEwgNTkwIDEwNTAiIGNsYXNzPSJlZGdlIi8+CiAgPHBhdGggZD0iTSA5ODAgMTAxNiBMIDk4MCAxMDUwIiBjbGFzcz0iZWRnZSIvPgogIDxwYXRoIGQ9Ik0gMTY1IDkzOCBMIDE2NSAxMDUwIiBjbGFzcz0iZWRnZSIvPgoKICA8cmVjdCB4PSI0MCIgeT0iMTA1MCIgd2lkdGg9IjM0MCIgaGVpZ2h0PSI4OCIgcng9IjgiIGNsYXNzPSJvdXQiLz4KICA8dGV4dCB4PSIyMTAiIHk9IjEwNzIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJib3giPlBoYXNlIDY6IOimgeeiuuiqje+8iHBvbGlzaCDjgafjgoLlh7rjgZnvvIk8L3RleHQ+CiAgPHRleHQgeD0iMjEwIiB5PSIxMDk0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ibW9ubyI+LSBge0lEfWA6IOWOn+aWh+OBoOOBkeOBp+OBr+WIpOaWreOBp+OBjeOBquOBhOeCuTwvdGV4dD4KICA8dGV4dCB4PSIyMTAiIHk9IjExMTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJzbWFsbCI+6KaP5YmH44Gr5a++5b+c44GX44Gq44GE44KC44Gu44GvIElEIOOBquOBl++8iDMwNeihjO+8iTwvdGV4dD4KCiAgPHJlY3QgeD0iNDEwIiB5PSIxMDUwIiB3aWR0aD0iMzYwIiBoZWlnaHQ9Ijg4IiByeD0iOCIgY2xhc3M9Im91dCIvPgogIDx0ZXh0IHg9IjU5MCIgeT0iMTA3MiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJveCI+ZGlhZ25vc3RpYyDjga7jgb86IOmBqeeUqOODq+ODvOODq++8iDMxMuihjO+8iTwvdGV4dD4KICA8dGV4dCB4PSI1OTAiIHk9IjEwOTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJtb25vIj4tIGB7SUR9YDog5a++6LGh566H5omA44Go5L+u5q2j5YaF5a65PC90ZXh0PgogIDx0ZXh0IHg9IjU5MCIgeT0iMTExNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj5hY3Rpb25hYmxlIOOBjOOBquOBkeOCjOOBsOOAjOmBqeeUqOODq+ODvOODqzog44Gq44GX44CNPC90ZXh0PgoKICA8cmVjdCB4PSI4MDAiIHk9IjEwNTAiIHdpZHRoPSIzNjAiIGhlaWdodD0iODgiIHJ4PSI4IiBjbGFzcz0ib3V0Ii8+CiAgPHRleHQgeD0iOTgwIiB5PSIxMDcyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYm94Ij7nm6Pmn7vopoHmsYLmmYLjga7jgb86IDQ46KGM44Gu55uj5p+75LiA6Kan77yIMzE26KGM77yJPC90ZXh0PgogIDx0ZXh0IHg9Ijk4MCIgeT0iMTA5NCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9Im1vbm8iPnwgSUQgfCBzdGF0dXMgfCDmoLnmi6Djgb7jgZ/jga/lr77osaHnrofmiYAgfDwvdGV4dD4KICA8dGV4dCB4PSI5ODAiIHk9IjExMTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJzbWFsbCI+5Yik5a6a44KS5a6M5LqG44Gn44GN44Gq44GR44KM44Gw5Ye644GV44Ga5YGc5q2i55CG55Sx44KS5aCx5ZGKPC90ZXh0PgoKICA8cmVjdCB4PSI0MCIgeT0iMTE2MCIgd2lkdGg9IjExMjAiIGhlaWdodD0iNjAiIHJ4PSI4IiBjbGFzcz0ibm90ZSIvPgogIDx0ZXh0IHg9IjYwMCIgeT0iMTE4MyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj5MTE0g5Ye65omA44Gu5Yik5a6a77yI57Sg5oCn44GM44Gq44GPIExMTSDjgbjlgJLjgZfjgZ/jgoLjga7jgpLlkKvjgoDvvInjga/jgIFkaWFnbm9zdGljIOOBrumBqeeUqOODq+ODvOODq+OBqOimgeeiuuiqjeOBruihjOacq+OBq+OAjO+8iExMTSDliKTmlq3vvInjgI3jgpLku5jjgZHjgovjgII8L3RleHQ+CiAgPHRleHQgeD0iNjAwIiB5PSIxMjA1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ic21hbGwiPnBvbGlzaCDjgafjga/ku5jjgZHjgarjgYTvvIgzMTTooYzvvInjgILnm6Pmn7vkuIDopqfjgafjga/moLnmi6DmrITjgavjgIxMTE0g5Yik5pat44CN44Go5pu444GP77yIMzIx6KGM77yJPC90ZXh0Pgo8L3N2Zz4K" alt="48規則の判定が Phase 3 から Phase 6 へ流れる経路">
+</div>
+<div class="title">Figure 1. 48規則の判定が Phase 3 で決まり、Phase 5 で再照合され、Phase 6 で3種類の出力になるまでの流れ。モード別の補正と <code>（LLM 判断）</code> の付与を含む</div>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">入力</dt>
+<dd>
+<p>Phase 1 の分析メモ、Phase 2 の制約、原文、ユーザーの依頼（改行単位の指定の有無など）。</p>
+</dd>
+<dt class="hdlist1">判断</dt>
+<dd>
+<p>各規則を、ID 表の「出所」列が示す材料で判定する。<code>P1</code>（30規則）は分析メモと KWJA 出力、<code>P2</code>（11規則）は Phase 2 で固定した制約、<code>P4</code>（1規則）は改行単位の指定の有無、<code>LLM</code>（6規則）は原文と文脈である。出所が <code>P1</code> でも、手がかりの素性が KWJA 出力にない規則は <code>LLM</code> 出所として判定し、その旨を記録する。素性がないことを理由に <code>not-applicable</code> にはしない（241行）。</p>
+</dd>
+<dt class="hdlist1">正常時の結果</dt>
+<dd>
+<p>48個の ID すべてに状態が付き、<code>actionable</code> と <code>needs-confirmation</code> が <code>rewrite_targets</code> に <code>rule_ids</code> 付きで記録される（248行）。Phase 5 の再照合で <code>actionable</code> が0件になる（298行）。Phase 6 では <code>要確認</code> が <code>- <code>{ID}</code>: {原文だけでは判断できない点}</code> の形で出る（305行）。</p>
+</dd>
+<dt class="hdlist1">失敗時の結果</dt>
+<dd>
+<p>Phase 5 で3巡しても <code>actionable</code> が残る場合は <code>needs-confirmation</code> に変えて <code>要確認</code> に出す（269行）。Phase 3 より前に停止した場合は、監査一覧を部分的に出さず停止理由を報告する（316行）。</p>
+</dd>
+<dt class="hdlist1">不変条件</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>ID は表の48個だけを使い、省略、改名、再利用しない（96行）。</p>
+</li>
+<li>
+<p><code>pass</code> と <code>not-applicable</code> は記録するだけで出力しない（243行）。</p>
+</li>
+<li>
+<p>コード、コマンド、ファイルパス、API 名などの保護範囲は両モードで守り、保護範囲にかかる箇所への判定は <code>not-applicable</code>、保護範囲の外には同じ規則を通常どおり適用する（68行）。</p>
+</li>
+<li>
+<p><code>needs-confirmation</code> はどの出力でも省略しない（325行）。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">設計上の判断</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>判定を Phase 3 に集約し、Phase 5 は再照合、Phase 6 は出力だけを担う（要件 D-01、非機能要件「保守性」）。</p>
+</li>
+<li>
+<p><code>rewrite_targets</code> の要素形（<code>decision</code>、<code>rule_ids</code>）は親スキルが定める記録で、analyzer の出力契約は変えない（要件 D-04）。</p>
+</li>
+<li>
+<p>デストロイモードは候補文を KWJA で再解析しないため、Phase 5 の再照合は <code>LLM</code> 出所で行う。セーフモードは意味回帰検査で再解析した分析メモを使う（269行、要件 FR-06）。</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_出力先と出力モードの分岐">5.2. 出力先と出力モードの分岐</h3>
+<div class="imageblock">
+<div class="content">
+<img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMTgwIDgyMCIgd2lkdGg9IjExODAiIGhlaWdodD0iODIwIiByb2xlPSJpbWciIGFyaWEtbGFiZWxsZWRieT0idCBkIj4KICA8dGl0bGUgaWQ9InQiPuWHuuWKm+WFiOOBqOWHuuWKm+ODouODvOODieOBruWIhuWykDwvdGl0bGU+CiAgPGRlc2MgaWQ9ImQiPuS+nemgvOaWh+OBi+OCiSBzYWZlIOW8leaVsOOBp+ODouODvOODieOCkuaxuuOCgeOAgeWHuuWKm+WFiO+8iOODleOCoeOCpOODq+e3qOmbhuOAgeW/nOetlOacrOaWh+OAgeacrOaWh+OCkuWkieabtOOBl+OBquOBhO+8ieOBqOWHuuWKm+ODouODvOODie+8iHBvbGlzaOOAgWRpYWdub3N0aWPvvInjgIHov73liqDopoHmsYLvvIjmnIDntYLniYjjgaDjgZHjgIHnm6Pmn7vjgZfjgabvvInjgavlv5zjgZjjgabkvZXjgpLlh7rlipvjgZnjgovjgYvjgpLnpLrjgZnjgII8L2Rlc2M+CiAgPGRlZnM+CiAgICA8bWFya2VyIGlkPSJhcnJvdyIgdmlld0JveD0iMCAwIDEwIDEwIiByZWZYPSI5IiByZWZZPSI1IiBtYXJrZXJXaWR0aD0iOCIgbWFya2VySGVpZ2h0PSI4IiBvcmllbnQ9ImF1dG8tc3RhcnQtcmV2ZXJzZSI+CiAgICAgIDxwYXRoIGQ9Ik0gMCAwIEwgMTAgNSBMIDAgMTAgeiIgZmlsbD0iIzMzNDE1NSIvPgogICAgPC9tYXJrZXI+CiAgICA8bWFya2VyIGlkPSJhcnJvdy1kYXNoIiB2aWV3Qm94PSIwIDAgMTAgMTAiIHJlZlg9IjkiIHJlZlk9IjUiIG1hcmtlcldpZHRoPSI4IiBtYXJrZXJIZWlnaHQ9IjgiIG9yaWVudD0iYXV0by1zdGFydC1yZXZlcnNlIj4KICAgICAgPHBhdGggZD0iTSAwIDAgTCAxMCA1IEwgMCAxMCB6IiBmaWxsPSIjYjkxYzFjIi8+CiAgICA8L21hcmtlcj4KICAgIDxzdHlsZT4KICAgICAgdGV4dCB7IGZvbnQtZmFtaWx5OiAiTm90byBTYW5zIEpQIiwgIkhpcmFnaW5vIFNhbnMiLCAiWXUgR290aGljIiwgIk1laXJ5byIsIHNhbnMtc2VyaWY7IGZpbGw6ICMxZTI5M2I7IH0KICAgICAgLnRpdGxlIHsgZm9udC1zaXplOiAyMHB4OyBmb250LXdlaWdodDogNzAwOyB9CiAgICAgIC5ib3ggeyBmb250LXNpemU6IDE0cHg7IH0KICAgICAgLmJvbGQgeyBmb250LXNpemU6IDE0cHg7IGZvbnQtd2VpZ2h0OiA3MDA7IH0KICAgICAgLnNtYWxsIHsgZm9udC1zaXplOiAxM3B4OyB9CiAgICAgIC5tb25vIHsgZm9udC1mYW1pbHk6ICJTRk1vbm8tUmVndWxhciIsIE1lbmxvLCBDb25zb2xhcywgbW9ub3NwYWNlOyBmb250LXNpemU6IDEzcHg7IH0KICAgICAgLmVkZ2UgeyBzdHJva2U6ICMzMzQxNTU7IHN0cm9rZS13aWR0aDogMS42OyBmaWxsOiBub25lOyBtYXJrZXItZW5kOiB1cmwoI2Fycm93KTsgfQogICAgICAubGluZSB7IHN0cm9rZTogIzMzNDE1NTsgc3Ryb2tlLXdpZHRoOiAxLjY7IGZpbGw6IG5vbmU7IH0KICAgICAgLmVkZ2Utc3RvcCB7IHN0cm9rZTogI2I5MWMxYzsgc3Ryb2tlLXdpZHRoOiAxLjQ7IGZpbGw6IG5vbmU7IHN0cm9rZS1kYXNoYXJyYXk6IDYgNDsgbWFya2VyLWVuZDogdXJsKCNhcnJvdy1kYXNoKTsgfQogICAgICAubGFiZWwgeyBmb250LXNpemU6IDEzcHg7IGZpbGw6ICMzMzQxNTU7IH0KICAgICAgLm5vZGUgeyBmaWxsOiAjZmZmZmZmOyBzdHJva2U6ICM0NzU1Njk7IHN0cm9rZS13aWR0aDogMS40OyB9CiAgICAgIC5zYWZlIHsgZmlsbDogI2VmZjZmZjsgc3Ryb2tlOiAjMWQ0ZWQ4OyBzdHJva2Utd2lkdGg6IDEuNDsgfQogICAgICAuZGVzdHJveSB7IGZpbGw6ICNmZmZiZWI7IHN0cm9rZTogI2I0NTMwOTsgc3Ryb2tlLXdpZHRoOiAxLjQ7IH0KICAgICAgLmRlc3QgeyBmaWxsOiAjZTBmMmZlOyBzdHJva2U6ICMwMzY5YTE7IHN0cm9rZS13aWR0aDogMS40OyB9CiAgICAgIC5wb2xpc2ggeyBmaWxsOiAjZGNmY2U3OyBzdHJva2U6ICMxNTgwM2Q7IHN0cm9rZS13aWR0aDogMS40OyB9CiAgICAgIC5kaWFnIHsgZmlsbDogI2ZmZWRkNTsgc3Ryb2tlOiAjYzI0MTBjOyBzdHJva2Utd2lkdGg6IDEuNDsgfQogICAgICAubm9jaGFuZ2UgeyBmaWxsOiAjZWRlOWZlOyBzdHJva2U6ICM2ZDI4ZDk7IHN0cm9rZS13aWR0aDogMS40OyB9CiAgICAgIC5tb2QgeyBmaWxsOiAjZjFmNWY5OyBzdHJva2U6ICM5NGEzYjg7IHN0cm9rZS13aWR0aDogMS4yOyBzdHJva2UtZGFzaGFycmF5OiA1IDM7IH0KICAgICAgLnN0b3AgeyBmaWxsOiAjZmVlMmUyOyBzdHJva2U6ICNiOTFjMWM7IHN0cm9rZS13aWR0aDogMS40OyB9CiAgICAgIC5vdXQgeyBmaWxsOiAjZjBmZGY0OyBzdHJva2U6ICMxNjY1MzQ7IHN0cm9rZS13aWR0aDogMS40OyB9CiAgICA8L3N0eWxlPgogIDwvZGVmcz4KCiAgPHRleHQgeD0iNTkwIiB5PSIzMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InRpdGxlIj7lh7rlipvlhYjjgajlh7rlipvjg6Ljg7zjg4njga7liIblspDvvIjlhaXlipvjgajlh7rlipvjg6Ljg7zjg4kgMznjgJw2MeihjOOAgVBoYXNlIDYgMzAw44CcMzMw6KGM77yJPC90ZXh0PgoKICA8IS0tIGlucHV0IC0tPgogIDxyZWN0IHg9IjQ0MCIgeT0iNTIiIHdpZHRoPSIzMDAiIGhlaWdodD0iNDQiIHJ4PSI4IiBjbGFzcz0ibm9kZSIvPgogIDx0ZXh0IHg9IjU5MCIgeT0iNzkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJib3giPuS+nemgvOaWhyDvvIsg5pys5paH44G+44Gf44Gv44OV44Kh44Kk44Or44OR44K577yINDHooYzvvIk8L3RleHQ+CiAgPHBhdGggZD0iTSA1OTAgOTYgTCA1OTAgMTI0IiBjbGFzcz0iZWRnZSIvPgoKICA8IS0tIHNhZmUgZGVjaXNpb24gLS0+CiAgPHBvbHlnb24gcG9pbnRzPSI1OTAsMTI0IDgxMCwxNTQgNTkwLDE4NCAzNzAsMTU0IiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiM0NzU1NjkiIHN0cm9rZS13aWR0aD0iMS40Ii8+CiAgPHRleHQgeD0iNTkwIiB5PSIxNTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJib3giPuesrOS4gOW8leaVsOOBjOato+eiuuOBqyBzYWZlIOOBi++8n++8iDQy6KGM77yJPC90ZXh0PgoKICA8dGV4dCB4PSIzMzAiIHk9IjE0NiIgY2xhc3M9ImxhYmVsIj7jga/jgYQ8L3RleHQ+CiAgPHBhdGggZD0iTSAzNzAgMTU0IEwgMzIwIDE1NCIgY2xhc3M9ImVkZ2UiLz4KICA8cmVjdCB4PSI2MCIgeT0iMTMwIiB3aWR0aD0iMjYwIiBoZWlnaHQ9IjQ4IiByeD0iOCIgY2xhc3M9InNhZmUiLz4KICA8dGV4dCB4PSIxOTAiIHk9IjE1MSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJvbGQiPuOCu+ODvOODleODouODvOODiTwvdGV4dD4KICA8dGV4dCB4PSIxOTAiIHk9IjE2OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj7ljp/mhI/jgpLljrPlr4bjgavkv53jgaTvvIg3MOOAnDg06KGM77yJPC90ZXh0PgoKICA8dGV4dCB4PSI4MjAiIHk9IjE0NiIgY2xhc3M9ImxhYmVsIj7jgYTjgYTjgYg8L3RleHQ+CiAgPHBhdGggZD0iTSA4MTAgMTU0IEwgODYwIDE1NCIgY2xhc3M9ImVkZ2UiLz4KICA8cmVjdCB4PSI4NjAiIHk9IjEzMCIgd2lkdGg9IjI4MCIgaGVpZ2h0PSI0OCIgcng9IjgiIGNsYXNzPSJkZXN0cm95Ii8+CiAgPHRleHQgeD0iMTAwMCIgeT0iMTUxIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYm9sZCI+44OH44K544OI44Ot44Kk44Oi44O844OJ77yI5pei5a6a77yJPC90ZXh0PgogIDx0ZXh0IHg9IjEwMDAiIHk9IjE2OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj7oh6rnhLbjgZXjgpLlhKrlhYjvvIg2NeOAnDY26KGM77yJPC90ZXh0PgoKICA8IS0tIG1lcmdlIHRvIHNldHRpbmdzIC0tPgogIDxwYXRoIGQ9Ik0gMTkwIDE3OCBMIDE5MCAyMzIiIGNsYXNzPSJlZGdlIi8+CiAgPHBhdGggZD0iTSAxMDAwIDE3OCBMIDEwMDAgMjMyIiBjbGFzcz0iZWRnZSIvPgogIDxyZWN0IHg9IjE0MCIgeT0iMjMyIiB3aWR0aD0iOTAwIiBoZWlnaHQ9IjQ0IiByeD0iOCIgY2xhc3M9Im5vZGUiLz4KICA8dGV4dCB4PSI1OTAiIHk9IjI1OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJveCI+6ZaL5aeL5pmC44Gr56K65a6a44GZ44KLOiDlr77osaHnr4Tlm7LjgIHlh7rlipvlhYjjgIHlqpLkvZPjgajmlofkvZPjgIHlh7rlipvjg6Ljg7zjg4nvvIg0NuOAnDUx6KGM77yJPC90ZXh0PgoKICA8IS0tIGVhcmx5IHN0b3AgKFBoYXNlIDEgZmFpbHVyZSkgLS0+CiAgPHBhdGggZD0iTSAxMDQwIDI1NCBMIDExNjIgMjU0IEwgMTE2MiA3OCBMIDExNDAgNzgiIGNsYXNzPSJlZGdlLXN0b3AiLz4KICA8cmVjdCB4PSI4MDAiIHk9IjQwIiB3aWR0aD0iMzQwIiBoZWlnaHQ9Ijg0IiByeD0iOCIgY2xhc3M9InN0b3AiLz4KICA8dGV4dCB4PSI5NzAiIHk9IjYxIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYm9sZCI+UGhhc2UgMSDjgacgS1dKQSDjgYzlpLHmlZfjgZfjgZ/jgonlgZzmraI8L3RleHQ+CiAgPHRleHQgeD0iOTcwIiB5PSI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj7ljp/lm6DjgpLloLHlkYrjgZfjgIHopo/liYfliKTlrprjgaDjgZHjgpI8L3RleHQ+CiAgPHRleHQgeD0iOTcwIiB5PSI5OCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj5MTE0g44Gn57aa6KGM44GX44Gq44GE77yIMzPjgJwzNOihjO+8iTwvdGV4dD4KICA8dGV4dCB4PSI5NzAiIHk9IjExNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj7nm6Pmn7vkuIDopqfjgoLpg6jliIbnmoTjgavlh7rjgZXjgZrjgIHlgZzmraLnkIbnlLHjgpLloLHlkYrvvIgzMTbooYzvvIk8L3RleHQ+CgogIDwhLS0gZGVzdGluYXRpb25zIC0tPgogIDxwYXRoIGQ9Ik0gMjIwIDI3NiBMIDIyMCAzMTgiIGNsYXNzPSJlZGdlIi8+CiAgPHBhdGggZD0iTSA1OTAgMjc2IEwgNTkwIDMxOCIgY2xhc3M9ImVkZ2UiLz4KICA8cGF0aCBkPSJNIDk2MCAyNzYgTCA5NjAgMzE4IiBjbGFzcz0iZWRnZSIvPgoKICA8cmVjdCB4PSI2MCIgeT0iMzE4IiB3aWR0aD0iMzIwIiBoZWlnaHQ9IjY0IiByeD0iOCIgY2xhc3M9ImRlc3QiLz4KICA8dGV4dCB4PSIyMjAiIHk9IjM0MSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJvbGQiPuWHuuWKm+WFiDog44OV44Kh44Kk44Or57eo6ZuGPC90ZXh0PgogIDx0ZXh0IHg9IjIyMCIgeT0iMzYzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ic21hbGwiPuS/ruato+OCkuWPjeaYoOOBl+OAgeacrOaWh+OBr+WGjeaOsuOBl+OBquOBhO+8iDMwMuihjO+8iTwvdGV4dD4KCiAgPHJlY3QgeD0iNDMwIiB5PSIzMTgiIHdpZHRoPSIzMjAiIGhlaWdodD0iNjQiIHJ4PSI4IiBjbGFzcz0iZGVzdCIvPgogIDx0ZXh0IHg9IjU5MCIgeT0iMzQxIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYm9sZCI+5Ye65Yqb5YWIOiDlv5znrZTmnKzmloc8L3RleHQ+CiAgPHRleHQgeD0iNTkwIiB5PSIzNjMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJzbWFsbCI+5L+u5q2j5b6M44Gu5pys5paH44KS5YWI44Gr5Ye644GZ77yIMzAz6KGM77yJPC90ZXh0PgoKICA8cmVjdCB4PSI4MDAiIHk9IjMxOCIgd2lkdGg9IjM0MCIgaGVpZ2h0PSI2NCIgcng9IjgiIGNsYXNzPSJub2NoYW5nZSIvPgogIDx0ZXh0IHg9Ijk3MCIgeT0iMzQxIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYm9sZCI+5Ye65Yqb5YWIOiDmnKzmlofjgpLlpInmm7TjgZfjgarjgYTvvIg0OeihjO+8iTwvdGV4dD4KICA8dGV4dCB4PSI5NzAiIHk9IjM2MyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj7jgIzjg6zjg5Pjg6Xjg7zjgaDjgZHjgI3jgIznm7TjgZXjgarjgYTjgafjgI3jgIznm6Pmn7vjgaDjgZHjgI08L3RleHQ+CgogIDwhLS0gbW9kZXMgKGZpbGUgLyByZXNwb25zZSBzaGFyZSBwb2xpc2ggJiBkaWFnbm9zdGljKSAtLT4KICA8cGF0aCBkPSJNIDIyMCAzODIgTCAyMjAgNDA0IiBjbGFzcz0ibGluZSIvPgogIDxwYXRoIGQ9Ik0gNTkwIDM4MiBMIDU5MCA0MDQiIGNsYXNzPSJsaW5lIi8+CiAgPHBhdGggZD0iTSAyMjAgNDA0IEwgNTkwIDQwNCIgY2xhc3M9ImxpbmUiLz4KICA8cGF0aCBkPSJNIDIyNSA0MDQgTCAyMjUgNDI4IiBjbGFzcz0iZWRnZSIvPgogIDxwYXRoIGQ9Ik0gNTg1IDQwNCBMIDU4NSA0MjgiIGNsYXNzPSJlZGdlIi8+CgogIDxyZWN0IHg9IjYwIiB5PSI0MjgiIHdpZHRoPSIzMzAiIGhlaWdodD0iODQiIHJ4PSI4IiBjbGFzcz0icG9saXNoIi8+CiAgPHRleHQgeD0iMjI1IiB5PSI0NTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJib2xkIj5wb2xpc2jvvIjml6LlrprjgIE1NeihjO+8iTwvdGV4dD4KICA8dGV4dCB4PSIyMjUiIHk9IjQ3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj7kv67mraPlvozjga7mnKzmlocg77yLIOimgeeiuuiqjSDjgaDjgZHjgpLlh7rjgZk8L3RleHQ+CiAgPHRleHQgeD0iMjI1IiB5PSI0ODgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJzbWFsbCI+6YGp55So44Or44O844Or44Gu5LiA6Kan44KE5YaF6YOo5YiG5p6Q44Gv5Ye644GV44Gq44GE44CCPC90ZXh0PgogIDx0ZXh0IHg9IjIyNSIgeT0iNTA0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ic21hbGwiPmFjdGlvbmFibGUg44Gu5pWw44KE5paH5pWw44Gr5q+U5L6L44GX44Gm5aKX44KE44GV44Gq44GEPC90ZXh0PgoKICA8cmVjdCB4PSI0MjAiIHk9IjQyOCIgd2lkdGg9IjMzMCIgaGVpZ2h0PSI4NCIgcng9IjgiIGNsYXNzPSJkaWFnIi8+CiAgPHRleHQgeD0iNTg1IiB5PSI0NTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJib2xkIj5kaWFnbm9zdGlj77yINTbjg7s1OOihjO+8iTwvdGV4dD4KICA8dGV4dCB4PSI1ODUiIHk9IjQ3MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj7liIbmnpDjg7vnkIbnlLHjg7vllY/poYznrofmiYDjgpLmsYLjgoHjgZ/kvp3poLzjgIE8L3RleHQ+CiAgPHRleHQgeD0iNTg1IiB5PSI0ODgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJzbWFsbCI+44CM5bKp5re144Or44O844Or44Gn55u044GX44Gm44CN44Gq44Gp6KaP5YmH44KEIElEIOOBruWQjeaMh+OBl+OAgTwvdGV4dD4KICA8dGV4dCB4PSI1ODUiIHk9IjUwNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj7pgannlKjjgZfjgZ/opo/liYfjga7mj5DnpLrjgpLmsYLjgoHjgovkvp3poLw8L3RleHQ+CgogIDxwYXRoIGQ9Ik0gOTYwIDM4MiBMIDk2MCA0MDQiIGNsYXNzPSJsaW5lIi8+CiAgPHBhdGggZD0iTSA4ODAgNDA0IEwgMTA2MCA0MDQiIGNsYXNzPSJsaW5lIi8+CiAgPHBhdGggZD0iTSA4ODAgNDA0IEwgODgwIDQyOCIgY2xhc3M9ImVkZ2UiLz4KICA8cGF0aCBkPSJNIDEwNjAgNDA0IEwgMTA2MCA0MjgiIGNsYXNzPSJlZGdlIi8+CgogIDxyZWN0IHg9IjgwMCIgeT0iNDI4IiB3aWR0aD0iMTYwIiBoZWlnaHQ9Ijg0IiByeD0iOCIgY2xhc3M9Im5vY2hhbmdlIi8+CiAgPHRleHQgeD0iODgwIiB5PSI0NTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJib2xkIj7jg6zjg5Pjg6Xjg7zjgaDjgZE8L3RleHQ+CiAgPHRleHQgeD0iODgwIiB5PSI0NzQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJzbWFsbCI+YWN0aW9uYWJsZSDjgag8L3RleHQ+CiAgPHRleHQgeD0iODgwIiB5PSI0OTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJzbWFsbCI+bmVlZHMtY29uZmlybWF0aW9uPC90ZXh0PgogIDx0ZXh0IHg9Ijg4MCIgeT0iNTA4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ic21hbGwiPuOBruWIpOWumuOCkuWHuuOBme+8iDMyNOihjO+8iTwvdGV4dD4KCiAgPHJlY3QgeD0iOTgwIiB5PSI0MjgiIHdpZHRoPSIxNjAiIGhlaWdodD0iODQiIHJ4PSI4IiBjbGFzcz0ibm9jaGFuZ2UiLz4KICA8dGV4dCB4PSIxMDYwIiB5PSI0NTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJib2xkIj7nm6Pmn7vjgaDjgZE8L3RleHQ+CiAgPHRleHQgeD0iMTA2MCIgeT0iNDc0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ic21hbGwiPjQ46KGM44Gu55uj5p+75LiA6KanPC90ZXh0PgogIDx0ZXh0IHg9IjEwNjAiIHk9IjQ5MiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj7jgpLlrprnvqnpoIbjgavlh7rjgZk8L3RleHQ+CiAgPHRleHQgeD0iMTA2MCIgeT0iNTA4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ic21hbGwiPu+8iDMxNuihjO+8iTwvdGV4dD4KCiAgPCEtLSBtb2RpZmllcnMgLS0+CiAgPHBhdGggZD0iTSAyMjUgNTEyIEwgMjI1IDU0OCIgY2xhc3M9ImVkZ2UiLz4KICA8cGF0aCBkPSJNIDU4NSA1MTIgTCA1ODUgNTQ4IiBjbGFzcz0iZWRnZSIvPgogIDxyZWN0IHg9IjYwIiB5PSI1NDgiIHdpZHRoPSIzMzAiIGhlaWdodD0iNjAiIHJ4PSI4IiBjbGFzcz0ibW9kIi8+CiAgPHRleHQgeD0iMjI1IiB5PSI1NzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJib3giPuOAjOacgOe1gueJiOOBoOOBkeOAje+8iDMyNeihjO+8iTwvdGV4dD4KICA8dGV4dCB4PSIyMjUiIHk9IjU5MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InNtYWxsIj7pgannlKjjg6vjg7zjg6vjgajoqLrmlq3jgpLnnIHjgY/jgILopoHnorroqo3jga/nnIHnlaXjgZfjgarjgYQ8L3RleHQ+CgogIDxyZWN0IHg9IjQyMCIgeT0iNTQ4IiB3aWR0aD0iMzMwIiBoZWlnaHQ9IjYwIiByeD0iOCIgY2xhc3M9Im1vZCIvPgogIDx0ZXh0IHg9IjU4NSIgeT0iNTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYm94Ij7jgIznm6Pmn7vjgZfjgabjgI3vvIvmjqjmlbLvvIgzMTbooYzvvIk8L3RleHQ+CiAgPHRleHQgeD0iNTg1IiB5PSI1OTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJzbWFsbCI+ZGlhZ25vc3RpYyDjga7mnKvlsL7jgas0OOihjOOBruebo+afu+S4gOimp+OCkuWKoOOBiOOCizwvdGV4dD4KCgogIDwhLS0gb3V0cHV0cyAtLT4KICA8cGF0aCBkPSJNIDIyNSA2MDggTCAyMjUgNjYwIiBjbGFzcz0iZWRnZSIvPgogIDxwYXRoIGQ9Ik0gNTg1IDYwOCBMIDU4NSA2NjAiIGNsYXNzPSJlZGdlIi8+CiAgPHBhdGggZD0iTSA4ODAgNTEyIEwgODgwIDY2MCIgY2xhc3M9ImVkZ2UiLz4KICA8cGF0aCBkPSJNIDEwNjAgNTEyIEwgMTA2MCA2NjAiIGNsYXNzPSJlZGdlIi8+CgogIDxyZWN0IHg9IjYwIiB5PSI2NjAiIHdpZHRoPSIzMzAiIGhlaWdodD0iMTEyIiByeD0iOCIgY2xhc3M9Im91dCIvPgogIDx0ZXh0IHg9IjIyNSIgeT0iNjgyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYm9sZCI+cG9saXNoIOOBruWHuuWKmzwvdGV4dD4KICA8dGV4dCB4PSI3MiIgeT0iNzA0IiBjbGFzcz0ic21hbGwiPjEuIOS/ruato+W+jOOBruacrOaWh++8iOODleOCoeOCpOODq+e3qOmbhuOBquOCieWkieabtOamguimge+8iTwvdGV4dD4KICA8dGV4dCB4PSI3MiIgeT0iNzI0IiBjbGFzcz0ibW9ubyI+Mi4g6KaB56K66KqNOiAtIGB7SUR9YDog4oCm77yI5b+F6KaB44Gq44Go44GN44Gg44GR77yJPC90ZXh0PgogIDx0ZXh0IHg9IjcyIiB5PSI3NDQiIGNsYXNzPSJzbWFsbCI+My4g5L2/55So44GX44GfIEtXSkEg6Kej5p6Q44OV44Kh44Kk44Or44Gu44OR44K577yIMzI46KGM77yJPC90ZXh0PgogIDx0ZXh0IHg9IjcyIiB5PSI3NjIiIGNsYXNzPSJzbWFsbCI+44CM77yITExNIOWIpOaWre+8ieOAjeOBr+S7mOOBkeOBquOBhO+8iDMxNOihjO+8iTwvdGV4dD4KCiAgPHJlY3QgeD0iNDIwIiB5PSI2NjAiIHdpZHRoPSIzMzAiIGhlaWdodD0iMTEyIiByeD0iOCIgY2xhc3M9Im91dCIvPgogIDx0ZXh0IHg9IjU4NSIgeT0iNjgyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYm9sZCI+ZGlhZ25vc3RpYyDjga7lh7rlips8L3RleHQ+CiAgPHRleHQgeD0iNDMyIiB5PSI3MDQiIGNsYXNzPSJzbWFsbCI+5pys5paHIOKGkiDopoHnorroqo0g4oaSIOWVj+mhjOOBruOBguOCi+i/sOiqniDihpIg5LiN5piO44O756u25ZCI44GX44Gf6aCFPC90ZXh0PgogIDx0ZXh0IHg9IjQzMiIgeT0iNzI0IiBjbGFzcz0ic21hbGwiPuKGkiDkv67lvqnjgZfjgZ/plqLkv4Ig4oaSIOmBqeeUqOODq+ODvOODq++8iDMwN+OAnDMxMuihjO+8iTwvdGV4dD4KICA8dGV4dCB4PSI0MzIiIHk9Ijc0NCIgY2xhc3M9InNtYWxsIj5MTE0g5Ye65omA44Gu6KGM5pyr44Gr44CM77yITExNIOWIpOaWre+8ieOAje+8iDMxNOihjO+8iTwvdGV4dD4KICA8dGV4dCB4PSI0MzIiIHk9Ijc2MiIgY2xhc3M9InNtYWxsIj7jg5XjgqHjgqTjg6vnt6jpm4bjgarjgonpgannlKjjgZfjgZ8gSUQg44KC5aCx5ZGK44GZ44KLPC90ZXh0PgoKICA8cmVjdCB4PSI4MDAiIHk9IjY2MCIgd2lkdGg9IjM0MCIgaGVpZ2h0PSIxMTIiIHJ4PSI4IiBjbGFzcz0ib3V0Ii8+CiAgPHRleHQgeD0iOTcwIiB5PSI2ODIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJib2xkIj7mnKzmlofjgpLlpInmm7TjgZfjgarjgYTlh7rlips8L3RleHQ+CiAgPHRleHQgeD0iODEyIiB5PSI3MDQiIGNsYXNzPSJtb25vIj7jg6zjg5Pjg6Xjg7w6IElEIC8g5a++6LGh566H5omAIC8g5ZWP6aGMIC8g5L+u5q2j5qGIPC90ZXh0PgogIDx0ZXh0IHg9IjgxMiIgeT0iNzI0IiBjbGFzcz0ic21hbGwiPu+8iG5lZWRzLWNvbmZpcm1hdGlvbiDjga/liKTmlq3jgavlv4XopoHjgarmg4XloLHjgpLnpLrjgZnvvIk8L3RleHQ+CiAgPHRleHQgeD0iODEyIiB5PSI3NDQiIGNsYXNzPSJtb25vIj7nm6Pmn7s6IHwgSUQgfCBzdGF0dXMgfCDmoLnmi6Djgb7jgZ/jga/lr77osaHnrofmiYAgfDwvdGV4dD4KICA8dGV4dCB4PSI4MTIiIHk9Ijc2MiIgY2xhc3M9InNtYWxsIj7DlzQ46KGM44CB5a6a576p6aCG44CCcGFzcyDjgaggbm90LWFwcGxpY2FibGUg44KC5ZCr44KAPC90ZXh0PgoKICA8dGV4dCB4PSI1OTAiIHk9IjgwNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImxhYmVsIj7jganjga7lh7rlipvjgafjgoLopoHnorroqo3jga/nnIHnlaXjgZfjgarjgYTvvIgzMjXooYzvvInjgILnm6Pmn7vkuIDopqfjga/liKTlrprjgpLlrozkuobjgafjgY3jgZ/jgajjgY3jgaDjgZHlh7rjgZnvvIgzMTbooYzvvInjgII8L3RleHQ+Cjwvc3ZnPgo=" alt="出力先と出力モードの分岐">
+</div>
+<div class="title">Figure 2. 依頼文からモード、出力先、出力モード、追加要求（最終版だけ、監査して）を決め、何を出力するかが決まるまでの分岐</div>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">入力</dt>
+<dd>
+<p>依頼文（「自然にして」「岩淵ルールで直して」「監査して」「レビューだけ」「最終版だけ」など）と本文。</p>
+</dd>
+<dt class="hdlist1">判断</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>出力先は3つ。ファイル編集、応答本文、本文を変更しない（49行）。「本文を変更しない」は「レビューだけ」「直さないで」「監査だけ」の依頼である。</p>
+</li>
+<li>
+<p>出力モードは2つのまま。<code>polish</code>（既定）と <code>diagnostic</code>（56行）。規則や ID を名指しする依頼と、適用した規則の提示を求める依頼は <code>diagnostic</code> として扱う（58行）。出力モードは増やさない（要件 D-07）。</p>
+</li>
+<li>
+<p>「最終版だけ」は適用ルールと診断を省くが <code>要確認</code> は省略しない（325行）。「監査して」は監査だけなら本文を変えず、推敲もなら <code>diagnostic</code> の末尾に48行を加える（316行）。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">正常時の結果</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p><code>polish</code>: 修正後の本文（ファイル編集なら本文を再掲せず変更ファイルと変更概要）、必要なときだけ <code>要確認</code>、使用した KWJA 解析ファイルのパス（302〜305行、328行）。適用ルールの一覧、内部分析、<code>（LLM 判断）</code> は出ない（55行、314行）。</p>
+</li>
+<li>
+<p><code>diagnostic</code>: 本文と <code>要確認</code> に加えて、問題のある述語、不明または競合していた項、修復で明確になった関係、適用ルール（307〜312行）。<code>LLM</code> 出所の行末に <code>（LLM 判断）</code> を付ける（314行）。</p>
+</li>
+<li>
+<p>レビューだけ: 本文を変えず、<code>actionable</code> と <code>needs-confirmation</code> の判定を <code>ID / 対象箇所 / 問題 / 修正案</code> で出す（324行）。</p>
+</li>
+<li>
+<p>監査: 規則の定義順に48行の表を出す（318〜322行）。<code>pass</code> と <code>not-applicable</code> も含む。</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">失敗時の結果</dt>
+<dd>
+<p>Phase 1 で KWJA が失敗すれば停止し、規則判定だけを LLM で続けない（33〜34行）。監査一覧も部分的には出さない（316行）。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_図を作らなかった変更">5.3. 図を作らなかった変更</h3>
+<div class="paragraph">
+<p>旧ディレクトリ <code>rewrite-japanese-with-iwabuchi-rules/</code> の削除は単純な削除で、分岐や状態遷移がないため図は作っていない。移し忘れの確認は「推奨する読解順」の9番と「重点チェック」で行う。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_重要コードの解説">6. 重要コードの解説</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>ここでの「コード」は <code>SKILL.md</code> の節である。行番号は <code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code> のものである。</p>
+</div>
+<div class="sect2">
+<h3 id="_frontmatter_description315行">6.1. frontmatter <code>description</code>（3〜15行）</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">責務</dt>
+<dd>
+<p>どの依頼でこのスキルが起動するかを決める。エージェントはこの文でスキルを選ぶ。</p>
+</dd>
+<dt class="hdlist1">入力</dt>
+<dd>
+<p>ユーザーの依頼文。</p>
+</dd>
+<dt class="hdlist1">出力</dt>
+<dd>
+<p>起動の可否。</p>
+</dd>
+<dt class="hdlist1">変更点</dt>
+<dd>
+<p>旧スキルのトリガー語「岩淵ルールで直して」「48規則で悪文をチェックして」「ルールID付きで推敲して」「文の組み立て・用語・敬語を網羅的に点検して」「監査して」を加え、「岩淵ルールでの推敲も既定はデストロイモードで、原意を保つには safe を付ける」を明記した。旧スキルにあった除外文（「一般的な『悪文をチェックして』『校正して』『自然にして』『読みやすくして』だけの依頼には使わない」）は引き継いでいない。文字数は458（上限1024）。</p>
+</dd>
+<dt class="hdlist1">副作用</dt>
+<dd>
+<p>旧スキルの削除後、これらの依頼はこのスキルだけが受ける。利用環境に旧スキルが残っていれば2つが反応し得る（「既知の制約」を参照）。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_入力と出力モード3961行">6.2. <code>## 入力と出力モード</code>（39〜61行）</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">責務</dt>
+<dd>
+<p>モード、出力先、出力モードの決定。</p>
+</dd>
+<dt class="hdlist1">変更点</dt>
+<dd>
+<p>出力先に「本文を変更しない（レビューだけ、監査だけ）」を加えた（49行）。<code>polish</code> を「修正後の本文と <code>要確認</code> を出し、適用した規則の一覧や内部分析は出さない。<code>actionable</code> の数や文数に比例して出力を増やさない」と定義し直した（55行）。<code>diagnostic</code> に「適用した規則 ID」を加えた（56行）。規則や ID を名指しする依頼を <code>diagnostic</code> とする判定を置いた（58行）。1〜2文や UI 文言でも48規則の照合は変えず、<code>not-applicable</code> を素早く済ませる（60行）。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_リライトの優先順位6392行">6.3. <code>## リライトの優先順位</code>（63〜92行）</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">責務</dt>
+<dd>
+<p>モードごとに、規則をどの強さで適用するかを決める。</p>
+</dd>
+<dt class="hdlist1">変更点</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>デストロイモード（66行）: 48規則は自然さの判定基準として使い、<code>actionable</code> の判定と修正もデストロイモードが許容する意味変更の範囲で行う。<code>needs-confirmation</code> の箇所はもっとも自然な解釈を選んで <code>actionable</code> として扱ってよいが、事実に関わるもの（<code>word-choice.match-expression-to-facts</code> など）は <code>needs-confirmation</code> のまま <code>要確認</code> に残す。</p>
+</li>
+<li>
+<p>保護範囲（68行）: 規則を理由に保護範囲を変えない。保護範囲にかかる箇所は <code>not-applicable</code>、外の箇所には同じ規則を通常どおり適用する。</p>
+</li>
+<li>
+<p>セーフモード（79行）: 「規則を機械的に適用せず、読みやすさや正確さが実際に上がる変更だけを採用する」を追加した（旧スキルの最優先原則から移した）。</p>
+</li>
+<li>
+<p>規則衝突時の順序（86〜92行）: 原意の保持、文脈・係り受け・否定範囲・用語の正確さ、明確さ、語感・敬語・簡潔さ、行配置の5段階。両モード共通だが、デストロイモードでは自然さ最優先を上位に置く。Phase 4 の優先順位（生成時の制約）とは別物であると明記している。</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_岩淵48規則の_id_表94173行">6.4. <code>## 岩淵48規則の ID 表</code>（94〜173行）</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">責務</dt>
+<dd>
+<p>規則の定義と、それを判定する材料の指定。</p>
+</dd>
+<dt class="hdlist1">構成</dt>
+<dd>
+<p>導入（96〜105行）と4つのカテゴリ表。列は <code>ID</code>、<code>規則</code>、<code>上位概念</code>、<code>主な手がかり</code>、<code>出所</code> の5列。行数は <code>output</code> 1、<code>sentence</code> 21、<code>word-choice</code> 16、<code>honorific</code> 10 の計48。</p>
+</dd>
+<dt class="hdlist1">上位概念</dt>
+<dd>
+<p>規則を判定する観測の層。<code>述語項構造</code> 7、<code>係り受け</code> 8、<code>節構造・談話関係</code> 5、<code>共参照・照応</code> 1、<code>形態素・語彙</code> 9、<code>固有表現・保護範囲</code> 1、<code>語用論・モダリティ</code> 3、<code>対人関係</code> 8、<code>文体</code> 5、<code>文書構造</code> 1（このガイド生成時に集計）。</p>
+</dd>
+<dt class="hdlist1">出所</dt>
+<dd>
+<p><code>P1</code> 30、<code>P2</code> 11、<code>P4</code> 1、<code>LLM</code> 6。</p>
+</dd>
+<dt class="hdlist1">規則本文</dt>
+<dd>
+<p>旧スキルの一文をそのまま移した。例外は <code>output.line-break-each-line</code> の「指定がなければ <code>needs-confirmation</code> とし」を <code>not-applicable</code> に置き換えた1か所だけ（111行。要件 D-08）。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_phase_3_修復箇所を決める215248行">6.5. <code>## Phase 3: 修復箇所を決める</code>（215〜248行）</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">責務</dt>
+<dd>
+<p>直す箇所の決定と、48規則の判定・記録。</p>
+</dd>
+<dt class="hdlist1">変更点</dt>
+<dd>
+<p>240〜243行、246行、248行。既存の修復トリガー一覧（220〜229行）と非トリガー一覧（233〜238行）は変えず、規則の判定はこれらを ID で言い換える位置づけである（要件 FR-04）。</p>
+</dd>
+<dt class="hdlist1"><code>rewrite_targets</code></dt>
+<dd>
+<p>分析メモの「直す候補の一覧」。analyzer は空配列で渡し（<code>natural-japanese-rewrite-analyzer/SKILL.md</code> 90行 <code>rewrite_targets: []</code>）、親スキルであるこの Phase 3 が埋める。各要素は少なくとも <code>decision</code>（<code>repair</code> / <code>keep</code> / <code>confirm</code>）と <code>rule_ids</code>（主 ID を先頭、関連 ID を続ける。空配列可）を持つ。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_phase_5_候補文を検査する267298行">6.6. <code>## Phase 5: 候補文を検査する</code>（267〜298行）</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">責務</dt>
+<dd>
+<p>生成した候補文の検査。</p>
+</dd>
+<dt class="hdlist1">変更点</dt>
+<dd>
+<p>冒頭に両モード共通の再照合を置いた（269行）。デストロイモードは候補文を再解析しないため <code>LLM</code> 出所で判定し、セーフモードは意味回帰検査で再解析した分析メモを使う。再照合は最大3巡。完了条件に「候補文で <code>actionable</code> の規則が0件」を加えた（298行）。既存の意味回帰検査（273〜296行）は変えていない。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_phase_6_出力する300330行">6.7. <code>## Phase 6: 出力する</code>（300〜330行）</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">責務</dt>
+<dd>
+<p>出力先と出力モードに応じた出力。</p>
+</dd>
+<dt class="hdlist1">変更点</dt>
+<dd>
+<p>ファイル編集時に本文を再掲せず変更ファイル、変更概要、<code>要確認</code> を報告する（302行）。<code>要確認</code> の書式（305行）。<code>diagnostic</code> の4項目目に適用ルール（312行）。<code>（LLM 判断）</code> の付与（314行）。監査一覧の条件と書式（316〜322行）。レビューだけと最終版だけ（324〜325行）。完了条件を「出力先に応じてリライト本文、判定、または監査一覧が出力され」に改めた（330行）。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_agentsopenai_yaml3行">6.8. <code>agents/openai.yaml</code>（3行）</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">責務</dt>
+<dd>
+<p>Codex 側に表示するスキルの短い説明。</p>
+</dd>
+<dt class="hdlist1">変更点</dt>
+<dd>
+<p><code>short_description</code> を「README、仕様書、PR説明文、UI文言などの日本語を、既定では自然さを優先して大胆に書き直し、safe 指定で原意を保つ。岩淵48規則のルールID付きで診断・監査もできる」（87文字）に差し替えた。<code>display_name</code> は維持、<code>default_prompt</code> は追加していない。YAML として読み込めることを確認した。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_削除した旧スキル">6.9. 削除した旧スキル</h3>
+<div class="paragraph">
+<p><code>rewrite-japanese-with-iwabuchi-rules/SKILL.md</code>（172行）と <code>agents/openai.yaml</code>（4行）を削除した。旧スキルの内容と新 SKILL.md の対応は次のとおり。</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 40%;">
+<col style="width: 60%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">旧スキルの節</th>
+<th class="tableblock halign-left valign-top">新 SKILL.md での対応</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">最優先原則（20〜24行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">セーフモードの箇条書き（72〜79行）と、両モード共通の保護範囲（68行）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">衝突時の順序（26〜32行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">規則衝突時の順序（86〜92行）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID の扱い（34〜46行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID 表の導入（96〜103行）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">作業手順（48〜60行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 1〜6。「このスキルは単独で実行する」は引き継がない（要件「保守性」）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4カテゴリの ID 表（62〜128行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID 表（107〜173行）。3列を追加</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">出力形式（130〜163行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 6（302〜325行）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">完了条件（165〜172行）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 3、5、6 の完了条件（248行、298行、330行）</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_テストとの対応">7. テストとの対応</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>この変更には自動テストがなく、要件定義書「受け入れ条件」の AC-01〜AC-18 と「検証シナリオ」の T-01〜T-15 で確認する。実装計画の「検証コマンドの結果」に実装時の結果があり、このガイドの生成時にも同じ検査を再実行した。</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 12.5%;">
+<col style="width: 50%;">
+<col style="width: 37.5%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">AC</th>
+<th class="tableblock halign-left valign-top">内容</th>
+<th class="tableblock halign-left valign-top">結果（計画の記録 / このガイド生成時の再確認）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-01</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID 表に ID 行がちょうど48行、<code>output</code> 1、<code>sentence</code> 21、<code>word-choice</code> 16、<code>honorific</code> 10、重複なし</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PASS / 再確認 PASS（48、1・21・16・10、重複0）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-02</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">48 ID の集合がバックアップ <code>docs/backups/2026_09_29/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md</code> と完全一致</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PASS / 再確認 PASS。集合だけでなく順序も一致。規則本文の差は <code>output.line-break-each-line</code> の1か所だけ</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-03</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">48行すべてに上位概念（10種のいずれか）と出所（4種のいずれか）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PASS / 再確認 PASS（<code>rows=48 bad=[]</code>）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-04</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">旧ディレクトリが存在しない</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PASS / 再確認 PASS</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-05</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>skills/</code> 配下の追跡ファイルに旧スキル名が0件</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PASS / 再確認 PASS（0件）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-06</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>description</code> に「岩淵ルール」「48規則」「ルールID」「監査」を含み、除外文を含まない</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PASS / 再確認 PASS（4語あり、除外文0件）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-07</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code> が <code>natural-japanese-rewriter</code> のまま、<code>description</code> が1024文字以内</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PASS（458文字） / 再確認 PASS</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-08</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">skill-creator の <code>quick_validate.py</code> を通過</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PASS / 再確認 PASS（<code>Skill is valid!</code>）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-09</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SKILL.md が400行以下</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PASS（330行） / 再確認 PASS（330行）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-10</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">analyzer と <code>japanese-kwja-analyze</code> に差分がない</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PASS / 再確認 PASS（<code>git diff --stat</code> 出力なし）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-11</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>manifest.json</code> の列挙とディレクトリ内の配布ファイルが一致</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PASS（<code>missing=[] unlisted=[]</code>） / 再確認: 列挙された3ファイルが存在し、未列挙は <code>manifest.json</code> 自身だけ</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-12</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 3 に4状態判定、<code>decision</code> と <code>rule_ids</code>、<code>needs-confirmation</code> から <code>要確認</code> への経路</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">レビュー PASS / 240〜248行で確認</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-13</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 5 に両モード共通の再照合と <code>actionable</code> 0件の完了条件</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">レビュー PASS / 269行、298行で確認</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-14</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Phase 6 に ID 付き <code>要確認</code>、適用ルール、要求時のみの監査一覧、レビューだけと最終版だけ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">レビュー PASS / 305行、312行、316〜325行で確認</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-15</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">規則衝突時の優先順位とデストロイモードでの規則の位置づけ</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">レビュー PASS / 65〜66行、86〜92行で確認</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-16</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>output.line-break-each-line</code> の既定が <code>not-applicable</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PASS（旧文言0、新文言1） / 再確認 PASS</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-17</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>short_description</code> が既定のデストロイモードと ID 付き診断に言及し、旧スキル名を含まない</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">PASS / 再確認 PASS（YAML 読み込み可、87文字）</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AC-18</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FR-09 を実施した場合の注記 ID の整合</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">該当なし（FR-09 不実施） / 同じ</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>検証シナリオ T-01〜T-15 は、実装計画「検証シナリオの対応表」の記述をスキル指示のレビューで確認したものである。T-03、T-10、T-12、T-14 は KWJA の実行を伴うが、モデル重み未取得のため実行しておらず、レビュー確認にとどまる（計画「検証シナリオのレビュー結果」）。</p>
+</div>
+<div class="paragraph">
+<p>要件定義書と実装計画は <code>asciidoctor --failure-level WARN</code> で警告がないことを完了条件にしている（計画「完了条件」）。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_重点チェック">8. 重点チェック</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>各項目は、レビュアーが判断する問いと、見落とすと何が壊れるかを示す。</p>
+</div>
+<div class="sect2">
+<h3 id="_48_id_の綴りがバックアップと一致するか">8.1. 48 ID の綴りがバックアップと一致するか</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">問い</dt>
+<dd>
+<p><code>## 岩淵48規則の ID 表</code> の48個の ID は、<code>docs/backups/2026_09_29/natural-japanese/rewrite-japanese-with-iwabuchi-rules/SKILL.md</code> の ID と綴り、件数、順序が一致しているか。規則本文の差は <code>output.line-break-each-line</code> の <code>needs-confirmation</code> → <code>not-applicable</code> の1か所だけか。</p>
+</dd>
+<dt class="hdlist1">確認結果</dt>
+<dd>
+<p>このガイド生成時の照合では、集合と順序が一致し、規則本文の差は111行の1か所だけだった。</p>
+</dd>
+<dt class="hdlist1">壊れるもの</dt>
+<dd>
+<p>過去の出力に残る ID が新しい表で引けなくなる。監査一覧や <code>要確認</code> の ID が旧スキルの利用者の記録と食い違う。要件の非機能要件「ID の安定性」に違反する。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_デストロイモードの_actionable_の意味が4状態の定義と整合するか">8.2. デストロイモードの <code>actionable</code> の意味が4状態の定義と整合するか</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">問い</dt>
+<dd>
+<p>4状態の定義（102行）は <code>actionable</code> を「原意を変えず安全に修正または修正提案できる」としている。一方デストロイモード（66行）は「<code>actionable</code> の判定と修正もこの許容の範囲で行う」とし、細部の意味変更を許容する。エージェントは102行をモードに依存しない既定、66行をデストロイモードでの上書きとして一意に読めるか。それとも定義側に「セーフモードでは」などの限定を置くべきか。</p>
+</dd>
+<dt class="hdlist1">背景</dt>
+<dd>
+<p>レビュー2巡目で見つかった矛盾で、要件 FR-05 に「デストロイモードが許容する意味の変化の範囲で行う」を加えて解消した（計画「計画からの調整」の矛盾解消の1件目）。3巡目で66行の基準を「原文にない主体、対象、動作主、原因、目的、数値、時刻、確実性を確定させる解釈は選ばない」と定義し、該当する規則 ID の例を3つにした（「レビュー3巡目で確定した変更」を参照）。</p>
+</dd>
+<dt class="hdlist1">壊れるもの</dt>
+<dd>
+<p>102行を厳密に読むと、デストロイモードで自然さのための修正が <code>actionable</code> にならず <code>needs-confirmation</code> に流れ、<code>要確認</code> が増える。逆に66行を広く読むと、<code>diagnostic</code> の適用ルールに意味を変えた修正が「原意を変えず」の定義のもとで並び、利用者が誤解する。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_polish_の出力が_要確認_以外に増えていないか">8.3. <code>polish</code> の出力が <code>要確認</code> 以外に増えていないか</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">問い</dt>
+<dd>
+<p><code>polish</code> で出るものは、修正後の本文（ファイル編集なら変更ファイルと変更概要）、必要なときだけの <code>要確認</code>、使用した KWJA 解析ファイルのパス（55行、302〜305行、328行）に限られているか。適用ルール（312行）、<code>（LLM 判断）</code>（314行）、監査一覧（316行）が <code>polish</code> に漏れる記述はないか。328行の解析ファイルパスの表示は変更前からの仕様だが、<code>polish</code> の「本文と <code>要確認</code>」という定義との関係を許容するか（「最終版だけ」のときだけパスも省く、325行）。</p>
+</dd>
+<dt class="hdlist1">壊れるもの</dt>
+<dd>
+<p>長文で <code>actionable</code> が多数あるとき出力が規則数に比例して増える（要件「例外と失敗時の挙動」の最後の項目、T-15）。UI 文言1行の依頼に規則の一覧が付く。<code>polish</code> で ID が見えないことを前提にした <code>diagnostic</code> の判定（58行）の意味がなくなる。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_旧スキルの_description_にあった除外文が消えトリガー語が引き継がれているか">8.4. 旧スキルの description にあった除外文が消え、トリガー語が引き継がれているか</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">問い</dt>
+<dd>
+<p><code>description</code>（3〜15行）に「岩淵ルールで直して」「48規則で悪文をチェックして」「ルールID付きで推敲して」「文の組み立て・用語・敬語を網羅的に点検して」「監査して」があり、旧スキルの除外文「一般的な…だけの依頼には使わない」がなく、既存のトリガー語6つと <code>safe</code> の説明が残っているか。</p>
+</dd>
+<dt class="hdlist1">確認結果</dt>
+<dd>
+<p>4語の存在と除外文0件を再確認した。</p>
+</dd>
+<dt class="hdlist1">壊れるもの</dt>
+<dd>
+<p>旧ディレクトリを削除した後、「岩淵ルールで直して」がどのスキルにも当たらず、エージェントが無反応になるか別スキルを誤起動する。除外文が残ると「校正して」で起動しなくなり、既存利用者の依頼が通らない。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_デストロイモードの_phase_5_再照合を_llm_出所で行うことは冒頭の禁止と矛盾しないか">8.5. デストロイモードの Phase 5 再照合を <code>LLM</code> 出所で行うことは、冒頭の禁止と矛盾しないか</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">問い</dt>
+<dd>
+<p>34行は「LLM による言語解析や規則の判定で代行せず」と書き、269行は「デストロイモードは候補文を再解析しないため <code>LLM</code> 出所で判定」と書く。34行は KWJA 失敗時の禁止、269行は候補文の再解析を省く設計であるが、エージェントが両者を矛盾と読んで Phase 5 で止まらないか。また、<code>P1</code> 出所の30規則を候補文に対して KWJA なしで再照合する精度低下を許容するか。</p>
+</dd>
+<dt class="hdlist1">壊れるもの</dt>
+<dd>
+<p>デストロイモードで Phase 5 が停止する、または再照合が形骸化して新たな <code>actionable</code> を見逃す。T-14（<code>safe</code> で再適用して <code>actionable</code> 0件）はセーフモードだけを検証しており、デストロイモードの再照合は検証シナリオにない。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_セーフモードの技術用語保護は表の主な手がかりだけで足りるか">8.6. セーフモードの技術用語保護は表の「主な手がかり」だけで足りるか</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">問い</dt>
+<dd>
+<p>実装計画 Task 3 の実装内容（4項目目）は、セーフモードの「技術用語を一般語へ薄めない」（77行）に <code>word-choice.simplify-overly-formal-literary-or-technical-terms</code> と <code>word-choice.limit-loanwords-and-foreign-words</code> の保護条件を添える予定だったが、SKILL.md の77行には注記がなく、ID 表の「主な手がかり」列（154〜155行）に「固有表現と技術用語は保護」「固有名称と技術的に必要な語は保護」があるだけである。この差は計画「計画からの調整」に記録されている（レビュー2巡目で重複と判断）。要件の非機能要件「意味安全性」の担保として表の列だけで足りるか。</p>
+</dd>
+<dt class="hdlist1">壊れるもの</dt>
+<dd>
+<p>セーフモードで専門用語や技術的に必要な外来語が平易化される（T-11）。計画と実装の差分が記録されず、次の変更で意図が読めない。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_rewrite_targets_の要素形を親が定めることは_analyzer_の契約と両立するか">8.7. <code>rewrite_targets</code> の要素形を親が定めることは analyzer の契約と両立するか</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">問い</dt>
+<dd>
+<p>analyzer は <code>rewrite_targets: []</code> を空配列で渡すだけで、要素の形を定めていない（<code>natural-japanese-rewrite-analyzer/SKILL.md</code> 90行）。親スキルが <code>decision</code> と <code>rule_ids</code> を必須にする（243行）ことで、将来 analyzer が要素を出すようになったときに整合を誰が持つか決まっているか（要件 D-04 は未確定事項として <code>issues[].code</code> の空白を残している）。</p>
+</dd>
+<dt class="hdlist1">壊れるもの</dt>
+<dd>
+<p>子スキルの契約変更なしに親がスキーマを増やし、同じキーの定義が2か所に分かれる。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_12文でも48規則を全照合するコストを許容するか">8.8. 1〜2文でも48規則を全照合するコストを許容するか</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">問い</dt>
+<dd>
+<p>60行は1〜2文や UI 文言でも48規則の照合を変えないとし、要件の非機能要件「コンテキスト効率」もそう定めている。<code>not-applicable</code> を素早く済ませる指示だけで、短文の依頼の内部処理が過剰にならないか。</p>
+</dd>
+<dt class="hdlist1">壊れるもの</dt>
+<dd>
+<p>短文の依頼で Phase 3 の記録が肥大し、応答が遅くなる。ただし出力は増えない設計である（55行）。</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_short_description_の長さは_codex_側の表示に収まるか">8.9. <code>short_description</code> の長さは Codex 側の表示に収まるか</h3>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">問い</dt>
+<dd>
+<p><code>agents/openai.yaml</code> の <code>short_description</code> は87文字で、変更前の約2倍である。表示上の上限は不明（計画 P-06 の不確実性）。</p>
+</dd>
+<dt class="hdlist1">壊れるもの</dt>
+<dd>
+<p>Codex の UI で説明が途中で切れ、「safe 指定で原意を保つ」が読めなくなる。</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_既知の制約と対象外">9. 既知の制約と対象外</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_既知の制約">9.1. 既知の制約</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>KWJA を実行していない。モデル重みが未取得で、初回ダウンロード先（<code>lotus.kuee.kyoto-u.ac.jp</code>）への通信が許可されなかったため、規則判定の実行時挙動は未確認である。T-03、T-10、T-12、T-14 はスキル指示のレビューで期待する判定を一意に説明できるかを見たもので、モデルの実際の挙動は保証しない（要件「未確定事項」の第1項、計画 P-13）。実行可能な環境で4件を追加実行することが推奨されている（計画「リスクと軽減策」の最終行）。</p>
+</li>
+<li>
+<p>KWJA の言語素性に敬語、語種（外来語）、話し言葉を示す素性があるかは未確認である。ない場合は該当規則を <code>LLM</code> 出所として判定する設計で、要件は満たすが精度は未検証である。</p>
+</li>
+<li>
+<p>利用環境の <code>~/.claude/skills/</code> は nix store への symlink で、このガイド生成時点でも <code>rewrite-japanese-with-iwabuchi-rules</code> と変更前（209行）の <code>natural-japanese-rewriter</code> が残っている。再ビルドまでは同じ依頼に2つのスキルが反応し得る。再ビルドは利用者の作業で、完了条件に含まない（要件「互換性、移行、運用」、計画「運用上の作業」）。</p>
+</li>
+<li>
+<p><code>references/detailed-rules.md</code> 214行の「一文ごとに改行する」と、<code>output.line-break-each-line</code> の既定 <code>not-applicable</code> の整合は未確定事項のままである（要件 D-08）。</p>
+</li>
+<li>
+<p>このガイドの図（SVG）は XML として妥当であることと、文字幅の見積もりで枠に収まることを確認したが、実行環境の制約でブラウザ描画は確認していない。</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_対象外_2">9.2. 対象外</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>旧スキル名の stub、alias、転送スキル</p>
+</li>
+<li>
+<p><code>references/detailed-rules.md</code> への規則 ID の注記（FR-09 不実施）</p>
+</li>
+<li>
+<p>analyzer の <code>issues[].code</code> への語彙追加、子スキルの契約変更</p>
+</li>
+<li>
+<p>README のスキル一覧の更新</p>
+</li>
+<li>
+<p><code>natural-japanese-rewriter-line-break</code>、<code>sentence-linebreak-skill</code>、<code>bullet-list-rewriter</code> の変更</p>
+</li>
+<li>
+<p>元メモの原本照合、規則の追加・削除・改名</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+    </article>
+  </div>
+</body>
+</html>

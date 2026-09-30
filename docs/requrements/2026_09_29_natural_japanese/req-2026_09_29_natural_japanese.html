@@ -802,7 +802,7 @@ natural-japanese-rewriter 内から rewrite-japanese-with-iwabuchi-rules を呼�
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">規則の状態</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>pass</code>（適用でき問題なし）、<code>not-applicable</code>（媒体や内容から対象外）、<code>actionable</code>（原意を変えず安全に修正できる問題）、<code>needs-confirmation</code>（原文にない情報や意図が必要）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>pass</code>（適用でき問題なし）、<code>not-applicable</code>（媒体や内容から対象外）、<code>actionable</code>（原意を変えず安全に修正または修正提案できる問題）、<code>needs-confirmation</code>（原文にない情報や意図が必要）</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">同 <code>:41-46</code></p></td>
 </tr>
 <tr>
@@ -1134,7 +1134,7 @@ SKILL.md の行数は400行以下を目安とし、超える場合は表以外�
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>word-choice.avoid-roundabout-phrasing</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">形態素・語彙</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">「〜することができる」「〜を行う」などの型（<code>detailed-rules.md</code> の LLM くさい表現）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">「〜することができる」「〜を行う」「適切に」などの LLM くさい表現の型</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">LLM</p></td>
 </tr>
 <tr>
@@ -1320,13 +1320,13 @@ SKILL.md の行数は400行以下を目安とし、超える場合は表以外�
 <p><code>actionable</code> と <code>needs-confirmation</code> の規則は、分析メモの <code>rewrite_targets</code> の対応する要素に <code>rule_ids</code> として記録する。主となる ID を先頭に、関連 ID を続ける。現行 SKILL.md の Phase 3 は <code>rewrite_target</code> と単数で書いているが、分析メモのキーは <code>rewrite_targets</code> であり、統合後はキー名に合わせる。</p>
 </li>
 <li>
-<p><code>rewrite_targets</code> の各要素は、少なくとも <code>decision</code>（<code>repair</code> / <code>keep</code> / <code>confirm</code>）と <code>rule_ids</code>（空配列可）を持つ。<code>actionable</code> は <code>repair</code>、<code>needs-confirmation</code> は <code>confirm</code>、項を無理に補わない一覧に当たる箇所など意図的に残す箇所は <code>keep</code> とする。既存の修復トリガー（主体の複数候補、係り先の曖昧さなど）による対象には、該当する規則 ID があれば同じ欄に付ける。要素の形は親スキルが定める記録であり、analyzer の出力契約は変えない。</p>
+<p><code>rewrite_targets</code> の各要素は、少なくとも <code>decision</code>（<code>repair</code> / <code>keep</code> / <code>confirm</code>）、<code>rule_ids</code>（空配列可）、<code>source</code>（<code>kwja</code> / <code>llm</code>）を持つ。<code>actionable</code> は <code>repair</code>、<code>needs-confirmation</code> は <code>confirm</code>、項を無理に補わない一覧に当たる箇所など意図的に残す箇所は <code>keep</code> とする。<code>keep</code> の箇所に付けた規則の状態は <code>pass</code> とする。規則違反がない自然さ目的の書き直しも <code>decision: repair</code>、<code>rule_ids: []</code> で記録する。要素は Phase 3 で親スキルが分析メモの <code>rewrite_targets</code> に追記し、<code>LLM</code> 出所の判定は同じ要素の <code>source: llm</code> で記録し、<code>predicates</code>、<code>arguments</code>、<code>entities</code>、<code>issues</code>、<code>ambiguities</code> には KWJA 出力にない根拠を書き込まない。本文を変更しない出力先では <code>repair</code> は修正案の提示を意味し、<code>rule_ids: []</code> の書き直しは記録しない。規則に対応しない <code>confirm</code> は、判定行では ID 欄を <code>-</code> とし、監査一覧では表の直後に ID なしで添える。既存の修復トリガー（主体の複数候補、係り先の曖昧さなど）による対象には、該当する規則 ID があれば同じ欄に付ける。要素の形は親スキルが定める記録であり、analyzer の出力契約は変えない。</p>
 </li>
 <li>
 <p><code>needs-confirmation</code> は <code>decision: confirm</code> とし、Phase 6 の <code>要確認</code> に ID 付きで出す。</p>
 </li>
 <li>
-<p><code>pass</code> と <code>not-applicable</code> は記録するだけで、出力しない。</p>
+<p><code>pass</code> と <code>not-applicable</code> は記録するだけで、監査一覧を除き出力しない。</p>
 </li>
 </ol>
 </div>
@@ -1352,7 +1352,7 @@ SKILL.md の行数は400行以下を目安とし、超える場合は表以外�
 <p>コード、コマンド、ファイルパス、API 名、設定値、数値、固有名詞、引用、リンク、構造化データを保護し、原文にない事実を作らない。規則を理由に保護範囲を変えず、保護範囲にかかる箇所への規則の判定は <code>not-applicable</code> とする。</p>
 </li>
 <li>
-<p><code>needs-confirmation</code> は省略せず <code>要確認</code> に出す。</p>
+<p><code>needs-confirmation</code> は省略せず <code>要確認</code> に出す。本文を変更しない出力先では、FR-07 の監査一覧または判定行に含める。</p>
 </li>
 </ul>
 </div>
@@ -1364,7 +1364,8 @@ SKILL.md の行数は400行以下を目安とし、超える場合は表以外�
 <div class="paragraph">
 <p>デストロイモードでは、48規則を自然さの判定基準として使う。
 既存の方針どおり文の分割・結合、構成の変更、語の置き換え、冗長な情報の削除を積極的に行い、<code>actionable</code> の判定と修正もデストロイモードが許容する意味の変化の範囲で行う。
-<code>needs-confirmation</code> の箇所はもっとも自然な解釈を選んで <code>actionable</code> として扱ってよい。ただし選んだ解釈を事実として断定せず、事実に関わる <code>needs-confirmation</code>（<code>word-choice.match-expression-to-facts</code> など）は <code>needs-confirmation</code> のまま <code>要確認</code> に残す。
+<code>needs-confirmation</code> の箇所はもっとも自然な解釈を選んで <code>actionable</code> として扱ってよい。ただし、原文にない主体、対象、動作主、原因、目的、数値、時刻、確実性を確定させる解釈は選ばず（<code>word-choice.match-expression-to-facts</code>、<code>sentence.state-changed-subject-explicitly</code>、<code>sentence.minimize-passive-voice</code> などが該当する）、<code>needs-confirmation</code> のまま <code>要確認</code> に残す。
+本文を変更しない出力先（レビューだけ、監査だけ）では、<code>needs-confirmation</code> を <code>actionable</code> に倒さず Phase 3 の判定をそのまま出す（D-07）。
 規則の優先順位は、既存のデストロイモードの優先順位（自然さ最優先）を上位とし、旧スキルの順序は規則どうしの衝突を解くときだけ使う。</p>
 </div>
 </div>
@@ -1375,6 +1376,7 @@ SKILL.md の行数は400行以下を目安とし、超える場合は表以外�
 デストロイモードは候補文を再解析しないため <code>LLM</code> 出所で再照合し、セーフモードは意味回帰検査で再解析した分析メモを使う。
 新たな <code>actionable</code> が見つかった場合は候補を修正して再照合する。
 再照合は意味回帰検査と同じく最大3巡とし、3巡で解消しない <code>actionable</code> は <code>needs-confirmation</code> に変えて Phase 6 の <code>要確認</code> に ID 付きで出す。
+3巡で <code>needs-confirmation</code> に変えた項目と、再照合で新たに検出して修正した項目は、原文用の分析メモの <code>rewrite_targets</code> に追記し、後者は <code>diagnostic</code> の適用ルールにも載せる。本文を変更しない出力先では Phase 5 を行わない（D-07）。
 セーフモードの意味回帰検査（KWJA 再解析、<code>SEMANTIC_DRIFT</code>）は変更しない。</p>
 </div>
 <div class="paragraph">
@@ -1400,14 +1402,14 @@ SKILL.md の行数は400行以下を目安とし、超える場合は表以外�
 <div class="paragraph">
 <p>監査一覧は、ユーザーが監査結果または全規則の判定を求めた場合だけ、規則の定義順で出す。
 形式は旧スキルの表（<code>| ID | status | 根拠または対象箇所 |</code>）をそのまま使う。
-監査だけを求められた場合はレビューのみと同じく本文を変更せず、監査と推敲の両方を求められた場合は <code>diagnostic</code> の末尾に加える。</p>
+監査だけを求められた場合はレビューのみと同じく本文を変更せず、監査一覧と解析ファイルのパスだけを出す（ID 付き <code>要確認</code> の別掲と診断は出さない）。監査と推敲の両方を求められた場合は <code>diagnostic</code> として扱い、その末尾に加える。ID が複数箇所で異なる状態になる場合は、<code>needs-confirmation</code>、<code>actionable</code>、<code>pass</code>、<code>not-applicable</code> の順で強い状態を1つ書き、3列目に箇所ごとの内訳を書く。</p>
 </div>
 <div class="paragraph">
-<p>ユーザーが「レビューだけ」「直さないで」と指定した場合は、本文を変更せず、<code>actionable</code> と <code>needs-confirmation</code> の判定を <code>ID / 対象箇所 / 問題 / 修正案</code> の形で出す。<code>needs-confirmation</code> は修正案の代わりに判断に必要な情報を示す。
-出力モードを増やさず、開始時に確定する出力先（ファイル編集、応答本文、本文を変更しない）で扱う。</p>
+<p>ユーザーが「レビューだけ」「直さないで」と指定した場合は、本文を変更せず、<code>actionable</code> と <code>needs-confirmation</code> の判定を <code>rewrite_targets</code> の要素ごとに1行の <code>ID / 対象箇所 / 問題 / 修正案</code> の形で出し、解析ファイルのパスを添える。診断の他の項目と <code>要確認</code> の別掲は出さず、修正案は Phase 4 の生成方針で作る。<code>needs-confirmation</code> は修正案の代わりに判断に必要な情報を示し、<code>LLM</code> 出所の行は末尾に <code>（LLM 判断）</code> を付ける。
+出力モードを増やさず、開始時に確定する出力先（ファイル編集、応答本文、本文を変更しない）で扱う。本文を変更しない出力先では Phase 1〜3 を行い、Phase 4 は「レビューだけ」の修正案を作る生成方針としてだけ使い、Phase 5 は行わない。<code>（LLM 判断）</code> は <code>polish</code> / <code>diagnostic</code> の区別ではなく本項の規定で付け、解析ファイルのパスは原文用だけを示す。</p>
 </div>
 <div class="paragraph">
-<p>ユーザーが「最終版だけ」と指定した場合は、適用ルールと診断を省略する。<code>要確認</code> は省略しない。</p>
+<p>ユーザーが「最終版だけ」と指定した場合は、適用ルール、診断、解析ファイルのパスを省略する。<code>要確認</code> は省略しない。</p>
 </div>
 <div class="paragraph">
 <p>ファイルを編集した場合は本文を再掲せず、変更ファイル、変更概要、<code>要確認</code> を報告する。<code>diagnostic</code> では適用した ID も報告する。</p>
@@ -1450,7 +1452,7 @@ SKILL.md の行数は400行以下を目安とし、超える場合は表以外�
 <p>KWJA は成功したが、ある規則の手がかりとなる素性やタグが出力にない場合（たとえば語種、敬語）は、その規則を <code>LLM</code> 出所として原文から判定し、<code>diagnostic</code> ではその旨を示す。素性がないことを理由に <code>not-applicable</code> としない。</p>
 </li>
 <li>
-<p>分析メモの <code>ambiguities</code> に該当箇所がある規則は、セーフモードでは <code>needs-confirmation</code> とし、<code>actionable</code> にしない。</p>
+<p>分析メモの <code>ambiguities</code> に該当箇所がある規則は、セーフモードでは旧スキルの順序（一意に復元できる直し、安全な候補すべてに共通する変更、原文保持）で扱い、それでも確定できない箇所（<code>repairability: blocked</code>、<code>recoverability: unknown</code> など）は <code>needs-confirmation</code> とし、<code>actionable</code> にしない。この判定は既存の修復トリガー（文脈で安全に絞れる、など）より優先する。</p>
 </li>
 <li>
 <p>保護範囲（コード、識別子、URL など）にかかる箇所への規則の判定は <code>not-applicable</code> とし、保護範囲を変更しない。保護範囲の外の箇所には同じ規則を通常どおり適用する。</p>
@@ -1602,7 +1604,7 @@ stub を残すと二つのスキルが同じ依頼に反応し、ユーザーが
 <div class="sect2">
 <h3 id="_d_07_出力モードを増やさずレビューのみと最終版だけを既存の枠で扱う">12.7. D-07 出力モードを増やさず、レビューのみと最終版だけを既存の枠で扱う</h3>
 <div class="paragraph">
-<p>「レビューだけ」は <code>diagnostic</code> で本文を変更しない場合、「最終版だけ」は <code>polish</code> で診断を省く場合として扱う。
+<p>「レビューだけ」は出力先「本文を変更しない」で <code>actionable</code> と <code>needs-confirmation</code> の判定だけを出す場合、「最終版だけ」は <code>polish</code> で診断と解析ファイルのパスを省く場合として扱う。
 旧スキル内で「最終版だけなら推敲後だけを出す」と「どのモードでも <code>needs-confirmation</code> は省略しない」が両立していなかったため（同 <code>:149, :154</code>）、安全側の後者を採る。</p>
 </div>
 </div>
@@ -1773,17 +1775,17 @@ FR-02 で移す規則本文もこの既定に合わせて書き換え、表と�
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">T-07</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">「監査して」と本文</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">本文を変えず、規則の定義順に48行の判定表を出す。<code>pass</code> と <code>not-applicable</code> も含む</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">本文を変えず、規則の定義順に48行の判定表を出す。<code>pass</code> と <code>not-applicable</code> も含み、判定表と解析ファイルのパス以外は出さない</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">T-08</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">「レビューだけ」と本文</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">本文を変えず、<code>actionable</code> と <code>needs-confirmation</code> の判定を <code>ID / 対象箇所 / 問題 / 修正案</code> で出す。<code>needs-confirmation</code> は判断に必要な情報を示す</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">本文を変えず、<code>actionable</code> と <code>needs-confirmation</code> の判定を要素ごとに1行の <code>ID / 対象箇所 / 問題 / 修正案</code> で出す。<code>needs-confirmation</code> は判断に必要な情報を示し、<code>LLM</code> 出所の行に <code>（LLM 判断）</code> を付ける。判定行と解析ファイルのパス以外は出さない</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">T-09</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">「最終版だけ」と本文</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">推敲後の本文と <code>要確認</code> だけを出し、適用ルールと診断を省く</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">推敲後の本文と <code>要確認</code> だけを出し、適用ルール、診断、解析ファイルのパスを省く</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">T-10</p></td>

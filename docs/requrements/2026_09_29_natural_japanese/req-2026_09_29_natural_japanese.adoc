@@ -85,7 +85,7 @@ natural-japanese-rewriter 内から rewrite-japanese-with-iwabuchi-rules を呼�
 |`rewrite-japanese-with-iwabuchi-rules/SKILL.md:62-128`
 
 |規則の状態
-|`pass`（適用でき問題なし）、`not-applicable`（媒体や内容から対象外）、`actionable`（原意を変えず安全に修正できる問題）、`needs-confirmation`（原文にない情報や意図が必要）
+|`pass`（適用でき問題なし）、`not-applicable`（媒体や内容から対象外）、`actionable`（原意を変えず安全に修正または修正提案できる問題）、`needs-confirmation`（原文にない情報や意図が必要）
 |同 `:41-46`
 
 |上位概念
@@ -300,7 +300,7 @@ SKILL.md の行数は400行以下を目安とし、超える場合は表以外�
 
 |`word-choice.avoid-roundabout-phrasing`
 |形態素・語彙
-|「〜することができる」「〜を行う」などの型（`detailed-rules.md` の LLM くさい表現）
+|「〜することができる」「〜を行う」「適切に」などの LLM くさい表現の型
 |LLM
 
 |`word-choice.use-precise-nonmisleading-terms`
@@ -437,9 +437,9 @@ Phase 3「修復箇所を決める」に、規則の状態判定を加える。
 
 . 48規則をすべて内部で照合し、各 ID を4状態のいずれかにする。判定の材料は FR-03 の出所に従い、`P1` は分析メモと KWJA 出力、`P2` は Phase 2 で固定した制約、`LLM` は原文と文脈から判断する。`P4` の規則（`output.line-break-each-line`）は、Phase 3 で改行単位の指定の有無から状態を決め、Phase 4 の生成時に適用する。
 . `actionable` と `needs-confirmation` の規則は、分析メモの `rewrite_targets` の対応する要素に `rule_ids` として記録する。主となる ID を先頭に、関連 ID を続ける。現行 SKILL.md の Phase 3 は `rewrite_target` と単数で書いているが、分析メモのキーは `rewrite_targets` であり、統合後はキー名に合わせる。
-. `rewrite_targets` の各要素は、少なくとも `decision`（`repair` / `keep` / `confirm`）と `rule_ids`（空配列可）を持つ。`actionable` は `repair`、`needs-confirmation` は `confirm`、項を無理に補わない一覧に当たる箇所など意図的に残す箇所は `keep` とする。既存の修復トリガー（主体の複数候補、係り先の曖昧さなど）による対象には、該当する規則 ID があれば同じ欄に付ける。要素の形は親スキルが定める記録であり、analyzer の出力契約は変えない。
+. `rewrite_targets` の各要素は、少なくとも `decision`（`repair` / `keep` / `confirm`）、`rule_ids`（空配列可）、`source`（`kwja` / `llm`）を持つ。`actionable` は `repair`、`needs-confirmation` は `confirm`、項を無理に補わない一覧に当たる箇所など意図的に残す箇所は `keep` とする。`keep` の箇所に付けた規則の状態は `pass` とする。規則違反がない自然さ目的の書き直しも `decision: repair`、`rule_ids: []` で記録する。要素は Phase 3 で親スキルが分析メモの `rewrite_targets` に追記し、`LLM` 出所の判定は同じ要素の `source: llm` で記録し、`predicates`、`arguments`、`entities`、`issues`、`ambiguities` には KWJA 出力にない根拠を書き込まない。本文を変更しない出力先では `repair` は修正案の提示を意味し、`rule_ids: []` の書き直しは記録しない。規則に対応しない `confirm` は、判定行では ID 欄を `-` とし、監査一覧では表の直後に ID なしで添える。既存の修復トリガー（主体の複数候補、係り先の曖昧さなど）による対象には、該当する規則 ID があれば同じ欄に付ける。要素の形は親スキルが定める記録であり、analyzer の出力契約は変えない。
 . `needs-confirmation` は `decision: confirm` とし、Phase 6 の `要確認` に ID 付きで出す。
-. `pass` と `not-applicable` は記録するだけで、出力しない。
+. `pass` と `not-applicable` は記録するだけで、監査一覧を除き出力しない。
 
 既存の修復トリガーと非トリガーの一覧（`natural-japanese-rewriter/SKILL.md:122-140`）は維持する。
 規則の判定は、これらの一覧を ID で言い換える位置づけであり、同じ判断を二重に書かない。
@@ -452,7 +452,7 @@ Phase 3 の完了条件に「48個の ID すべてに状態が付き、`actionab
 
 * 48規則をすべて照合する。
 * コード、コマンド、ファイルパス、API 名、設定値、数値、固有名詞、引用、リンク、構造化データを保護し、原文にない事実を作らない。規則を理由に保護範囲を変えず、保護範囲にかかる箇所への規則の判定は `not-applicable` とする。
-* `needs-confirmation` は省略せず `要確認` に出す。
+* `needs-confirmation` は省略せず `要確認` に出す。本文を変更しない出力先では、FR-07 の監査一覧または判定行に含める。
 
 セーフモードでは、旧スキルの最優先原則をそのまま適用する。
 `actionable` は原意・事実・仕様・技術的意味を変えずに修正できる問題に限り、規則を機械的に適用せず、読みやすさや正確さが実際に上がる変更だけを採用する。
@@ -460,7 +460,8 @@ Phase 3 の完了条件に「48個の ID すべてに状態が付き、`actionab
 
 デストロイモードでは、48規則を自然さの判定基準として使う。
 既存の方針どおり文の分割・結合、構成の変更、語の置き換え、冗長な情報の削除を積極的に行い、`actionable` の判定と修正もデストロイモードが許容する意味の変化の範囲で行う。
-`needs-confirmation` の箇所はもっとも自然な解釈を選んで `actionable` として扱ってよい。ただし選んだ解釈を事実として断定せず、事実に関わる `needs-confirmation`（`word-choice.match-expression-to-facts` など）は `needs-confirmation` のまま `要確認` に残す。
+`needs-confirmation` の箇所はもっとも自然な解釈を選んで `actionable` として扱ってよい。ただし、原文にない主体、対象、動作主、原因、目的、数値、時刻、確実性を確定させる解釈は選ばず（`word-choice.match-expression-to-facts`、`sentence.state-changed-subject-explicitly`、`sentence.minimize-passive-voice` などが該当する）、`needs-confirmation` のまま `要確認` に残す。
+本文を変更しない出力先（レビューだけ、監査だけ）では、`needs-confirmation` を `actionable` に倒さず Phase 3 の判定をそのまま出す（D-07）。
 規則の優先順位は、既存のデストロイモードの優先順位（自然さ最優先）を上位とし、旧スキルの順序は規則どうしの衝突を解くときだけ使う。
 
 === FR-06 Phase 5 で再照合する
@@ -469,6 +470,7 @@ Phase 5「候補文を検査する」に、両モード共通で「候補文に�
 デストロイモードは候補文を再解析しないため `LLM` 出所で再照合し、セーフモードは意味回帰検査で再解析した分析メモを使う。
 新たな `actionable` が見つかった場合は候補を修正して再照合する。
 再照合は意味回帰検査と同じく最大3巡とし、3巡で解消しない `actionable` は `needs-confirmation` に変えて Phase 6 の `要確認` に ID 付きで出す。
+3巡で `needs-confirmation` に変えた項目と、再照合で新たに検出して修正した項目は、原文用の分析メモの `rewrite_targets` に追記し、後者は `diagnostic` の適用ルールにも載せる。本文を変更しない出力先では Phase 5 を行わない（D-07）。
 セーフモードの意味回帰検査（KWJA 再解析、`SEMANTIC_DRIFT`）は変更しない。
 
 Phase 5 の完了条件に「候補文で `actionable` の規則が0件」を加える。
@@ -488,12 +490,12 @@ Phase 5 の完了条件に「候補文で `actionable` の規則が0件」を加
 
 監査一覧は、ユーザーが監査結果または全規則の判定を求めた場合だけ、規則の定義順で出す。
 形式は旧スキルの表（`| ID | status | 根拠または対象箇所 |`）をそのまま使う。
-監査だけを求められた場合はレビューのみと同じく本文を変更せず、監査と推敲の両方を求められた場合は `diagnostic` の末尾に加える。
+監査だけを求められた場合はレビューのみと同じく本文を変更せず、監査一覧と解析ファイルのパスだけを出す（ID 付き `要確認` の別掲と診断は出さない）。監査と推敲の両方を求められた場合は `diagnostic` として扱い、その末尾に加える。ID が複数箇所で異なる状態になる場合は、`needs-confirmation`、`actionable`、`pass`、`not-applicable` の順で強い状態を1つ書き、3列目に箇所ごとの内訳を書く。
 
-ユーザーが「レビューだけ」「直さないで」と指定した場合は、本文を変更せず、`actionable` と `needs-confirmation` の判定を ``ID / 対象箇所 / 問題 / 修正案`` の形で出す。`needs-confirmation` は修正案の代わりに判断に必要な情報を示す。
-出力モードを増やさず、開始時に確定する出力先（ファイル編集、応答本文、本文を変更しない）で扱う。
+ユーザーが「レビューだけ」「直さないで」と指定した場合は、本文を変更せず、`actionable` と `needs-confirmation` の判定を `rewrite_targets` の要素ごとに1行の ``ID / 対象箇所 / 問題 / 修正案`` の形で出し、解析ファイルのパスを添える。診断の他の項目と `要確認` の別掲は出さず、修正案は Phase 4 の生成方針で作る。`needs-confirmation` は修正案の代わりに判断に必要な情報を示し、`LLM` 出所の行は末尾に `（LLM 判断）` を付ける。
+出力モードを増やさず、開始時に確定する出力先（ファイル編集、応答本文、本文を変更しない）で扱う。本文を変更しない出力先では Phase 1〜3 を行い、Phase 4 は「レビューだけ」の修正案を作る生成方針としてだけ使い、Phase 5 は行わない。`（LLM 判断）` は `polish` / `diagnostic` の区別ではなく本項の規定で付け、解析ファイルのパスは原文用だけを示す。
 
-ユーザーが「最終版だけ」と指定した場合は、適用ルールと診断を省略する。`要確認` は省略しない。
+ユーザーが「最終版だけ」と指定した場合は、適用ルール、診断、解析ファイルのパスを省略する。`要確認` は省略しない。
 
 ファイルを編集した場合は本文を再掲せず、変更ファイル、変更概要、`要確認` を報告する。`diagnostic` では適用した ID も報告する。
 
@@ -518,7 +520,7 @@ Phase 5 の完了条件に「候補文で `actionable` の規則が0件」を加
 
 * KWJA の実行または解析ファイルの読み取りに失敗した場合は、既存どおりリライトを止めて原因を報告する。規則の判定だけを LLM で続行しない。
 * KWJA は成功したが、ある規則の手がかりとなる素性やタグが出力にない場合（たとえば語種、敬語）は、その規則を `LLM` 出所として原文から判定し、`diagnostic` ではその旨を示す。素性がないことを理由に `not-applicable` としない。
-* 分析メモの `ambiguities` に該当箇所がある規則は、セーフモードでは `needs-confirmation` とし、`actionable` にしない。
+* 分析メモの `ambiguities` に該当箇所がある規則は、セーフモードでは旧スキルの順序（一意に復元できる直し、安全な候補すべてに共通する変更、原文保持）で扱い、それでも確定できない箇所（`repairability: blocked`、`recoverability: unknown` など）は `needs-confirmation` とし、`actionable` にしない。この判定は既存の修復トリガー（文脈で安全に絞れる、など）より優先する。
 * 保護範囲（コード、識別子、URL など）にかかる箇所への規則の判定は `not-applicable` とし、保護範囲を変更しない。保護範囲の外の箇所には同じ規則を通常どおり適用する。
 * `output.line-break-each-line` は、改行の単位が指定されていなければ `not-applicable` とし、現在の行配置を保つ。指定があれば `actionable` として、表・箇条書き・コード・front matter など行自体に意味がある構造を崩さずに適用する。
 * 監査一覧を求められたが規則の判定を完了できない場合（Phase 3 前の停止など）は、部分的な一覧を出さず、停止理由を報告する。
@@ -610,7 +612,7 @@ stub を残すと二つのスキルが同じ依頼に反応し、ユーザーが
 
 === D-07 出力モードを増やさず、レビューのみと最終版だけを既存の枠で扱う
 
-「レビューだけ」は `diagnostic` で本文を変更しない場合、「最終版だけ」は `polish` で診断を省く場合として扱う。
+「レビューだけ」は出力先「本文を変更しない」で `actionable` と `needs-confirmation` の判定だけを出す場合、「最終版だけ」は `polish` で診断と解析ファイルのパスを省く場合として扱う。
 旧スキル内で「最終版だけなら推敲後だけを出す」と「どのモードでも `needs-confirmation` は省略しない」が両立していなかったため（同 `:149, :154`）、安全側の後者を採る。
 
 === D-08 `output.line-break-each-line` の既定を `not-applicable` にする
@@ -703,15 +705,15 @@ FR-02 で移す規則本文もこの既定に合わせて書き換え、表と�
 
 |T-07
 |「監査して」と本文
-|本文を変えず、規則の定義順に48行の判定表を出す。`pass` と `not-applicable` も含む
+|本文を変えず、規則の定義順に48行の判定表を出す。`pass` と `not-applicable` も含み、判定表と解析ファイルのパス以外は出さない
 
 |T-08
 |「レビューだけ」と本文
-|本文を変えず、`actionable` と `needs-confirmation` の判定を `ID / 対象箇所 / 問題 / 修正案` で出す。`needs-confirmation` は判断に必要な情報を示す
+|本文を変えず、`actionable` と `needs-confirmation` の判定を要素ごとに1行の `ID / 対象箇所 / 問題 / 修正案` で出す。`needs-confirmation` は判断に必要な情報を示し、`LLM` 出所の行に `（LLM 判断）` を付ける。判定行と解析ファイルのパス以外は出さない
 
 |T-09
 |「最終版だけ」と本文
-|推敲後の本文と `要確認` だけを出し、適用ルールと診断を省く
+|推敲後の本文と `要確認` だけを出し、適用ルール、診断、解析ファイルのパスを省く
 
 |T-10
 |改行の単位を指定しない Markdown 文書

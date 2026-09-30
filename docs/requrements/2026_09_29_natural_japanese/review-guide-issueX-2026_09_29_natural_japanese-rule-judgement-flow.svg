@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 1250" width="1180" height="1250" role="img" aria-labelledby="t d">
+  <title id="t">48規則の判定が Phase 3 から Phase 6 へ流れる経路</title>
+  <desc id="d">Phase 3 で48規則を出所（P1、P2、P4、LLM）に従って4状態に判定し、rewrite_targets の decision と rule_ids に記録する。Phase 5 で候補文に再照合し、最大3巡で解消しない actionable は needs-confirmation に変える。Phase 6 で要確認、適用ルール、監査一覧として出力する。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+    <marker id="arrow-dash" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    </marker>
+    <style>
+      text { font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; fill: #1e293b; }
+      .title { font-size: 20px; font-weight: 700; }
+      .band-label { font-size: 16px; font-weight: 700; fill: #0f172a; }
+      .box { font-size: 14px; }
+      .small { font-size: 13px; }
+      .mono { font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px; }
+      .edge { stroke: #334155; stroke-width: 1.6; fill: none; marker-end: url(#arrow); }
+      .line { stroke: #334155; stroke-width: 1.6; fill: none; }
+      .edge-dash { stroke: #64748b; stroke-width: 1.4; fill: none; stroke-dasharray: 6 4; marker-end: url(#arrow-dash); }
+      .label { font-size: 13px; fill: #334155; }
+      .band { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1; }
+      .node { fill: #ffffff; stroke: #475569; stroke-width: 1.4; }
+      .src { fill: #e0f2fe; stroke: #0369a1; stroke-width: 1.4; }
+      .pass { fill: #dcfce7; stroke: #15803d; stroke-width: 1.4; }
+      .na { fill: #e5e7eb; stroke: #4b5563; stroke-width: 1.4; }
+      .act { fill: #ffedd5; stroke: #c2410c; stroke-width: 1.4; }
+      .conf { fill: #ede9fe; stroke: #6d28d9; stroke-width: 1.4; }
+      .safe { fill: #eff6ff; stroke: #1d4ed8; stroke-width: 1.2; stroke-dasharray: 5 3; }
+      .destroy { fill: #fffbeb; stroke: #b45309; stroke-width: 1.2; stroke-dasharray: 5 3; }
+      .record { fill: #fef9c3; stroke: #a16207; stroke-width: 1.4; }
+      .out { fill: #f0fdf4; stroke: #166534; stroke-width: 1.4; }
+      .note { fill: #f1f5f9; stroke: #94a3b8; stroke-width: 1.2; }
+    </style>
+  </defs>
+
+  <text x="590" y="30" text-anchor="middle" class="title">48規則の判定が Phase 3 → Phase 5 → Phase 6 を流れる経路</text>
+
+  <!-- Phase 3 band -->
+  <rect x="20" y="50" width="1140" height="650" rx="10" class="band"/>
+  <text x="36" y="74" class="band-label">Phase 3: 修復箇所を決める（SKILL.md 215〜248行）</text>
+
+  <rect x="340" y="88" width="500" height="52" rx="8" class="node"/>
+  <text x="590" y="110" text-anchor="middle" class="box">48規則をすべて照合し、各 ID を4状態のいずれかにする</text>
+  <text x="590" y="130" text-anchor="middle" class="small">判定の材料は ID 表の「出所」列に従う（240行）</text>
+
+  <!-- fan-out to sources -->
+  <path d="M 590 140 L 165 176" class="edge"/>
+  <path d="M 590 140 L 445 176" class="edge"/>
+  <path d="M 590 140 L 725 176" class="edge"/>
+  <path d="M 590 140 L 1005 176" class="edge"/>
+
+  <rect x="40" y="176" width="250" height="68" rx="8" class="src"/>
+  <text x="165" y="202" text-anchor="middle" class="box">P1: Phase 1 の分析メモと</text>
+  <text x="165" y="222" text-anchor="middle" class="box">KWJA 出力（30規則）</text>
+
+  <rect x="320" y="176" width="250" height="68" rx="8" class="src"/>
+  <text x="445" y="202" text-anchor="middle" class="box">P2: Phase 2 で固定した</text>
+  <text x="445" y="222" text-anchor="middle" class="box">上位レイヤーの制約（11規則）</text>
+
+  <rect x="600" y="176" width="250" height="68" rx="8" class="src"/>
+  <text x="725" y="202" text-anchor="middle" class="box">P4: 改行単位の指定の有無</text>
+  <text x="725" y="224" text-anchor="middle" class="mono">output.line-break-each-line</text>
+
+  <rect x="880" y="176" width="250" height="68" rx="8" class="src"/>
+  <text x="1005" y="196" text-anchor="middle" class="box">LLM: 原文と文脈から判断（6規則）</text>
+  <text x="1005" y="214" text-anchor="middle" class="small">＋ P1 でも手がかりの素性が KWJA</text>
+  <text x="1005" y="232" text-anchor="middle" class="small">出力にない規則（241行）</text>
+
+  <!-- collector -->
+  <path d="M 165 244 L 165 272" class="line"/>
+  <path d="M 445 244 L 445 272" class="line"/>
+  <path d="M 725 244 L 725 272" class="line"/>
+  <path d="M 1005 244 L 1005 272" class="line"/>
+  <path d="M 165 272 L 1005 272" class="line"/>
+  <path d="M 590 272 L 590 300" class="edge"/>
+
+  <rect x="340" y="300" width="500" height="40" rx="8" class="node"/>
+  <text x="590" y="325" text-anchor="middle" class="box">各 ID を4状態のいずれかにする（100〜103行）</text>
+
+  <path d="M 590 340 L 165 376" class="edge"/>
+  <path d="M 590 340 L 445 376" class="edge"/>
+  <path d="M 590 340 L 725 376" class="edge"/>
+  <path d="M 590 340 L 1005 376" class="edge"/>
+
+  <rect x="40" y="376" width="250" height="76" rx="8" class="pass"/>
+  <text x="165" y="398" text-anchor="middle" class="mono">pass</text>
+  <text x="165" y="418" text-anchor="middle" class="box">適用でき、問題がない</text>
+  <text x="165" y="438" text-anchor="middle" class="small">記録するだけで出力しない</text>
+
+  <rect x="320" y="376" width="250" height="76" rx="8" class="na"/>
+  <text x="445" y="398" text-anchor="middle" class="mono">not-applicable</text>
+  <text x="445" y="418" text-anchor="middle" class="box">対象外。保護範囲にかかる箇所</text>
+  <text x="445" y="438" text-anchor="middle" class="small">記録するだけで出力しない（68行）</text>
+
+  <rect x="600" y="376" width="250" height="76" rx="8" class="act"/>
+  <text x="725" y="398" text-anchor="middle" class="mono">actionable</text>
+  <text x="725" y="418" text-anchor="middle" class="box">規則に反し、安全に修正できる</text>
+  <text x="725" y="440" text-anchor="middle" class="mono">→ decision: repair</text>
+
+  <rect x="880" y="376" width="250" height="76" rx="8" class="conf"/>
+  <text x="1005" y="398" text-anchor="middle" class="mono">needs-confirmation</text>
+  <text x="1005" y="418" text-anchor="middle" class="box">原文にない情報や意図が必要</text>
+  <text x="1005" y="440" text-anchor="middle" class="mono">→ decision: confirm</text>
+
+  <!-- mode notes -->
+  <text x="40" y="486" class="label">モード別の補正（判定に影響する）</text>
+  <rect x="40" y="496" width="255" height="122" rx="8" class="safe"/>
+  <text x="52" y="518" class="box">セーフモード（246行）</text>
+  <text x="52" y="538" class="small">分析メモの ambiguities に当たる</text>
+  <text x="52" y="556" class="small">箇所は actionable にせず</text>
+  <text x="52" y="574" class="small">needs-confirmation にして、</text>
+  <text x="52" y="592" class="small">原文を保持する</text>
+
+  <rect x="315" y="496" width="255" height="122" rx="8" class="destroy"/>
+  <text x="327" y="518" class="box">デストロイモード（66行）</text>
+  <text x="327" y="538" class="small">needs-confirmation の箇所を最も</text>
+  <text x="327" y="556" class="small">自然な解釈で actionable にしてよい。</text>
+  <text x="327" y="574" class="small">事実に関わるもの（match-</text>
+  <text x="327" y="592" class="small">expression-to-facts など）は</text>
+  <text x="327" y="610" class="small">needs-confirmation のまま</text>
+
+  <!-- keep -->
+  <rect x="40" y="624" width="520" height="56" rx="8" class="note"/>
+  <text x="300" y="646" text-anchor="middle" class="box">意図的に残す箇所（「補わない」一覧に当たる箇所など）</text>
+  <text x="300" y="666" text-anchor="middle" class="mono">→ decision: keep（rule_ids は空配列可、243行）</text>
+  <path d="M 560 652 L 580 652" class="edge"/>
+
+  <!-- record -->
+  <path d="M 725 452 L 725 610" class="edge"/>
+  <path d="M 1005 452 L 1005 610" class="edge"/>
+  <rect x="580" y="610" width="580" height="70" rx="8" class="record"/>
+  <text x="870" y="634" text-anchor="middle" class="box">rewrite_targets の各要素に decision と rule_ids（主 ID を先頭）を記録（243行）</text>
+  <text x="870" y="654" text-anchor="middle" class="small">完了条件: 48個の ID すべてに状態が付き、actionable と needs-confirmation が</text>
+  <text x="870" y="671" text-anchor="middle" class="small">rule_ids 付きで記録されている（248行）</text>
+
+  <!-- Phase 4 band -->
+  <rect x="20" y="716" width="1140" height="60" rx="10" class="band"/>
+  <text x="36" y="740" class="band-label">Phase 4</text>
+  <path d="M 870 680 L 870 726" class="edge"/>
+  <rect x="580" y="726" width="580" height="40" rx="8" class="node"/>
+  <text x="870" y="751" text-anchor="middle" class="box">制約に沿って生成する。P4 規則は改行単位の指定があるときだけ適用（240行）</text>
+
+  <!-- Phase 5 band -->
+  <rect x="20" y="792" width="1140" height="218" rx="10" class="band"/>
+  <text x="36" y="816" class="band-label">Phase 5: 候補文を検査する（267〜298行）</text>
+  <path d="M 870 766 L 870 804" class="edge"/>
+  <rect x="580" y="804" width="580" height="60" rx="8" class="node"/>
+  <text x="870" y="828" text-anchor="middle" class="box">候補文に48規則を再照合する（269行）</text>
+  <text x="870" y="850" text-anchor="middle" class="small">デストロイ: 再解析せず LLM 出所で判定 ／ セーフ: 再解析した分析メモで判定</text>
+
+  <path d="M 870 864 L 870 876" class="edge"/>
+  <polygon points="870,876 1070,904 870,932 670,904" fill="#ffffff" stroke="#475569" stroke-width="1.4"/>
+  <text x="870" y="909" text-anchor="middle" class="box">新たな actionable がある？</text>
+
+  <text x="880" y="952" class="label">いいえ</text>
+  <path d="M 870 932 L 870 960" class="edge"/>
+  <rect x="680" y="960" width="380" height="40" rx="8" class="node"/>
+  <text x="870" y="985" text-anchor="middle" class="box">完了条件: 候補文で actionable が0件（298行）</text>
+
+  <text x="600" y="896" class="label">はい</text>
+  <path d="M 670 904 L 560 904" class="edge"/>
+  <rect x="300" y="876" width="260" height="56" rx="8" class="node"/>
+  <text x="430" y="899" text-anchor="middle" class="box">候補を修正して再照合する</text>
+  <text x="430" y="919" text-anchor="middle" class="small">（最大3巡）</text>
+  <path d="M 430 876 L 430 834 L 580 834" class="edge"/>
+
+  <path d="M 300 904 L 290 904" class="edge"/>
+  <rect x="40" y="870" width="250" height="68" rx="8" class="conf"/>
+  <text x="165" y="890" text-anchor="middle" class="small">3巡で解消しない actionable は</text>
+  <text x="165" y="908" text-anchor="middle" class="small">needs-confirmation に変えて</text>
+  <text x="165" y="926" text-anchor="middle" class="small">要確認へ出す（269行）</text>
+
+  <!-- Phase 6 band -->
+  <rect x="20" y="1008" width="1140" height="230" rx="10" class="band"/>
+  <text x="785" y="1036" text-anchor="middle" class="band-label">Phase 6: 出力する（300〜330行）</text>
+  <path d="M 870 1000 L 870 1016" class="line"/>
+  <path d="M 210 1016 L 980 1016" class="line"/>
+  <path d="M 210 1016 L 210 1050" class="edge"/>
+  <path d="M 590 1016 L 590 1050" class="edge"/>
+  <path d="M 980 1016 L 980 1050" class="edge"/>
+  <path d="M 165 938 L 165 1050" class="edge"/>
+
+  <rect x="40" y="1050" width="340" height="88" rx="8" class="out"/>
+  <text x="210" y="1072" text-anchor="middle" class="box">Phase 6: 要確認（polish でも出す）</text>
+  <text x="210" y="1094" text-anchor="middle" class="mono">- `{ID}`: 原文だけでは判断できない点</text>
+  <text x="210" y="1116" text-anchor="middle" class="small">規則に対応しないものは ID なし（305行）</text>
+
+  <rect x="410" y="1050" width="360" height="88" rx="8" class="out"/>
+  <text x="590" y="1072" text-anchor="middle" class="box">diagnostic のみ: 適用ルール（312行）</text>
+  <text x="590" y="1094" text-anchor="middle" class="mono">- `{ID}`: 対象箇所と修正内容</text>
+  <text x="590" y="1116" text-anchor="middle" class="small">actionable がなければ「適用ルール: なし」</text>
+
+  <rect x="800" y="1050" width="360" height="88" rx="8" class="out"/>
+  <text x="980" y="1072" text-anchor="middle" class="box">監査要求時のみ: 48行の監査一覧（316行）</text>
+  <text x="980" y="1094" text-anchor="middle" class="mono">| ID | status | 根拠または対象箇所 |</text>
+  <text x="980" y="1116" text-anchor="middle" class="small">判定を完了できなければ出さず停止理由を報告</text>
+
+  <rect x="40" y="1160" width="1120" height="60" rx="8" class="note"/>
+  <text x="600" y="1183" text-anchor="middle" class="small">LLM 出所の判定（素性がなく LLM へ倒したものを含む）は、diagnostic の適用ルールと要確認の行末に「（LLM 判断）」を付ける。</text>
+  <text x="600" y="1205" text-anchor="middle" class="small">polish では付けない（314行）。監査一覧では根拠欄に「LLM 判断」と書く（321行）</text>
+</svg>

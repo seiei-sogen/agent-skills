@@ -648,7 +648,7 @@ body {
 <h2 id="_計画の状態">1. 計画の状態</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>実装済みの計画である。Task 1〜9 はすべて完了し、検証結果は「実装結果と検証結果」に記録した。実装後に <code>ponytail-review</code> によるレビューを2巡行い、重複の削除と矛盾の解消を反映した。計画からの調整と要件側の明確化は同節「計画からの調整」にある。</p>
+<p>実装済みの計画である。Task 1〜9 はすべて完了し、検証結果は「実装結果と検証結果」に記録した。実装後に <code>ponytail-review</code> によるレビューを2巡、要件照合・実行シミュレーション・構造検査の3系統に懐疑者2名ずつを付けた検証ワークフローを1巡、10観点の候補出しと1票検証による <code>code-review</code> を1巡行い、重複の削除と矛盾の解消を反映した。計画からの調整と要件側の明確化は同節「計画からの調整」にある。</p>
 </div>
 <div class="paragraph">
 <p>作業は <code>main</code> 上で完結させ、ブランチと PR は作らない（要件「前置き」）。commit と push は親パイプラインが行い、本計画には PR 作成タスクを置かない。</p>
@@ -1597,7 +1597,7 @@ body {
 <div class="ulist checklist">
 <ul class="checklist">
 <li>
-<p>&#10003; 完了。「<mark>#</mark> 48規則の扱い」を「リライトの優先順位」末尾に追加。番号付きリスト5項目（行配置まで）を確認</p>
+<p>&#10003; 完了。規則の扱いを「リライトの優先順位」のモード段落と箇条書きへ畳み込み、衝突時の番号付きリスト5項目（行配置まで）を末尾に置いた（当初の小見出し <code><mark>#</mark> 48規則の扱い</code> はレビュー1巡目で外した。「計画からの調整」参照）</p>
 </li>
 </ul>
 </div>
@@ -2404,7 +2404,7 @@ git status --short</code></pre>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">T-07</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Task 2、Task 6</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">監査一覧の要求時だけの出力、規則の定義順、<code>pass</code> と <code>not-applicable</code> を含む48行、本文を変更しないこと</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">監査一覧の要求時だけの出力、規則の定義順、<code>pass</code> と <code>not-applicable</code> を含む48行、本文を変更しないこと、監査一覧と解析ファイルのパス以外を出さないこと</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">T-08</p></td>
@@ -2414,7 +2414,7 @@ git status --short</code></pre>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">T-09</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Task 2、Task 6</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">最終版だけの扱い（適用ルールと診断の省略、<code>要確認</code> は省略しない）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">最終版だけの扱い（適用ルール、診断、解析ファイルのパスの省略、<code>要確認</code> は省略しない）</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">T-10（KWJA 未実行）</p></td>
@@ -2483,7 +2483,7 @@ done</code></pre>
 <div class="ulist">
 <ul>
 <li>
-<p><code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code>: 209行 → 330行（レビュー前は347行）。description の差し替え、出力先と <code>polish</code> / <code>diagnostic</code> の定義の更新、「リライトの優先順位」への規則の扱いと衝突時の順序の追記、「## 岩淵48規則の ID 表」（4カテゴリ、5列、表本体67行）、Phase 3・5・6 の追記。</p>
+<p><code>skills/natural-japanese/natural-japanese-rewriter/SKILL.md</code>: 209行 → 332行（レビュー前は347行）。description の差し替え、出力先と <code>polish</code> / <code>diagnostic</code> の定義の更新、「リライトの優先順位」への規則の扱いと衝突時の順序の追記、「## 岩淵48規則の ID 表」（4カテゴリ、5列、表本体67行）、Phase 3・5・6 の追記。</p>
 </li>
 <li>
 <p><code>skills/natural-japanese/natural-japanese-rewriter/agents/openai.yaml</code>: <code>short_description</code> の1行。</p>
@@ -2548,7 +2548,7 @@ done</code></pre>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">AC-09</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">330行（上限400）</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">332行（上限400）</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">AC-10</p></td>
@@ -2589,7 +2589,7 @@ done</code></pre>
 </tbody>
 </table>
 <div class="paragraph">
-<p>レビュー2巡の修正後に同じ検証を再実行し、すべて同じ結果だった（AC-09 だけ347行から330行に変化）。</p>
+<p>レビュー2巡、検証ワークフロー1巡、<code>code-review</code> 1巡の修正後に同じ検証を再実行し、すべて同じ結果だった（AC-09 だけ347行から332行に変化）。</p>
 </div>
 </div>
 <div class="sect2">
@@ -2601,7 +2601,7 @@ done</code></pre>
 <div class="sect2">
 <h3 id="_計画からの調整">10.4. 計画からの調整</h3>
 <div class="paragraph">
-<p>実装時の調整は次の3件で、要件の範囲内である。</p>
+<p>実装時の調整は次の4件で、要件の範囲内である。</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -2613,6 +2613,9 @@ done</code></pre>
 </li>
 <li>
 <p>Task 3 で予定した <code><mark>#</mark> 48規則の扱い</code> の小見出しは、レビュー1巡目で「既存のモード段落と重複する」と指摘され、内容をデストロイモード段落、セーフモードの箇条書き、衝突時の順序の3か所へ畳み込んで小見出しを外した。</p>
+</li>
+<li>
+<p>Task 3 で予定した「技術用語を一般語へ薄めない」への2規則（<code>word-choice.simplify-overly-formal-literary-or-technical-terms</code>、<code>word-choice.limit-loanwords-and-foreign-words</code>）の注記は、レビュー2巡目で ID 表の「主な手がかり」列（固有表現と技術用語の保護）と重複すると指摘され、注記を置かず表の列だけで担保した。</p>
 </li>
 </ol>
 </div>
@@ -2645,10 +2648,69 @@ done</code></pre>
 </ol>
 </div>
 <div class="paragraph">
-<p>レビューで指摘されたが採らなかった項目は、旧 SKILL.md から引き継いだ既存文（冒頭の2文、「子スキルと優先順位」の最終文、Phase 3 の導入2文）の短縮で、本件の変更対象外として残した。</p>
+<p>3巡目の検証ワークフロー（要件との照合、T-01 / T-07 / T-08 / T-09 / T-10 の実行シミュレーション、構造の機械検査。critical / high の所見は懐疑者2名が反証を試み、6件すべて反証されなかった）で、本文を変更しない出力先の扱いを中心に次を要件へ明確化し、SKILL.md へ反映した。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>監査だけの出力は監査一覧と解析ファイルのパスだけとし、<code>要確認</code> の別掲と診断は出さない（FR-07、T-07）。</p>
+</li>
+<li>
+<p>レビューだけの出力は1件1行の <code>ID / 対象箇所 / 問題 / 修正案</code> だけとし、修正案は Phase 4 の生成方針で作り、<code>LLM</code> 出所の行に <code>（LLM 判断）</code> を付ける（FR-07）。</p>
+</li>
+<li>
+<p>本文を変更しない出力先では、デストロイモードの <code>needs-confirmation</code> の <code>actionable</code> 化を行わず、Phase 3 で判定を終えて再照合しない。<code>repair</code> は修正案の提示を意味する（FR-04、FR-05、FR-06）。</p>
+</li>
+<li>
+<p>デストロイモードで <code>要確認</code> に残す判定の基準を「原文にない主体、対象、動作主、原因、目的、数値、時刻、確実性を確定させる解釈」と定義し、該当する規則 ID を例示した（FR-05）。</p>
+</li>
+<li>
+<p>Phase 5 の再照合で検出・修正した項目も適用ルールに載せ、出所の表示は Phase 3 と同じ規則に従う（FR-06）。</p>
+</li>
+<li>
+<p>規則違反がない自然さ目的の書き直しは <code>decision: repair</code>、<code>rule_ids: []</code> で記録し、要素は親スキルが分析メモの <code>rewrite_targets</code> に追記し、<code>LLM</code> 出所の判定を KWJA 由来のフィールドに書き込まない（FR-04）。</p>
+</li>
+<li>
+<p><code>pass</code> と <code>not-applicable</code> は監査一覧を除き出力しない、セーフモードの <code>ambiguities</code> 判定は修復トリガーより優先する、「最終版だけ」は解析ファイルのパスも省く（FR-04、例外、FR-07）。</p>
+</li>
+<li>
+<p><code>word-choice.avoid-roundabout-phrasing</code> の主な手がかりから <code>detailed-rules.md</code> への参照を外し、型を SKILL.md 内に例示した（FR-03 の文言調整の範囲）。</p>
+</li>
+</ol>
 </div>
 <div class="paragraph">
-<p>行数は見積もり約360行に対して330行だった。</p>
+<p>4巡目の <code>code-review</code>（10観点の候補出し、1票検証、補完探索）で、3巡目の記述どうしの矛盾と未定義を次のとおり解消し、要件と SKILL.md へ反映した。</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>本文を変更しない出力先の Phase 構成を「入力と出力モード」に1段落で定義した（Phase 1〜3 を行い、Phase 4 は「レビューだけ」の修正案の生成方針としてだけ使い、Phase 5 は行わない。<code>（LLM 判断）</code> は <code>polish</code> / <code>diagnostic</code> ではなくレビューだけ・監査だけの規定で付け、解析ファイルのパスは原文用だけ）。Phase 5 の再照合と 3巡目の「Phase 3 で判定を終える」文はこの段落に寄せた（D-07、FR-05、FR-06、FR-07）。</p>
+</li>
+<li>
+<p>レビューだけの出力は判定行と解析ファイルのパスとし、1行の単位を <code>rewrite_targets</code> の要素と定めた。3巡目の「判定行だけ」は解析ファイルのパスを含まない書き方だったため修正した（FR-07、T-08）。</p>
+</li>
+<li>
+<p>「KWJA 由来のフィールド」を analyzer の具体的なキー名（<code>predicates</code>、<code>arguments</code>、<code>entities</code>、<code>issues</code>、<code>ambiguities</code>）で置き換え、<code>LLM</code> 出所は <code>rewrite_targets</code> の要素の <code>source: llm</code> に記録することにした（FR-04）。</p>
+</li>
+<li>
+<p>本文を変更しない出力先では <code>rule_ids: []</code> の書き直しは記録しない。規則に対応しない <code>confirm</code> は判定行では ID 欄 <code>-</code>、監査一覧では表の直後に ID なしで添える。<code>keep</code> の箇所に付けた規則の状態は <code>pass</code> とする（FR-04、FR-07）。</p>
+</li>
+<li>
+<p>セーフモードの <code>ambiguities</code> 判定は、analyzer が <code>probable</code> の項も <code>ambiguities</code> に残すため、旧スキルの順序（一意に復元、共通する変更、原文保持）を通したうえで <code>repairability: blocked</code> や <code>recoverability: unknown</code> など確定できない箇所だけ <code>needs-confirmation</code> とした（例外）。</p>
+</li>
+<li>
+<p>監査一覧で同じ ID が箇所ごとに異なる状態になる場合の集約規則（強い状態を1つ、3列目に内訳）を加え、監査と推敲の両方は <code>diagnostic</code> として扱うと明記した（FR-07）。</p>
+</li>
+<li>
+<p>Phase 6 の解析ファイルのパスは「Phase 5 の意味回帰検査を行った場合」だけ最終候補用も示す。セーフモードの禁止事項に <code>動作主</code> を加えてデストロイモードの基準と揃えた。T-09 に解析ファイルのパスの省略を加えた（FR-05、FR-07）。</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>レビューで指摘されたが採らなかった項目は、旧 SKILL.md から引き継いだ既存文（冒頭の2文、「子スキルと優先順位」の最終文、Phase 3 の導入2文）の短縮、改行単位の「指定」の出所の限定（要件の規則本文どおりとする）、デストロイモードの文分割・結合と行配置の境界の定義（要件の未確定事項 <code>detailed-rules.md:214</code> に関わるため本件では決めない）、Phase 6 完了条件から外したセーフモードの意味不変条件（Phase 5 の完了条件が同じ条件を持つ）である。</p>
+</div>
+<div class="paragraph">
+<p>行数は見積もり約360行に対して332行だった。</p>
 </div>
 </div>
 </div>

@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 820" width="1180" height="820" role="img" aria-labelledby="t d">
+  <title id="t">出力先と出力モードの分岐</title>
+  <desc id="d">依頼文から safe 引数でモードを決め、出力先（ファイル編集、応答本文、本文を変更しない）と出力モード（polish、diagnostic）、追加要求（最終版だけ、監査して）に応じて何を出力するかを示す。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+    <marker id="arrow-dash" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#b91c1c"/>
+    </marker>
+    <style>
+      text { font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; fill: #1e293b; }
+      .title { font-size: 20px; font-weight: 700; }
+      .box { font-size: 14px; }
+      .bold { font-size: 14px; font-weight: 700; }
+      .small { font-size: 13px; }
+      .mono { font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px; }
+      .edge { stroke: #334155; stroke-width: 1.6; fill: none; marker-end: url(#arrow); }
+      .line { stroke: #334155; stroke-width: 1.6; fill: none; }
+      .edge-stop { stroke: #b91c1c; stroke-width: 1.4; fill: none; stroke-dasharray: 6 4; marker-end: url(#arrow-dash); }
+      .label { font-size: 13px; fill: #334155; }
+      .node { fill: #ffffff; stroke: #475569; stroke-width: 1.4; }
+      .safe { fill: #eff6ff; stroke: #1d4ed8; stroke-width: 1.4; }
+      .destroy { fill: #fffbeb; stroke: #b45309; stroke-width: 1.4; }
+      .dest { fill: #e0f2fe; stroke: #0369a1; stroke-width: 1.4; }
+      .polish { fill: #dcfce7; stroke: #15803d; stroke-width: 1.4; }
+      .diag { fill: #ffedd5; stroke: #c2410c; stroke-width: 1.4; }
+      .nochange { fill: #ede9fe; stroke: #6d28d9; stroke-width: 1.4; }
+      .mod { fill: #f1f5f9; stroke: #94a3b8; stroke-width: 1.2; stroke-dasharray: 5 3; }
+      .stop { fill: #fee2e2; stroke: #b91c1c; stroke-width: 1.4; }
+      .out { fill: #f0fdf4; stroke: #166534; stroke-width: 1.4; }
+    </style>
+  </defs>
+
+  <text x="590" y="30" text-anchor="middle" class="title">出力先と出力モードの分岐（入力と出力モード 39〜61行、Phase 6 300〜330行）</text>
+
+  <!-- input -->
+  <rect x="440" y="52" width="300" height="44" rx="8" class="node"/>
+  <text x="590" y="79" text-anchor="middle" class="box">依頼文 ＋ 本文またはファイルパス（41行）</text>
+  <path d="M 590 96 L 590 124" class="edge"/>
+
+  <!-- safe decision -->
+  <polygon points="590,124 810,154 590,184 370,154" fill="#ffffff" stroke="#475569" stroke-width="1.4"/>
+  <text x="590" y="159" text-anchor="middle" class="box">第一引数が正確に safe か？（42行）</text>
+
+  <text x="330" y="146" class="label">はい</text>
+  <path d="M 370 154 L 320 154" class="edge"/>
+  <rect x="60" y="130" width="260" height="48" rx="8" class="safe"/>
+  <text x="190" y="151" text-anchor="middle" class="bold">セーフモード</text>
+  <text x="190" y="169" text-anchor="middle" class="small">原意を厳密に保つ（70〜84行）</text>
+
+  <text x="820" y="146" class="label">いいえ</text>
+  <path d="M 810 154 L 860 154" class="edge"/>
+  <rect x="860" y="130" width="280" height="48" rx="8" class="destroy"/>
+  <text x="1000" y="151" text-anchor="middle" class="bold">デストロイモード（既定）</text>
+  <text x="1000" y="169" text-anchor="middle" class="small">自然さを優先（65〜66行）</text>
+
+  <!-- merge to settings -->
+  <path d="M 190 178 L 190 232" class="edge"/>
+  <path d="M 1000 178 L 1000 232" class="edge"/>
+  <rect x="140" y="232" width="900" height="44" rx="8" class="node"/>
+  <text x="590" y="259" text-anchor="middle" class="box">開始時に確定する: 対象範囲、出力先、媒体と文体、出力モード（46〜51行）</text>
+
+  <!-- early stop (Phase 1 failure) -->
+  <path d="M 1040 254 L 1162 254 L 1162 78 L 1140 78" class="edge-stop"/>
+  <rect x="800" y="40" width="340" height="84" rx="8" class="stop"/>
+  <text x="970" y="61" text-anchor="middle" class="bold">Phase 1 で KWJA が失敗したら停止</text>
+  <text x="970" y="80" text-anchor="middle" class="small">原因を報告し、規則判定だけを</text>
+  <text x="970" y="98" text-anchor="middle" class="small">LLM で続行しない（33〜34行）</text>
+  <text x="970" y="116" text-anchor="middle" class="small">監査一覧も部分的に出さず、停止理由を報告（316行）</text>
+
+  <!-- destinations -->
+  <path d="M 220 276 L 220 318" class="edge"/>
+  <path d="M 590 276 L 590 318" class="edge"/>
+  <path d="M 960 276 L 960 318" class="edge"/>
+
+  <rect x="60" y="318" width="320" height="64" rx="8" class="dest"/>
+  <text x="220" y="341" text-anchor="middle" class="bold">出力先: ファイル編集</text>
+  <text x="220" y="363" text-anchor="middle" class="small">修正を反映し、本文は再掲しない（302行）</text>
+
+  <rect x="430" y="318" width="320" height="64" rx="8" class="dest"/>
+  <text x="590" y="341" text-anchor="middle" class="bold">出力先: 応答本文</text>
+  <text x="590" y="363" text-anchor="middle" class="small">修正後の本文を先に出す（303行）</text>
+
+  <rect x="800" y="318" width="340" height="64" rx="8" class="nochange"/>
+  <text x="970" y="341" text-anchor="middle" class="bold">出力先: 本文を変更しない（49行）</text>
+  <text x="970" y="363" text-anchor="middle" class="small">「レビューだけ」「直さないで」「監査だけ」</text>
+
+  <!-- modes (file / response share polish & diagnostic) -->
+  <path d="M 220 382 L 220 404" class="line"/>
+  <path d="M 590 382 L 590 404" class="line"/>
+  <path d="M 220 404 L 590 404" class="line"/>
+  <path d="M 225 404 L 225 428" class="edge"/>
+  <path d="M 585 404 L 585 428" class="edge"/>
+
+  <rect x="60" y="428" width="330" height="84" rx="8" class="polish"/>
+  <text x="225" y="450" text-anchor="middle" class="bold">polish（既定、55行）</text>
+  <text x="225" y="470" text-anchor="middle" class="small">修正後の本文 ＋ 要確認 だけを出す</text>
+  <text x="225" y="488" text-anchor="middle" class="small">適用ルールの一覧や内部分析は出さない。</text>
+  <text x="225" y="504" text-anchor="middle" class="small">actionable の数や文数に比例して増やさない</text>
+
+  <rect x="420" y="428" width="330" height="84" rx="8" class="diag"/>
+  <text x="585" y="450" text-anchor="middle" class="bold">diagnostic（56・58行）</text>
+  <text x="585" y="470" text-anchor="middle" class="small">分析・理由・問題箇所を求めた依頼、</text>
+  <text x="585" y="488" text-anchor="middle" class="small">「岩淵ルールで直して」など規則や ID の名指し、</text>
+  <text x="585" y="504" text-anchor="middle" class="small">適用した規則の提示を求める依頼</text>
+
+  <path d="M 960 382 L 960 404" class="line"/>
+  <path d="M 880 404 L 1060 404" class="line"/>
+  <path d="M 880 404 L 880 428" class="edge"/>
+  <path d="M 1060 404 L 1060 428" class="edge"/>
+
+  <rect x="800" y="428" width="160" height="84" rx="8" class="nochange"/>
+  <text x="880" y="452" text-anchor="middle" class="bold">レビューだけ</text>
+  <text x="880" y="474" text-anchor="middle" class="small">actionable と</text>
+  <text x="880" y="492" text-anchor="middle" class="small">needs-confirmation</text>
+  <text x="880" y="508" text-anchor="middle" class="small">の判定を出す（324行）</text>
+
+  <rect x="980" y="428" width="160" height="84" rx="8" class="nochange"/>
+  <text x="1060" y="452" text-anchor="middle" class="bold">監査だけ</text>
+  <text x="1060" y="474" text-anchor="middle" class="small">48行の監査一覧</text>
+  <text x="1060" y="492" text-anchor="middle" class="small">を定義順に出す</text>
+  <text x="1060" y="508" text-anchor="middle" class="small">（316行）</text>
+
+  <!-- modifiers -->
+  <path d="M 225 512 L 225 548" class="edge"/>
+  <path d="M 585 512 L 585 548" class="edge"/>
+  <rect x="60" y="548" width="330" height="60" rx="8" class="mod"/>
+  <text x="225" y="570" text-anchor="middle" class="box">「最終版だけ」（325行）</text>
+  <text x="225" y="590" text-anchor="middle" class="small">適用ルールと診断を省く。要確認は省略しない</text>
+
+  <rect x="420" y="548" width="330" height="60" rx="8" class="mod"/>
+  <text x="585" y="570" text-anchor="middle" class="box">「監査して」＋推敲（316行）</text>
+  <text x="585" y="590" text-anchor="middle" class="small">diagnostic の末尾に48行の監査一覧を加える</text>
+
+
+  <!-- outputs -->
+  <path d="M 225 608 L 225 660" class="edge"/>
+  <path d="M 585 608 L 585 660" class="edge"/>
+  <path d="M 880 512 L 880 660" class="edge"/>
+  <path d="M 1060 512 L 1060 660" class="edge"/>
+
+  <rect x="60" y="660" width="330" height="112" rx="8" class="out"/>
+  <text x="225" y="682" text-anchor="middle" class="bold">polish の出力</text>
+  <text x="72" y="704" class="small">1. 修正後の本文（ファイル編集なら変更概要）</text>
+  <text x="72" y="724" class="mono">2. 要確認: - `{ID}`: …（必要なときだけ）</text>
+  <text x="72" y="744" class="small">3. 使用した KWJA 解析ファイルのパス（328行）</text>
+  <text x="72" y="762" class="small">「（LLM 判断）」は付けない（314行）</text>
+
+  <rect x="420" y="660" width="330" height="112" rx="8" class="out"/>
+  <text x="585" y="682" text-anchor="middle" class="bold">diagnostic の出力</text>
+  <text x="432" y="704" class="small">本文 → 要確認 → 問題のある述語 → 不明・競合した項</text>
+  <text x="432" y="724" class="small">→ 修復した関係 → 適用ルール（307〜312行）</text>
+  <text x="432" y="744" class="small">LLM 出所の行末に「（LLM 判断）」（314行）</text>
+  <text x="432" y="762" class="small">ファイル編集なら適用した ID も報告する</text>
+
+  <rect x="800" y="660" width="340" height="112" rx="8" class="out"/>
+  <text x="970" y="682" text-anchor="middle" class="bold">本文を変更しない出力</text>
+  <text x="812" y="704" class="mono">レビュー: ID / 対象箇所 / 問題 / 修正案</text>
+  <text x="812" y="724" class="small">（needs-confirmation は判断に必要な情報を示す）</text>
+  <text x="812" y="744" class="mono">監査: | ID | status | 根拠または対象箇所 |</text>
+  <text x="812" y="762" class="small">×48行、定義順。pass と not-applicable も含む</text>
+
+  <text x="590" y="806" text-anchor="middle" class="label">どの出力でも要確認は省略しない（325行）。監査一覧は判定を完了できたときだけ出す（316行）。</text>
+</svg>
