@@ -1,0 +1,4 @@
+interface:
+  display_name: "git-squash-one-commmit"
+  short_description: "現在のブランチのコミットを1つにスカッシュする"
+  default_prompt: "$git-squash-one-commmit を使って、現在のブランチのコミットを 1 つにまとめてください。"
