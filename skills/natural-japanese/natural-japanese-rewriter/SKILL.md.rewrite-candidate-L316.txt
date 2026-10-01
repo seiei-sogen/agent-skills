@@ -1,0 +1,2 @@
+出所が `P1` でも、手がかりとなる素性やタグが KWJA 出力にない規則は `LLM` 出所として原文から判定し、その旨を記録する。素性がないことを理由に `not-applicable` としない。`LLM` 出所の判定は `rewrite_targets` の要素に `source: llm` として記録し、`predicates`、`arguments`、`entities`、`issues`、`ambiguities` には KWJA 出力にない根拠を書き込まない。
+`diagnostic` では、`LLM` 出所の判定（素性がないため `P1` から `LLM` に切り替えたものを含む）に、適用ルールと `要確認` の行末で `（LLM 判断）` を付ける。`polish` の `要確認` では付けない。本文を変更しない出力先では、判定行と監査一覧の規定に従う。
