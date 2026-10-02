@@ -1,0 +1,4 @@
+interface:
+  display_name: "update-agent-skills"
+  short_description: "自作スキルをコミット・push し、skup と hs で更新して両エージェントへ反映します"
+  default_prompt: "$update-agent-skills を使って、agent-skills リポジトリの差分をコミット・push し、fish の skup、hs を順に実行して Claude Code と Codex に反映してください。"

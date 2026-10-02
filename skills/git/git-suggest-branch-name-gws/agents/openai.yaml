@@ -1,0 +1,4 @@
+interface:
+  display_name: "git-suggest-branch-name-gws"
+  short_description: "issue 番号と変更内容からブランチ名を生成し、gws でワークツリーを作成します"
+  default_prompt: "$git-suggest-branch-name-gws を使って、入力した issue 番号と変更内容から Git ブランチ名を生成し、その名前で gws を実行してワークツリーを作成してください。"
