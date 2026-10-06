@@ -16,7 +16,8 @@ description: 複数の GitHub issue をまとめて扱うパイプライン。�
 
 その中で、作業をするが、後述する、`pipe-requirements-to-pr` で生成されたドキュメントは、対応する、`reqs` のディレクトリに格納する。
 
-git worktreeを生成した後、その中で、`pipe-requirements-to-pr` スキルを使い、複数の要件定義書 = `reqs` を一度に2PR
-ずつ作業する。（セッションの節約のため。）
+git worktreeを生成した後、その中で、`pipe-requirements-to-pr` スキルを使い、複数の要件定義書 = `reqs` を対応する。
+
+一度に、1PRずつ対応する。
 
 また、フロントエンド、バックエンド、両方の対応が必要な、場合、レビューガイドなどに、別PRで（フロントエンド or バックエンド）側の対応が必要か明記する。
