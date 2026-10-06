@@ -7,11 +7,13 @@ description: 現在の Git ブランチに紐づく既存の GitHub PR を gh CL
 
 現在のブランチに紐づくオープンな PR の本文を、変更の対象と内容が前提知識なしでも分かり、レビュアーが1分で読める文章へ更新する。
 ユーザーがタイトルの更新も明示しない限り、PR のタイトルは変更しない。
+draft PR も更新対象とする。更新前の draft 状態を維持し、ユーザーが明示的に指示しない限り `gh pr ready` などで draft を解除しない。
+assignee には、この環境で `gh` が認証している GitHub ユーザー（`@me`）を追加する。リポジトリの所有者や既存 PR の作者から推測せず、既存の assignee は削除しない。
 
 ## PR を特定する
 
 1. Git リポジトリ内であることと、現在のブランチ名を確認する。
-2. `gh pr view --json number,url,title,body,baseRefName,headRefName,state` を使い、現在のブランチに紐づく PR を取得する。
+2. `gh pr view --json number,url,title,body,baseRefName,headRefName,state,isDraft,assignees` を使い、現在のブランチに紐づく PR を取得する。`gh api user --jq .login` で認証ユーザーも確認する。
 3. 取得した PR が現在のブランチを head に持つオープンな PR であることを確認する。
 
 ブランチが取得できない、PR が見つからない、または PR がオープンでない場合は更新しない。
@@ -109,10 +111,10 @@ PR 上の実際の差分は `gh pr diff` を優先し、差分が大きい場合
 完成した本文を安全な一時 Markdown ファイルへ保存し、長さが上限内であることを確かめてから、PR 番号を明示して次の形式で更新する。
 
 ```bash
-gh pr edit <PR番号> --body-file <本文ファイル>
+gh pr edit <PR番号> --body-file <本文ファイル> --add-assignee @me
 ```
 
-更新後は `gh pr view <PR番号> --json url,body` で本文を再取得し、意図した内容が反映されたことを確認する。
+更新後は `gh pr view <PR番号> --json url,body,isDraft,assignees` で再取得し、意図した本文、更新前と同じ draft 状態、認証ユーザーの assignee への追加を確認する。
 更新に失敗した場合は別の PR へ切り替えたり、同じ操作を無制限に繰り返したりせず、エラーを報告する。
 
 最後に、更新した PR の番号と URL、使ったテンプレートのファイル名（なければ「テンプレートなし」）、本文の文字数、および本文に書いた「対象」と「内容」を簡潔に報告する。
