@@ -1,0 +1,4 @@
+interface:
+  display_name: "pipe-multiple-issues"
+  short_description: "複数の GitHub issue をまとめて扱うパイプライン（未定義）"
+  default_prompt: "$pipe-multiple-issue を使ってください。"
