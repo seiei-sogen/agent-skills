@@ -79,7 +79,7 @@ docs/task-requirements/<branch-tail>/req-<branch-tail>.adoc
 - 対象範囲と対象外
 - 機能要件と、issue から読み取れる制約
 - 検証可能な受け入れ条件
-- 例外、失敗時、境界条件
+- 利用者に見える失敗時の結果、境界条件
 - issue だけでは確定できない未決事項
 
 issue に根拠がない仕様は確定事項として補わない。

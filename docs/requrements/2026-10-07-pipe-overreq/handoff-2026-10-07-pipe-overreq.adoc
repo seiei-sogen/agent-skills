@@ -1,0 +1,80 @@
+= ハンドオフ: pipe 系スキルの過剰な要件定義と Quint を減らす
+:toc: left
+
+作成日: 2026-10-07
+
+== 次のセッションでやること
+
+`skills/pipe/` 配下のスキルを直し、自動壁打ちが生む要件定義と Quint モデルの過剰を減らす。
+改善案（<<proposals>>）の 1〜6 のうち、どれを入れるかをユーザーはまだ決めていない。最初にユーザーへ確認する。
+
+== ここまでの経緯
+
+. issue #45412 で `pipe-requirements-to-pr` を試したところ、要件定義から実装計画までが2時間たっても終わらなかった。
+. 原因は2つあった。1つは、Codex による往復レビュー（R1〜R5）の待ち時間で、合計約65分かかっていた。もう1つは、後段の Phase が上流の文書まで90点基準で採点し直すため、指摘を反映するたびに文書が増え、収束しなかったこと。
+. 後者を commit `96810f9`（main に push 済み）で直した。各 Phase は自分の成果物だけを採点する。重大な指摘を定義し、文書間の確認は最大2巡とした。差分は `git show 96810f9` で確認できる。
+. 実行中の issue45412 セッション（`issue45412-backend-relink-closed-google-a8`）には、R5 で区切り、Phase 1 の commit・PR 作成と Phase 4 へ進むよう SendMessage で伝えた。向こうで実行されたかは確認していない。
+. その後ユーザーから、生成された要件定義書と `.qnt` が過剰だという指摘があった。原因と改善案を分析した（下記）。スキルへの反映はまだしていない。
+
+ユーザーが選ばなかった案は次の2つ。再提案しない。
+
+* Quint の採点を、不変条件と競合トレースだけに絞る案
+* 外部レビュアー（Codex）への依頼を Phase ごとに1回に限る案
+
+ITF（`quint run --out-itf`）によるモデルベーステストについては、ユーザーが不要と明言している。pipe 系スキルには指示がなく、`quint-lang` の CLI リファレンスに記載があるだけなので、削除する対象はない。今後も追加しない。
+
+== 根拠にした成果物
+
+issue45412 の worktree の `docs/req/issue45412-backend-relink-closed-google-maps/` 配下を根拠にした。
+worktree のパスは `/home/agir_wsl/develop/ghq_repos/github.com.fujita-kazuhiko/hello-ai/auto_reserve-worktrees/feat/issue45412-backend-relink-closed-google-maps/` である。
+
+* `req-issue45412-backend-relink-closed-google-maps.adoc`: 902行。規則37件、シナリオ49件、前提15件、未確定事項8件。
+* `closed_place_relink.qnt`、`closed_place_relink_test.qnt`: Quint モデルとテスト。
+* `handoff/codex-r3-reply.md`〜`codex-r5-reply.md`: Codex の採点と指摘。R3 は72点で重大10件、R4 は84点で重大3件。R5 は要件94点・設計85点・計画88点で、重大2件。
+* `decisions.tsv`: 品質ゲートの経過。
+* セッションのログ: `~/.claude/projects/-home-agir-wsl-develop-ghq-repos-github-com-fujita-kazuhiko-hello-ai-auto-reserve-worktrees-feat-issue45412-backend-relink-closed-google-maps/5cd8c36c-db37-4630-8cef-122e5da5e0ee.jsonl`
+
+== 過剰の具体例
+
+* 要件に設計が混ざっている。REQ-030 のロック順、REQ-037 の transaction 境界、REQ-050 の別 transaction、`StringNormalizer.normalize_for_match` というクラス名、行番号付きの前提が入っている。
+* 指摘から規則が連鎖して増えた。R3 で候補過多（REQ-014）を足すと、R4 で候補1件の取得操作（REQ-047）と権限のシナリオが増えた。外部キー解除（REQ-036）からは残留リスク Q-8 が生まれ、それがモデルの `candidateFk` に入って R5 の重大な指摘になった。
+* `.qnt` の不変条件は、どれも各 action のガードで成り立つように作られている。`batchNeverActsOnChangedPair` は、Safe 版では `commitSkips` と `changedSinceStart` が同じ式になり、常に真になる（`closed_place_relink.qnt:67-75`）。一方、業務の核である候補の判定はモデル化されていない（`:11`）。
+* 実際に起きうる競合は、日次バッチ1本と、まれな手動操作の間だけ。`updated_at` による楽観ロックと、割り込みを1件入れた spec で足りる。
+
+この issue に必要だった要件は、規則15件前後、シナリオ20件前後で、Quint は不要だったと見ている。これは見積もりで、検証していない。
+
+== スキル側の原因
+
+パスは `skills/pipe/` からの相対パス。
+
+. 自動壁打ちの終了条件が「派生した論点が尽きるまで」になっている（`pipe-grilling-auto-to-requirements-pr/SKILL.md:74`、`pipe-generate-quality-gated-implementation-plan/SKILL.md:57`）。人が答えないので、論点の枝が切れない。
+. 推奨回答の基準が「安全側」（`pipe-requirements-to-pr/SKILL.md:75`）で、モデルはこれを、規則・確認・記録を足すことだと解釈する。
+. 品質ゲートが漏れしか減点せず、100点を目指させている（`pipe-grilling-auto-to-requirements-pr/SKILL.md:103-110`）。
+. 要件の契約（`pipe-requirements-to-pr/references/artifact-contracts.md:41-49`）が、設計フェーズを追加する前のままで、失敗時挙動や運用まで要件に求めている。
+. `pipe-grilling-auto-to-requirements-pr/references/ears-and-gherkin.md:5-6` が、失敗時の振る舞いにも EARS とシナリオを求めている。そのため、内部の競合がシナリオとテストに展開される。
+. 調査レポートの「反映漏れがない」が採点対象のため、判断に効かない事実まで前提として要件に入る。
+. Quint を使う条件（`pipe-auto-grilling-design/SKILL.md:27`）が広すぎる。DB を更新するバッチなら、ほぼすべて当てはまる。
+
+== 改善案 [[proposals]]
+
+. 論点を切る手順を入れる。論点を採用する前に「決めないと、利用者や操作者に見える挙動が実装者によって変わるか」を問う。変わらなければ規則にせず、実装者に委ねることを1行だけ記録する。終了条件は「残りの論点が観測できる挙動を変えない」にする。
+. 「安全側」を「挙動や規則を増やさない側。迷ったら対象外か未確定に置く」と定義し直す。
+. 品質ゲートで過剰を減点する。issue の目的にさかのぼれない規則、ロック順・transaction・クラス名・行番号、定石で足りる競合のための規則が対象。「100点を目指す」は削り、90点で止める。
+. 要件は「何をするか」に絞る。内部の失敗や並行性は設計文書へ移し、要件には観測できる結果だけを残す。前提は判断に効いたものだけにし、詳細は調査レポートを参照させる。
+. Gherkin は、対象の選び方や閾値など、判断の境界があるところだけに付ける。
+. Quint を使う条件を絞る。複数の書き手が同じ状態を更新し、楽観ロック・一意制約・冪等キーといった定石で決まらない場合だけにする。ガードを言い換えただけの不変条件や、既存システムの穴はモデルにしない。
+
+== 作業上の注意
+
+* このリポジトリは PR を作らず、main に直接 commit・push する。commit はユーザーに確認してから行う。
+* `git push` は、サンドボックスが `~/.ssh` の読み取りを禁止しているため、SSH 認証で失敗する。push だけ `dangerouslyDisableSandbox` で実行した。
+* リポジトリ直下に未追跡ファイル（`.bashrc`、`.claude/` など）がある。commit に含めない。
+* 実行中の Claude Code セッションは、`/nix/store/...agent-skills-source-...` からスキルを読む。スキルの修正は、再ビルド後に始めたセッションから効く。
+* 改善案 1 と 3 は、`pipe-grilling-auto-to-requirements-pr`（要件）と `pipe-generate-quality-gated-implementation-plan`（計画）の両方に効く。`pipe-auto-grilling-design` の自動壁打ちにも同じ手順が要る。共通の基準は `artifact-contracts.md` に置き、各スキルから参照する形が既存の構成に合う。
+
+== 推奨スキル
+
+* `writing-for-agents`: スキルの `SKILL.md` を編集する前に読む。
+* `pstack:principle-subtract-before-you-add`: 今回のテーマそのもの。改善案を足すより、既存の記述を削れないか先に検討する。
+* `natural-japanese-rewriter`: 編集した日本語の推敲に使う（必要な場合）。
+* `commit-message-generator`: commit メッセージの作成に使う（commit する場合）。
