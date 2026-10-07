@@ -1,0 +1,4 @@
+interface:
+  display_name: "pipe-auto-grilling-design"
+  short_description: "要件を自動で詰めて設計文書と必要なQuintモデルを作る"
+  default_prompt: "$pipe-auto-grilling-design を使い、要件定義書と事前調査JSONから設計文書を作成してください。"

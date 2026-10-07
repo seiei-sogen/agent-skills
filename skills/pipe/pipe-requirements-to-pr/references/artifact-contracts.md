@@ -1,7 +1,7 @@
 # 成果物の契約
 
-このファイルは `pipe-requirements-to-pr` の開始時、要件更新時、実装計画作成時、レビューガイド作成時に参照する。
-子パイプラインの `pipe-grilling-auto-to-requirements-pr` と `pipe-generate-quality-gated-implementation-plan` も、成果物の名前と内容はこの契約に従う。
+このファイルは `pipe-requirements-to-pr` の開始時、要件更新時、設計・実装計画作成時、レビューガイド作成時に参照する。
+子パイプラインの `pipe-grilling-auto-to-requirements-pr`、`pipe-auto-grilling-design`、`pipe-generate-quality-gated-implementation-plan` も、成果物の名前と内容はこの契約に従う。
 
 ## 識別子と配置
 
@@ -21,6 +21,8 @@
 ```text
 req-<topic>.adoc
 pre-investigation-report-<topic>.json
+design-<issue-token>-<topic>.adoc
+design-<issue-token>-<topic>.html
 implementation-plan-<issue-token>-<topic>.adoc
 easy-implementation-plan-<issue-token>-<topic>.html
 req-<topic>.html
@@ -50,6 +52,20 @@ review-guide-<issue-token>-<topic>.html
 
 自動壁打ちで採用した決定には、推奨案であること、根拠、不確実性を残す。調査レポート由来の事実には、必要に応じて根拠パスを添える。
 
+## 設計文書
+
+`design-<issue-token>-<topic>.adoc` に、要件の EARS ID と Gherkin シナリオを参照しながら、次を記す。設計文書は自由記述と必要な図で構成し、要件や実装タスクを写し直さない。
+
+- 目的、対象範囲、既存構成と採用した方式・根拠
+- コンポーネントの責務と依存、データの形・所有・永続化
+- 公開インターフェース、操作の前提・結果、失敗時の振る舞い
+- 状態遷移、並行性、時間、再試行に関する前提と不変条件
+- 要件 ID・シナリオと設計要素の対応、未確認事項、検証結果と制約
+
+状態・並行性が核になる場合は対象だけの Quint モデルを要件定義書と同じディレクトリに `.qnt` として保存し、設計文書からパス、対応する EARS ID・シナリオ・不変条件、検査コマンドと結果を参照する。同名の別対象モデルは上書きしない。モデルの抽象化と検査範囲を明記する。該当しない場合は Quint を省略した理由を記す。モデルを用いる実装では `quint-execute-spec` を参照し、設計とコードの対応を確認する。
+
+説明に図が必要なら設計文書と同じディレクトリへ SVG を置き、AsciiDoc から参照する。HTML 生成時に図が埋め込まれたことを確認する。
+
 ## 実装計画
 
 AsciiDoc として、少なくとも次を含める。
@@ -63,12 +79,12 @@ AsciiDoc として、少なくとも次を含める。
 7. リスクと軽減策
 8. 完了条件
 
-設計方針は文章や図で記し、要件の EARS と Gherkin は参照先として使う。各タスクは、満たす規則を EARS 要件 ID で示し、対応する Gherkin シナリオを完了条件に結び付ける。依存関係が許す範囲でシナリオ単位の縦切りにし、最小の正常系から状態依存・異常系へ進める。
+設計文書の決定を実装タスクに落とし込み、要件の EARS と Gherkin は参照先として使う。各タスクは、満たす規則を EARS 要件 ID で示し、対応する Gherkin シナリオを完了条件に結び付ける。依存関係が許す範囲でシナリオ単位の縦切りにし、最小の正常系から状態依存・異常系へ進める。
 
 各実装タスクには次を記載する。
 
 - `Satisfies`: 対応する EARS 要件 ID。共通基盤のタスクは、それが支える要件 ID と後続タスクを示す
-- `Design`: 実装方式や参照する設計の箇所
+- `Design`: 対応する設計文書の節。Quint モデルがあれば、対応する action・不変条件と検査ゲート
 - 対象パスと主要シンボル。未確定なら探索起点
 - 変更前後の責務または振る舞い
 - 依存タスク
@@ -100,11 +116,13 @@ AsciiDoc として、少なくとも次を含める。
 - モックは必要なシステム境界に限り、内部モジュールや協力者をモックしない。
 - テストを追加する実装タスクは、1つのシームで1つの失敗するテストを確認し、最小実装で通す赤→緑の垂直スライスにする。全テストを先に書く水平スライシングを計画・実行しない。
 
-## 文書ペアの品質ゲート
+## 文書間の品質ゲート
 
 個別採点に加えて、次の不整合を確認する。
 
 - 要件にある受け入れ条件へ対応する計画タスクまたは検証がない
+- 設計の判断・状態遷移・Quint の不変条件に対応する実装タスクや検証がない
+- 実装計画が設計文書と異なる方式・インターフェース・データの所有を前提にしている
 - EARS 要件 ID または Gherkin シナリオ名から担当タスクと完了判定を追えない
 - Gherkin の例が EARS の規則にない振る舞いを要求する、または規則と例の要件 ID が対応しない
 - 計画が要件にない挙動を追加する
@@ -117,13 +135,13 @@ AsciiDoc として、少なくとも次を含める。
 
 ## HTML 派生成果物
 
-`req-<topic>.html`、`implementation-plan-<issue-token>-<topic>.html`、`review-guide-<issue-token>-<topic>.html` は、検証を通過した同名の AsciiDoc から `asciidoc-to-colorful-html` で生成する。
+`req-<topic>.html`、`design-<issue-token>-<topic>.html`、`implementation-plan-<issue-token>-<topic>.html`、`review-guide-<issue-token>-<topic>.html` は、検証を通過した同名の AsciiDoc から `asciidoc-to-colorful-html` で生成する。
 
 `easy-implementation-plan-<issue-token>-<topic>.html` は、品質ゲートを通過した実装計画から `easy-to-understand` で生成する解説 HTML とする。
 
 - CSS とローカル画像を埋め込み、単一ファイルで表示できる状態にする。
 - HTML の内容変更は変換元の AsciiDoc へ反映し、HTML を再生成する。
-- この親パイプラインでは Phase 1〜5 の HTML 生成・更新を保留し、Phase 6 のレビューガイド生成直前に要件定義書と実装計画の HTML、および実装計画の解説 HTML を生成する。それ以降に変換元の AsciiDoc が変わった場合は、対応する HTML を再生成して最新内容との一致を確認する。
+- この親パイプラインでは Phase 1〜6 の HTML 生成・更新を保留し、Phase 7 のレビューガイド生成直前に要件定義書、設計文書、実装計画の HTML、および実装計画の解説 HTML を生成する。それ以降に変換元の AsciiDoc が変わった場合は、対応する HTML を再生成して最新内容との一致を確認する。
 - 既存 HTML を上書きする場合は、同じ変換元から作られた派生成果物であることを確認する。同名の別用途ファイルなら停止する。
 
 ## レビューガイド
