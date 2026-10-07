@@ -70,6 +70,7 @@ docs/task-requirements/<branch-tail>/req-<branch-tail>.adoc
 別 issue の成果物なら上書きせず停止する。
 
 [成果物の契約](artifact-contracts.md) に従い、取得した issue の内容から有効な AsciiDoc 要件定義書を作成する。
+規則は EARS、issue に根拠がある具体的な受け入れ例は Gherkin で書き、[記法と対応関係](../../pipe-grilling-auto-to-requirements-pr/references/ears-and-gherkin.md) に従う。issue から分からない例は作らず、Phase 1 の壁打ちで具体化する。
 少なくとも次を追跡できるようにする。
 
 - 出典となる issue 番号、タイトル、URL
