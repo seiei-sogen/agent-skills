@@ -160,7 +160,7 @@ Git リポジトリ、`develop`、現在のブランチ、作業ツリー、適�
 
 [レビューと PR](references/review-and-pr.md) の PR 手順に従う。HTML 生成後に要件定義書、設計文書、Quint モデル、実装計画を更新していた場合は、設計・モデルへの影響を Phase 2、文書間の整合を Phase 3 の品質ゲートで再確認し、Phase 7 の手順で実装計画の解説 HTML を再生成する。要件定義書、設計文書、実装計画、レビューガイド、またはSVG図を更新していた場合は、対応する HTML を `asciidoc-to-colorful-html` で再生成し、変換元の最新内容と一致することを確認する。設計文書の HTML と図、実装計画の解説 HTML、レビューガイド、参照するSVG図、そのHTML、Quint モデルまで含む対象変更だけが未コミットであることを確認してから、`commit-push` を実行する。
 
-Phase 1 で作成した PR をそのまま使い、draft 状態を維持する。オープンな PR が見つからない場合だけ `gh pr create --draft --assignee @me` で `develop` 向け draft PR を作成する。assignee はこの環境で `gh` が認証している GitHub ユーザーとする。その後 `pr-update-gh` を実行し、設計文書・Quint モデル・レビューガイドへの導線、実施した検証、確認してほしい点を含む本文へ更新して、再取得した本文、URL、isDraft、assignees を確認する。ユーザーが明示的に指示しない限り draft を解除しない。
+Phase 1 で作成した PR をそのまま使い、draft 状態を維持する。オープンな PR が見つからない場合だけ `gh pr create --draft --assignee @me` で `develop` 向け draft PR を作成する。assignee はこの環境で `gh` が認証している GitHub ユーザーとする。その後 `pr-update-gh` を実行し、設計文書・Quint モデル・レビューガイドへの導線、実施した検証、修正対象、TODO、レビューアーに確認してほしいことを含む本文へ更新して、再取得した本文、URL、isDraft、assignees を確認する。ユーザーが明示的に指示しない限り draft を解除しない。
 
 ## 再開と完了報告
 
