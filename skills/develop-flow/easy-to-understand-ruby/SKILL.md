@@ -1,5 +1,5 @@
 ---
-name: easy-to-understand
+name: easy-to-understand-rubv
 description: 対象を馬鹿にもわかるように超わかりやすく、易しく説明する。超わかりやすい図、超わかりやすい日本語を使って、HTMLファイルで出力する。
 ---
 
@@ -12,6 +12,10 @@ description: 対象を馬鹿にもわかるように超わかりやすく、易�
 
 - 引数がある場合は、その引数（fileなど）を対象にする。
 - ない場合は直前のやりとりなど
+
+TypeScriptエンジニアだが、Ruby、Ruby on Railsにブランクがある馬鹿向けに、
+Rubyの文法やRuby on Railsのライブラリの仕様を含めて説明する。
+具体的にRubyのコードを引用して、説明する。
 
 ## 出力
 
