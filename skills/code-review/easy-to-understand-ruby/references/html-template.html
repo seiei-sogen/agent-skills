@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{対象ファイル名}} 入門</title>
+<style>
+/* 手本 sanko/easy-closed-place-check-model.html と同じ配色。文字は濃く、面は薄く。ダークモードでも同じ関係を保つ */
+:root {
+  --bg: #fbfaf7;
+  --fg: #23211d;
+  --muted: #6b665d;
+  --card: #ffffff;
+  --line: #ddd8cc;
+  --accent: #1c6fd1;
+  --accent-soft: #e8f1fc;
+  --ok: #2b8a3e;
+  --ok-soft: #e9f7ec;
+  --warn: #c92a2a;
+  --warn-soft: #fdecec;
+  --amber: #b85c00;
+  --amber-soft: #fff3e0;
+  --gray: #8f8a80;
+  --gray-soft: #f1efea;
+  --code-bg: #f1eee6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1a18;
+    --fg: #ece8df;
+    --muted: #a9a398;
+    --card: #252420;
+    --line: #3d3a34;
+    --accent: #6aa8f0;
+    --accent-soft: #18283c;
+    --ok: #63c477;
+    --ok-soft: #1a3020;
+    --warn: #ff7676;
+    --warn-soft: #3a1d1d;
+    --amber: #f0a050;
+    --amber-soft: #3a2a14;
+    --gray: #8a857b;
+    --gray-soft: #2c2b27;
+    --code-bg: #2e2c27;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1a18;
+  --fg: #ece8df;
+  --muted: #a9a398;
+  --card: #252420;
+  --line: #3d3a34;
+  --accent: #6aa8f0;
+  --accent-soft: #18283c;
+  --ok: #63c477;
+  --ok-soft: #1a3020;
+  --warn: #ff7676;
+  --warn-soft: #3a1d1d;
+  --amber: #f0a050;
+  --amber-soft: #3a2a14;
+  --gray: #8a857b;
+  --gray-soft: #2c2b27;
+  --code-bg: #2e2c27;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", system-ui, sans-serif;
+  line-height: 1.8;
+  font-size: 16px;
+}
+main { max-width: 820px; margin: 0 auto; padding: 32px 16px 80px; }
+h1 { font-size: 1.6rem; line-height: 1.4; margin: 0 0 8px; }
+h2 {
+  font-size: 1.25rem; margin: 56px 0 12px; padding-bottom: 6px;
+  border-bottom: 2px solid var(--line);
+}
+h2 .num {
+  display: inline-block; min-width: 1.8em; margin-right: 6px; padding: 0 6px;
+  border-radius: 6px; background: var(--fg); color: var(--bg);
+  text-align: center; font-size: 0.95rem;
+}
+h3 { font-size: 1.05rem; margin: 28px 0 8px; }
+p { margin: 10px 0; }
+ul, ol { padding-left: 1.4em; }
+li { margin: 4px 0; }
+.lead { color: var(--muted); margin-top: 0; }
+code {
+  background: var(--code-bg); padding: 1px 6px; border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.86em; word-break: break-all;
+}
+pre {
+  background: var(--code-bg); border-radius: 10px; padding: 12px 14px; margin: 10px 0;
+  overflow-x: auto; font-size: 13px; line-height: 1.6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+pre code { background: none; padding: 0; font-size: inherit; word-break: normal; }
+pre .ln { display: inline-block; width: 2.4em; color: var(--muted); user-select: none; }
+pre .cm { color: var(--ok); }
+pre .mk { display: block; color: var(--accent); font-weight: 700; margin: 6px 0 2px; }
+.oneline {
+  background: var(--card); border: 2px solid var(--fg); border-radius: 14px;
+  padding: 18px 20px; margin: 24px 0; font-size: 1.05rem;
+}
+.oneline strong { background: linear-gradient(transparent 60%, var(--accent-soft) 60%); }
+
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.cmp > div { min-width: 0; }
+.cmp .lbl { font-size: 0.8rem; font-weight: 700; color: var(--muted); }
+.cmp pre { margin: 2px 0 0; height: calc(100% - 1.6em); }
+@media (max-width: 640px) { .cmp { grid-template-columns: 1fr; } }
+
+figure { margin: 22px 0; }
+.figscroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.figscroll svg { display: block; width: 100%; min-width: 560px; height: auto; }
+figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+
+.note {
+  border-left: 5px solid var(--accent); background: var(--accent-soft);
+  padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 18px 0;
+}
+.note.warn-n { border-left-color: var(--warn); background: var(--warn-soft); }
+.note.ok-n { border-left-color: var(--ok); background: var(--ok-soft); }
+.note p { margin: 4px 0; }
+.note ul { margin: 6px 0; }
+
+.step {
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 16px; margin: 12px 0;
+}
+.step h4 { margin: 0 0 4px; font-size: 1rem; }
+.step .sno {
+  display: inline-block; min-width: 1.8em; margin-right: 6px; padding: 0 6px;
+  border-radius: 6px; background: var(--accent); color: var(--bg); text-align: center; font-size: 0.9rem;
+}
+.step pre { margin: 6px 0; }
+.step p { margin: 4px 0; font-size: 0.95rem; }
+
+table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.93rem; }
+th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+th { background: var(--gray-soft); }
+.tablewrap { overflow-x: auto; }
+td code { word-break: normal; white-space: nowrap; }
+.nw2 td:nth-child(2) { white-space: nowrap; }
+
+/* SVG 図の部品。fill と stroke は必ずこのクラスで付け、色を直書きしない */
+.f-box { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+.f-blue { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+.f-ok { fill: var(--ok-soft); stroke: var(--ok); stroke-width: 1.5; }
+.f-warn { fill: var(--warn-soft); stroke: var(--warn); stroke-width: 1.5; }
+.f-amber { fill: var(--amber-soft); stroke: var(--amber); stroke-width: 2; }
+.f-gray { fill: var(--gray-soft); stroke: var(--gray); stroke-width: 1.5; stroke-dasharray: 6 4; }
+.f-t { fill: var(--fg); }
+.f-m { fill: var(--muted); }
+.f-tw { fill: var(--warn); }
+.f-tok { fill: var(--ok); }
+.f-ta { fill: var(--amber); }
+.f-tb { fill: var(--accent); }
+.f-line { stroke: var(--fg); stroke-width: 1.5; fill: none; }
+.f-line-d { stroke: var(--muted); stroke-width: 1.5; fill: none; stroke-dasharray: 6 4; }
+.f-line-ok { stroke: var(--ok); stroke-width: 2; fill: none; }
+.f-line-warn { stroke: var(--warn); stroke-width: 2; fill: none; }
+.ah { fill: var(--fg); }
+.ah-m { fill: var(--muted); }
+.ah-ok { fill: var(--ok); }
+.ah-warn { fill: var(--warn); }
+svg text { font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", system-ui, sans-serif; }
+svg .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>{{対象}} を、TypeScript から来た人向けにいちばんやさしく読む</h1>
+<p class="lead">対象: <code>{{パス}}</code>（{{行数}}行、コミット {{短い SHA}} 時点）。Ruby も Rails も初めての前提で、文法の1文字から説明します。</p>
+
+<div class="oneline">
+このファイルは、<strong>「{{1 文で言うと何をする表・クラス・処理か}}」</strong>です。<br>
+TypeScript でいうと、<strong>{{Prisma / NestJS / Knex などの近い概念}}</strong>です。
+</div>
+
+<!-- 1: 全体像の図。対象が関わる表・クラス・処理の関係を SVG で描く -->
+<h2><span class="num">1</span>まず「何の{{表 / 処理}}か」を絵で見る</h2>
+<p>{{登場する表や処理が、業務の中で何のためにあるか}}</p>
+<p>{{対象がその中でどこを受け持つか。「その結果を書き込む先が、今回読む表 X です」の形}}</p>
+<figure>
+<div class="figscroll">
+<svg viewBox="0 0 720 360" role="img" aria-label="{{図の要約}}">
+  <defs>
+    <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+  </defs>
+  <rect x="20" y="16" width="220" height="80" rx="10" class="f-box"/>
+  <text x="130" y="48" text-anchor="middle" font-size="13" font-weight="700" class="f-t mono">{{表名}}</text>
+  <text x="130" y="72" text-anchor="middle" font-size="13" class="f-t">{{一言}}</text>
+</svg>
+</div>
+<figcaption>{{図の読み方。どの箱が今回の主役か}}</figcaption>
+</figure>
+
+<!-- 2: コード全文。行番号つき、A〜 のセグメント見出しを .mk で入れる -->
+<h2><span class="num">2</span>コード全文（A〜{{G}} の{{7}}つに分けて読む）</h2>
+<pre><code><span class="mk">── A：{{セグメント名}} ──</span><span class="ln">1</span>{{エスケープ済みのコード}}
+<span class="ln">2</span>{{...}}</code></pre>
+
+<!-- 3: このファイルに出てくる Ruby の文法だけ。Ruby / TS でいうと / このファイルでの例 -->
+<h2><span class="num">3</span>このファイルに出てくる Ruby の文法だけ、先に覚える</h2>
+<p>全部 TypeScript に言い換えられます。迷ったらこの表に戻ってください。</p>
+<div class="tablewrap">
+<table>
+<tr><th>Ruby</th><th>TypeScript でいうと</th><th>このファイルでの例</th></tr>
+<tr><td><code>{{書き方}}</code></td><td>{{対応}}</td><td>{{行番号と抜粋}}</td></tr>
+</table>
+</div>
+<div class="note">
+<p><strong>いちばん大事な違い：</strong>{{クラス本体の DSL は読み込み時に実行されるメソッド呼び出し、など}}</p>
+</div>
+
+<!-- 4〜: セグメントごとに 1 節。Ruby と TS を並べ、何が起きるかを説明し、理由を書く -->
+<h2><span class="num">4</span>A：{{セグメント名}}</h2>
+<div class="cmp">
+<div><div class="lbl">Ruby</div>
+<pre><code>{{抜粋}}</code></pre></div>
+<div><div class="lbl">TypeScript のイメージ</div>
+<pre><code>{{対応コード}}</code></pre></div>
+</div>
+<p>{{この行で起きること}}</p>
+<div class="note warn-n">
+<p><strong>TS の人が最初に驚くところ：</strong>{{...}}</p>
+</div>
+
+<!-- 処理の流れは .step で 1 段ずつ。SQL が作られるなら実行して得た SQL を添える -->
+<div class="step">
+<h4><span class="sno">1</span>{{段階名}}</h4>
+<pre><code>{{Ruby の 1 行}}</code></pre>
+<pre><code>{{実際に出した SQL や結果}}</code></pre>
+<p>{{説明}}</p>
+</div>
+
+<!-- N-2: このファイルに「書いていない」こと（関連コード、ライフサイクル） -->
+<h2><span class="num">{{N-2}}</span>このクラスに「書いていない」こと</h2>
+
+<!-- N-1: つまずきやすい点。各項目に対応する節の記号を添える -->
+<h2><span class="num">{{N-1}}</span>TypeScript の人がつまずきやすい{{7}}つ</h2>
+<ol>
+<li><strong>{{要点}}</strong>：{{説明}}（{{A}}）。</li>
+</ol>
+
+<!-- N: ことば早見表 -->
+<h2><span class="num">{{N}}</span>ことば早見表</h2>
+<div class="tablewrap">
+<table>
+<tr><th>ことば</th><th>意味</th></tr>
+<tr><td>{{用語}}</td><td>{{意味}}</td></tr>
+</table>
+</div>
+
+</main>
+</body>
+</html>

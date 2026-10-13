@@ -1,4 +1,4 @@
 interface:
   display_name: "easy-to-understand-ruby"
-  short_description: "難しい内容を、予備知識なしでも分かる平易な説明へ変える"
-  default_prompt: "$easy-to-understand を使って、直前のやり取りをやさしく説明してください。"
+  short_description: "Ruby / Rails のコードを、ブランクのある TypeScript エンジニア向けに図と対応表つきの HTML で解説する"
+  default_prompt: "$easy-to-understand-ruby を使って、対象の Ruby / Rails コードをやさしく説明してください。"
