@@ -25,7 +25,9 @@ class Scan(HTMLParser):
         self.text_in_code = []
         self.in_p = False
         self.p_text = ""
+        self.p_plain = ""
         self.long_paragraphs = []
+        self.long_sentences = []
         self.figures_without_caption = 0
         self.in_figure = False
         self.figure_has_caption = False
@@ -43,7 +45,7 @@ class Scan(HTMLParser):
         if tag == "h2":
             self.current_h2 = ""
         if tag == "p":
-            self.in_p, self.p_text = True, ""
+            self.in_p, self.p_text, self.p_plain = True, "", ""
         if tag == "figure":
             self.in_figure, self.figure_has_caption = True, False
         if tag == "figcaption" and self.in_figure:
@@ -75,6 +77,9 @@ class Scan(HTMLParser):
         if tag == "p" and self.in_p:
             if self.p_text.count("。") > 4:
                 self.long_paragraphs.append(self.p_text.strip()[:20])
+            for sentence in self.p_plain.split("。"):
+                if len(sentence.strip()) > MAX_SENTENCE:
+                    self.long_sentences.append(sentence.strip()[:20])
             self.in_p = False
         if tag == "figure":
             if not self.figure_has_caption:
@@ -92,9 +97,13 @@ class Scan(HTMLParser):
             self.text_in_code.append(data)
         if self.in_p:
             self.p_text += data
+            if not self.in_code:
+                self.p_plain += data
 
 
 CJK = re.compile(r"[　-ヿ㐀-鿿＀-￯]")
+# コードを除いた 1 文の上限。これを超える文は読点で 2 文に割る
+MAX_SENTENCE = 60
 
 
 def svg_overflows(raw: str):
@@ -148,6 +157,11 @@ def main(path: Path) -> int:
         ("未確認" in raw or "実際に" in raw or "確かめ" in raw, "実行して確かめた事実、または「未確認」の明記がある"),
         (not overflows, "SVG の箱から文字がはみ出していない: " + ", ".join(overflows)),
         (not s.long_paragraphs, "1 段落が 4 文以内: " + ", ".join(s.long_paragraphs)),
+        (not s.long_sentences, f"コードを除いた 1 文が {MAX_SENTENCE} 字以内: " + ", ".join(s.long_sentences)),
+        (c.get("div.plain", 0) >= 4, f"節の冒頭の「ひとことで言うと」.plain が 4 つ以上ある（今 {c.get('div.plain', 0)}）"),
+        (c.get("div.goals", 0) >= 1, "冒頭に「読み終わるとわかること」.goals がある"),
+        (c.get("div.step", 0) == 0 or c.get("p.ja", 0) >= 1, "SQL や実行結果に「日本語にすると」.ja が付いている"),
+        (c.get("p.q", 0) >= 3, f"「つまずきやすい」が Q&A 形式（.q が 3 つ以上。今 {c.get('p.q', 0)}）"),
     ]
     failed = [label for ok, label in checks if not ok] + s.errors
     for label in failed:

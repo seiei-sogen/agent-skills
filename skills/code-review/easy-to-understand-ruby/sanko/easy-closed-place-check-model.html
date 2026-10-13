@@ -127,6 +127,24 @@ figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
 .note p { margin: 4px 0; }
 .note ul { margin: 6px 0; }
 
+/* やさしさの部品。節の冒頭の「ひとことで言うと」、冒頭の「読み終わるとわかること」、SQL の日本語訳、Q&A */
+.plain {
+  background: var(--amber-soft); border-radius: 10px; padding: 10px 14px; margin: 12px 0 16px;
+}
+.plain .lbl { display: block; font-size: 0.8rem; font-weight: 700; color: var(--amber); }
+.goals {
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 16px; margin: 16px 0;
+}
+.goals .lbl { font-weight: 700; }
+.goals ul { margin: 4px 0 0; }
+.ja { color: var(--muted); font-size: 0.92rem; margin: 2px 0 10px; }
+.ja::before { content: "日本語にすると："; font-weight: 700; }
+.qa .q { font-weight: 700; margin: 16px 0 2px; }
+.qa .q::before { content: "Q. "; color: var(--accent); }
+.qa .a { margin: 0 0 0 1.4em; }
+.qa .a::before { content: "A. "; color: var(--ok); font-weight: 700; }
+
 .step {
   background: var(--card); border: 1px solid var(--line); border-radius: 12px;
   padding: 12px 16px; margin: 12px 0;
@@ -177,15 +195,26 @@ svg .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospac
 <p class="lead">対象: <code>app/models/google_map/closed_place_check.rb</code>（69行、コミット 800239f 時点）。Ruby も Rails も初めての前提で、文法の1文字から説明します。</p>
 
 <div class="oneline">
-このファイルは、<strong>「(お店, 閉業した Google マップのページ) の組ごとに、最後に調べた結果を1行だけ入れておく表」</strong>を Ruby から扱うためのクラスです。<br>
-TypeScript でいうと、<strong>Prisma のモデル定義と、よく使う検索関数が1つのクラスに同居したもの</strong>です。
+このファイルは、<strong>「お店と、閉業した Google マップのページの組み合わせごとに、『最後に調べたらこうだった』を 1 行だけ残しておく表」</strong>を Ruby から扱うためのクラスです。<br>
+たとえるなら、<strong>お店ごとに貼った「確認メモ」の付箋を、1 冊の台帳にまとめたもの</strong>です。付箋は組み合わせごとに 1 枚だけで、調べ直すたびに書き直します。<br>
+TypeScript でいうと、<strong>Prisma のモデル定義と、よく使う検索関数が 1 つのクラスに同居したもの</strong>です。
+</div>
+
+<div class="goals">
+<span class="lbl">読み終わるとわかること</span>
+<ul>
+<li>Rails のモデルは、列の定義を書かなくても DB の表をそのまま扱えること</li>
+<li><code>enum</code> と <code>scope</code> が、何を自動で作ってくれるか</li>
+<li>長いメソッドチェーンが、どんな SQL になって、何を選び出しているか</li>
+</ul>
 </div>
 
 <!-- ============================================================ -->
 <h2><span class="num">1</span>まず「何の表か」を絵で見る</h2>
 
-<p>AutoReserve（AR）のお店は、Google マップのお店ページに「紐付け」されています。紐付けは <code>restaurant_web_systems</code> という表の1行で、中身は Google マップの URL と、そのページの ID（place ID）です。</p>
-<p>Google マップ側でそのページが「閉業」になると、紐付けが古くなっているかもしれません（お店が移転して、新しいページができている、など）。そこで毎日バッチが Google マップを検索し直します。<strong>その結果を書き込む先が、今回読む表 <code>google_map_closed_place_checks</code></strong> です。</p>
+<div class="plain"><span class="lbl">ひとことで言うと</span>お店の「Google マップのページはこれです」という結びつきが古くなっていないか、毎日調べ直します。その結果を書きとめておく台帳が、今回の主役です。</div>
+<p>AutoReserve（AR）のお店には、Google マップのお店ページが 1 つ結びついています。この結びつきを、このアプリでは「紐付け」と呼びます。紐付けは <code>restaurant_web_systems</code> という表の 1 行です。中身は Google マップの URL と、そのページの ID（place ID）です。</p>
+<p>Google マップ側でそのページが「閉業」になることがあります。お店が移転して、新しいページができた、などです。すると紐付けが古くなっているかもしれません。そこで毎日バッチが Google マップを検索し直し、<strong>その結果を書き込む先が、今回読む表 <code>google_map_closed_place_checks</code></strong> です。</p>
 
 <figure>
 <div class="figscroll">
@@ -235,6 +264,7 @@ TypeScript でいうと、<strong>Prisma のモデル定義と、よく使う検
 
 <!-- ============================================================ -->
 <h2><span class="num">2</span>コード全文（A〜G の7つに分けて読む）</h2>
+<div class="plain"><span class="lbl">ひとことで言うと</span>69 行ありますが、プログラムとして動くのは 25 行目からです。中身は「クラスの宣言と設定が 4 つ（B〜E）」と「検索条件が 2 つ（F・G）」だけです。まずは青い見出し A〜G だけを眺めてください。</div>
 
 <pre><code><span class="mk">── A：表の設計図（自動生成のコメント） ──</span><span class="ln">1</span><span class="cm"># == Schema Information</span>
 <span class="ln">2</span><span class="cm">#</span>
@@ -309,6 +339,7 @@ TypeScript でいうと、<strong>Prisma のモデル定義と、よく使う検
 <!-- ============================================================ -->
 <h2><span class="num">3</span>このファイルに出てくる Ruby の文法だけ、先に覚える</h2>
 
+<div class="plain"><span class="lbl">ひとことで言うと</span>Ruby の文法は、TypeScript の「かっこ」や「記号」を省いた書き方だと思ってください。見た目は違っても、やっていることは同じです。</div>
 <p>全部 TypeScript に言い換えられます。迷ったらこの表に戻ってください。</p>
 
 <div class="tablewrap">
@@ -331,11 +362,12 @@ TypeScript でいうと、<strong>Prisma のモデル定義と、よく使う検
 </div>
 
 <div class="note">
-<p><strong>いちばん大事な違い：</strong>クラスの中に直接書いた <code>audited ...</code> や <code>belongs_to ...</code> は、<strong>クラスを読み込んだ瞬間に1回だけ実行される「メソッド呼び出し」</strong>です。TypeScript のデコレーター <code>@Entity()</code> や <code>@ManyToOne()</code> がクラスに機能を足すのと同じ役目です。</p>
+<p><strong>いちばん大事な違い：</strong>クラスの中に直接書いた <code>audited ...</code> や <code>belongs_to ...</code> は、ただの<strong>「メソッド呼び出し」</strong>です。クラスを読み込んだ瞬間に、1 回だけ動きます。TypeScript のデコレーター <code>@Entity()</code> や <code>@ManyToOne()</code> がクラスに機能を足すのと同じ役目です。</p>
 </div>
 
 <!-- ============================================================ -->
 <h2><span class="num">4</span>A：上の長いコメントは「表の設計図」で、プログラムではない</h2>
+<div class="plain"><span class="lbl">ひとことで言うと</span>1〜24 行目は、表にどんな列があるかを人向けに書いたメモです。消してもプログラムは動きます。</div>
 
 <p>1〜24行目は <strong>annotaterb</strong> という道具（gem。npm パッケージのようなもの）が DB を読んで自動で書いたコメントです。動作には関係しません。人が読むための設計図です。</p>
 <p>TypeScript の型で書き直すと、こうなります。</p>
@@ -367,6 +399,7 @@ type GoogleMapClosedPlaceCheck = {
 
 <!-- ============================================================ -->
 <h2><span class="num">5</span>B：<code>class GoogleMap::ClosedPlaceCheck &lt; ApplicationRecord</code></h2>
+<div class="plain"><span class="lbl">ひとことで言うと</span>この 1 行で、「DB の表を Ruby のクラスとして扱う」準備が全部終わります。import も、表の名前の指定も、列の定義もいりません。</div>
 
 <div class="cmp">
 <div><div class="lbl">Ruby</div>
@@ -386,10 +419,11 @@ end</code></pre></div>
   <br><code>app/models/google_map/closed_place_check.rb</code> ⇔ <code>GoogleMap::ClosedPlaceCheck</code></li>
 <li><strong>表の名前も自動で決まる</strong>。クラス名 <code>ClosedPlaceCheck</code> から <code>closed_place_checks</code>（複数形・スネークケース）を作り、<code>GoogleMap</code> モジュールが決めている接頭辞 <code>google_map_</code> を付けて、<code>google_map_closed_place_checks</code> になります（<code>app/models/google_map.rb</code> の <code>table_name_prefix</code>）。</li>
 </ol>
-<p>このように「名前を規約どおりにすれば設定を書かなくてよい」のが Rails の基本方針です（Convention over Configuration）。</p>
+<p>Rails の基本方針は「名前を決まりどおりにすれば、設定は書かなくてよい」です。英語では Convention over Configuration と呼びます。</p>
 
 <!-- ============================================================ -->
 <h2><span class="num">6</span>C：<code>audited only: :dismissed_at, on: :update</code></h2>
+<div class="plain"><span class="lbl">ひとことで言うと</span>「対応不要にした」という操作だけ、いつ誰がやったかを別の表に残しておきます。</div>
 
 <div class="cmp">
 <div><div class="lbl">Ruby</div>
@@ -408,6 +442,7 @@ class ClosedPlaceCheck { ... }</code></pre></div>
 
 <!-- ============================================================ -->
 <h2><span class="num">7</span>D：<code>belongs_to :restaurant, class_name: "::Restaurant"</code></h2>
+<div class="plain"><span class="lbl">ひとことで言うと</span>「この記録は、どのお店のものか」をつなぐ線です。<code>::</code> は「同じ名前の別のクラスと間違えないように」という印です。</div>
 
 <div class="cmp">
 <div><div class="lbl">Ruby</div>
@@ -469,6 +504,7 @@ class ClosedPlaceCheck { ... }</code></pre></div>
 
 <!-- ============================================================ -->
 <h2><span class="num">8</span>E：<code>enum</code>：結果を「名前」で扱い、DB には「数字」で入れる</h2>
+<div class="plain"><span class="lbl">ひとことで言うと</span>結果を「一致なし」のような名前で読み書きできるようにします。DB には 0〜6 の数字で入ります。</div>
 
 <div class="cmp">
 <div><div class="lbl">Ruby</div>
@@ -540,6 +576,7 @@ type Result = keyof typeof RESULT;
 
 <!-- ============================================================ -->
 <h2><span class="num">9</span>F：<code>scope :unresolved</code>：「未解決の記録」を探す条件に名前を付ける</h2>
+<div class="plain"><span class="lbl">ひとことで言うと</span>「まだ片付いていない記録だけください」と一言で頼めるように、検索条件に名前を付けます。</div>
 
 <div class="cmp">
 <div><div class="lbl">Ruby</div>
@@ -573,7 +610,8 @@ WHERE google_map_closed_place_checks.id IN (
   FROM restaurant_web_systems
   ...（G の target_web_systems の条件がそのまま入る）
 )</code></pre>
-<p>記録がまだない組では、サブクエリの <code>id</code> が NULL になります。SQL では NULL はどの値とも一致しないので、一覧に出るのは「記録がある組」だけです。</p>
+<p class="ja">「G の条件に当てはまる紐付け行を集めて、その記録の id を持つ行だけ返して」</p>
+<p>記録がまだない組では、サブクエリ（SQL の中に入れ子にした別の検索）の <code>id</code> が NULL になります。SQL では NULL はどの値とも一致しないので、一覧に出るのは「記録がある組」だけです。</p>
 
 <div class="note ok-n">
 <p><strong>なぜ <code>result</code> 列で絞らないのか（28・50行目のコメント）</strong></p>
@@ -586,6 +624,7 @@ WHERE google_map_closed_place_checks.id IN (
 
 <!-- ============================================================ -->
 <h2><span class="num">10</span>G：<code>target_web_systems</code>：再チェックの対象を探す、このファイルの心臓部</h2>
+<div class="plain"><span class="lbl">ひとことで言うと</span>「いま調べ直す必要があるお店はどれか」を選び出す、いちばん長い検索条件です。1 行ずつ条件を足して、対象を絞り込んでいきます。</div>
 
 <p><code>def self.</code> なのでクラスメソッド（TS の <code>static</code>）です。メソッドを1つずつつなげて（メソッドチェーン）、検索条件を少しずつ足していきます。<strong>行の先頭の <code>.</code> は「前の行の続き」</strong>という意味です。</p>
 <p>つないだ条件は、じょうごのように対象を絞り込みます。</p>
@@ -621,6 +660,7 @@ WHERE google_map_closed_place_checks.id IN (
 <pre><code>RestaurantWebSystem.status_default.google_map</code></pre>
 <pre><code>FROM restaurant_web_systems
 WHERE restaurant_web_systems.status = 0 AND restaurant_web_systems.source = 16</code></pre>
+<p class="ja">「無効になっていない、Google マップの紐付け行だけ」</p>
 <p><code>status_default</code> と <code>google_map</code> は、<code>RestaurantWebSystem</code> 側の enum が作った scope です（E で見た仕組み）。<code>status</code> は prefix 付きなので <code>status_default</code>、<code>source</code> は prefix なしなので <code>google_map</code> という名前になっています。<code>archived</code>（重複などで無効化した行）を除きます。</p>
 </div>
 
@@ -628,6 +668,7 @@ WHERE restaurant_web_systems.status = 0 AND restaurant_web_systems.source = 16</
 <h4><span class="sno">2</span>お店と結合する</h4>
 <pre><code>.joins(:restaurant)</code></pre>
 <pre><code>INNER JOIN restaurants ON restaurants.id = restaurant_web_systems.restaurant_id</code></pre>
+<p class="ja">「その紐付け行のお店の情報も、横にくっつける」</p>
 <p><code>RestaurantWebSystem</code> の <code>belongs_to :restaurant</code> を使い、関連の名前だけで JOIN の SQL を作ります。</p>
 </div>
 
@@ -635,6 +676,7 @@ WHERE restaurant_web_systems.status = 0 AND restaurant_web_systems.source = 16</
 <h4><span class="sno">3</span>お店の条件を取り込む</h4>
 <pre><code>.merge(::Restaurant.published.where(for_test: false).where.not(open_status: :permanently_closed))</code></pre>
 <pre><code>AND restaurants.status = 1 AND restaurants.for_test = FALSE AND restaurants.open_status != 2</code></pre>
+<p class="ja">「お店が公開中で、テスト用でなく、AR 側では閉業にしていないものだけ」</p>
 <ul>
 <li><code>merge</code>：別のモデル（ここでは <code>Restaurant</code>）の検索条件を、今の検索に合体させる。</li>
 <li><code>published</code>：<code>Restaurant</code> の enum が作った scope。公開中のお店。</li>
@@ -647,12 +689,14 @@ WHERE restaurant_web_systems.status = 0 AND restaurant_web_systems.source = 16</
 <div class="step">
 <h4><span class="sno">4</span>Google の情報と結合する</h4>
 <pre><code>.joins("INNER JOIN google_map_restaurants ON google_map_restaurants.google_place_id = restaurant_web_systems.source_id")</code></pre>
+<p class="ja">「Google から取ってきた情報の行も、横にくっつける」</p>
 <p>紐付け行と <code>google_map_restaurants</code> の間には Rails の関連（<code>belongs_to</code> など）がありません。そのため名前では書けず、SQL を文字列でそのまま書いています。紐付け行の <code>source_id</code>（place ID）で、Google の情報の行を見つけます。</p>
 </div>
 
 <div class="step">
 <h4><span class="sno">5</span>Google 側で閉業のものだけ</h4>
 <pre><code>.where("google_map_restaurants.data-&gt;&gt;'open_status' = 'permanently_closed'")</code></pre>
+<p class="ja">「Google 側で閉業になっているものだけ」</p>
 <p><code>data</code> は jsonb 列（JSON をそのまま入れられる PostgreSQL の列）です。<code>-&gt;&gt;</code> は PostgreSQL の演算子で、JSON のキーの値を文字列で取り出します。TS でいえば <code>data.open_status === 'permanently_closed'</code> です。この PR では、この条件に合う行だけを集めた索引（<code>index_google_map_restaurants_on_permanently_closed</code>）も追加しています。</p>
 </div>
 
@@ -663,10 +707,11 @@ WHERE restaurant_web_systems.status = 0 AND restaurant_web_systems.source = 16</
     ON google_map_closed_place_checks.restaurant_id = restaurant_web_systems.restaurant_id
    AND google_map_closed_place_checks.closed_google_place_id = restaurant_web_systems.source_id
 SQL</code></pre>
+<p class="ja">「この組の記録があれば横にくっつける。なくても行は残す」</p>
 <ul>
 <li><code>&lt;&lt;~SQL</code> から <code>SQL</code> までが1つの文字列です（ヒアドキュメント）。<code>~</code> は行頭の字下げを取り除く印です。<code>SQL</code> という語はただの終わりの目印で、<code>END</code> でもかまいません。</li>
 <li><code>.squish</code>：Rails が足した文字列のメソッドで、改行や連続した空白を1つの空白にまとめる。実際に試すと <code>"LEFT JOIN a ON b = c"</code> のように1行になる。</li>
-<li><strong>INNER ではなく LEFT にする理由</strong>：まだ一度も調べていない組には記録がありません。INNER JOIN だと、そういう組が消えてしまいます。LEFT JOIN なら、記録がない組も残り、記録の列はすべて NULL になります。</li>
+<li><strong>INNER ではなく LEFT にする理由</strong>：LEFT JOIN は「相手がなくても、左側の行は残す」結合です。まだ一度も調べていない組には記録がありません。INNER JOIN だと、そういう組が消えてしまいます。LEFT JOIN なら、記録がない組も残り、記録の列はすべて NULL になります。</li>
 </ul>
 </div>
 
@@ -674,6 +719,7 @@ SQL</code></pre>
 <h4><span class="sno">7</span>「対応不要」にした組を外す</h4>
 <pre><code>.where(google_map_closed_place_checks: { dismissed_at: nil })</code></pre>
 <pre><code>AND google_map_closed_place_checks.dismissed_at IS NULL</code></pre>
+<p class="ja">「『対応不要』の時刻が入っていないものだけ」</p>
 <ul>
 <li>ハッシュのキーに表の名前を書くと、別の表の列を条件にできる。</li>
 <li><code>nil</code> を渡すと、Rails は <code>= NULL</code> ではなく <code>IS NULL</code> にしてくれる（SQL の <code>= NULL</code> は常に成り立たない）。</li>
@@ -684,7 +730,7 @@ SQL</code></pre>
 <h3>返ってくるのは「記録」ではなく「紐付け行」</h3>
 <p>このメソッドは <code>ClosedPlaceCheck</code> クラスにありますが、返すのは <code>RestaurantWebSystem</code> の検索条件です（コンソールで見ると型は <code>RestaurantWebSystem::ActiveRecord_Relation</code>）。55行目の <code>@return</code> もそう書いています。</p>
 
-<h3>まだ SQL は実行されていない（遅延評価）</h3>
+<h3>この時点では、まだ DB に問い合わせていない</h3>
 <p>このメソッドが返すのは「検索条件のかたまり」（Relation）で、まだ DB には問い合わせていません。<code>count</code> や <code>each</code> などを呼んだときに、初めて SQL が実行されます。TS の Knex や Kysely のクエリビルダーが、<code>await</code> するまで実行されないのと同じです。</p>
 <pre><code>rel = GoogleMap::ClosedPlaceCheck.target_web_systems  <span class="cm"># まだ何も起きない</span>
 rel.count                                              <span class="cm"># ここで SELECT COUNT(*) ... が走る</span>
@@ -727,6 +773,7 @@ rel.exists?(id: 123)                                   <span class="cm"># ここ
 
 <!-- ============================================================ -->
 <h2><span class="num">11</span>このクラスに「書いていない」こと</h2>
+<div class="plain"><span class="lbl">ひとことで言うと</span>このクラスにあるのは「表の形」と「探し方」だけです。書き込みや入力チェックは、別の場所にあるか、DB に任せています。</div>
 
 <h3>保存の処理は別のクラスにある</h3>
 <p>記録を書き込むのは <code>app/services/google_map/closed_place_pair.rb</code> の <code>record!</code> です。</p>
@@ -781,16 +828,23 @@ rel.exists?(id: 123)                                   <span class="cm"># ここ
 </figure>
 
 <!-- ============================================================ -->
-<h2><span class="num">12</span>TypeScript の人がつまずきやすい7つ</h2>
-<ol>
-<li><strong>列の定義がないのに属性が使える</strong>：Rails が DB の表から読み取って作る（A）。</li>
-<li><strong>import がない</strong>：ファイルの場所とクラス名を合わせれば自動で読み込まれる（B）。</li>
-<li><strong>クラスの中の <code>audited</code> や <code>enum</code> は「実行される呼び出し」</strong>：デコレーターと同じ役目（C・D・E）。</li>
-<li><strong>名前空間の中の <code>Restaurant</code> は別物を指すことがある</strong>：迷ったら <code>::</code> を付ける（D・G の3）。</li>
-<li><strong>enum は名前で書き、DB には数字で入る</strong>：<code>check.result</code> は文字列が返る（E）。</li>
-<li><strong>検索条件は実行されるまで SQL にならない</strong>：<code>count</code> や <code>each</code> で初めて走る（G）。</li>
-<li><strong><code>nil</code> を where に渡すと <code>IS NULL</code></strong>：<code>= NULL</code> にはならない（G の7）。</li>
-</ol>
+<h2><span class="num">12</span>TypeScript の人がつまずきやすい 7 つ</h2>
+<div class="qa">
+<p class="q">列の定義がどこにもないのに、なぜ <code>check.checked_at</code> が使えるの？</p>
+<p class="a">Rails が起動時に DB の表を見て、列ごとの読み書きメソッドを作るからです（A）。</p>
+<p class="q">import がないのに、なぜ <code>ApplicationRecord</code> や <code>RestaurantWebSystem</code> が見つかるの？</p>
+<p class="a">ファイルの場所とクラス名を合わせておくと、使われた瞬間に自動で読み込まれるからです（B）。</p>
+<p class="q">クラスの中の <code>audited</code> や <code>enum</code> は、宣言？ それとも処理？</p>
+<p class="a">処理です。クラスを読み込むときに 1 回だけ動く、ただのメソッド呼び出しです。デコレーターと同じ役目です（C・D・E）。</p>
+<p class="q"><code>Restaurant</code> と書いたら、どの Restaurant になるの？</p>
+<p class="a">今いる名前空間の内側から順に探すので、別物を指すことがあります。迷ったら <code>::</code> を付けてください（D・G の 3）。</p>
+<p class="q"><code>check.result</code> は数字が返るの？</p>
+<p class="a">文字列 <code>"no_match"</code> が返ります。DB に入っているのは数字ですが、Ruby では名前で扱います（E）。</p>
+<p class="q"><code>target_web_systems</code> を呼んだら、すぐ SQL が走るの？</p>
+<p class="a">走りません。<code>count</code> や <code>each</code> を呼んだときに初めて走ります（G）。</p>
+<p class="q"><code>where(dismissed_at: nil)</code> は <code>= NULL</code> になって、何も当たらないのでは？</p>
+<p class="a">Rails が <code>IS NULL</code> に直してくれるので、ちゃんと当たります（G の 7）。</p>
+</div>
 
 <!-- ============================================================ -->
 <h2><span class="num">13</span>ことば早見表</h2>
