@@ -1,0 +1,181 @@
+= 画面で試す手引き: issue #45412 閉業した Google Map 紐付けの付け替え（2026-10-09）
+:toc: left
+:toc-title: 目次
+:imagesdir: screenshots
+
+2026-10-09 に、PR https://github.com/hello-ai/auto_reserve/pull/45605[#45605] の HEAD `7c94e18605` で書いた。
+読み手は、ローカルの admin 画面で自分の手で動きを確かめるユーザーである。
+この文書と同じ `check/` ディレクトリに、ダミーデータを作るスクリプト、エージェントが同じ手順を流したときのスクリーンショット、バッチの確認ログを置いた。すべて git の管理外で、コミットしない。
+
+== 前提
+
+* 5100 番の puma が、この worktree（`feat/issue45412-backend-relink-closed-google-maps`）から動いていること。DB は `auto_reserve_development`。
+* admin は `http://admin.lvh.me:5100/`。ログインは `http://lvh.me:5100/login` で `hello1@test.autoreserve.com` / `password1234`（`db/seeds.rb`）。
+* 入力欄の成功経路（手順 8）とバッチの本実行（手順 9）は、ローカルから Google マップへ実際に通信する。ProxyMesh は通さない。
+
+[IMPORTANT]
+.ログイン後に画面上部の通知（toastr）が出ないときは、`lvh.me` の session cookie を消す
+====
+ローカルでは、`lvh.me:5100/login` でログインすると `_auto_reserve_session` cookie が `lvh.me` ドメインに作られ、admin を開くと同じ名前の cookie が `admin.lvh.me` ドメインにも作られる。
+ブラウザは両方を admin へ送り、Rails は先に送られた `lvh.me` の方を読む。書き込みは `admin.lvh.me` の方に行くため、「付け替えました」などの flash が失われ、代わりにログイン時の「ログインしました」が出ることがある。
+この PR の変更ではなく、ローカルの session 設定による（`config/initializers/session_store.rb` の `domain: :all`）。
+
+対処: ログイン後に、DevTools の Application > Cookies で `http://admin.lvh.me:5100` を開き、Domain が `lvh.me` の `_auto_reserve_session` だけを削除する（`admin.lvh.me` の方は残す）。
+通知が出なくても、画面の内容（一覧から消える、詳細の「最後の結果」が変わる）は正しく変わる。
+====
+
+== 1. ダミーデータを入れる
+
+worktree のルートで実行する。何度流しても同じ状態に戻る（前回の分を消してから作る）ので、途中で壊しても流し直せばよい。
+
+[source,shell]
+----
+DISABLE_SPRING=1 bin/rails runner docs/req/issue45412-backend-relink-closed-google-maps/check/seed-check-data.rb
+----
+
+7組の店舗を作る。店名は「【閉業確認用】…」、閉業 place の place_id は `kakunin45412-K?-closed`。place_id は架空なので、Google マップへのリンクを開いても店は出ない。
+詳細画面の URL は固定で、`http://admin.lvh.me:5100/google_map_closed_place_checks/45412000-0000-4000-8000-00000000000N`（N は 1〜7）。
+
+[cols="1,2,2,1,2,3"]
+|===
+|組 |店舗 |最後の結果 |付け替えなかった回数 |次の再チェック予定 |この組で試すこと
+
+|K1 |海鮮居酒屋 湊 |複数一致 |1 |最後の再チェックの7日後 |候補 a・b は取得済み、c は未取得。候補から付け替える（手順 4・5）
+|K2 |喫茶 やまびこ |検索結果なし |1 |7日後 |失敗の理由が付かない。入力欄で付け替える（手順 8）
+|K3 |蕎麦処 ふじ |一致なし |2 |14日後 |間隔が延びているのを見る（手順 3）
+|K4 |焼肉 ほし |候補過多 |3 |28日後 |対応不要にする（手順 7）
+|K5 |洋食 さくら |既存参照あり |4 |56日後 |候補は別の店の archived な紐付けが参照している（手順 6）
+|K6 |中華 りゅう |一致なし |5 |90日後 |間隔の上限を見る（手順 3）
+|K7 |パン工房 こむぎ |失敗（閉業 place の取得失敗） |1 |8日前の7日後＝昨日（予定を過ぎている） |バッチの対象になる（手順 9）
+|===
+
+「最後の再チェック日時」は、作成時刻から K1 が1日前、K2 が2日前、…、K7 が8日前にしてある。
+スクリプトの最後に、各組の URL と「一覧に出る組 7 件、バッチの対象になる組 1 件」が出る。
+
+== 2. ストーリー
+
+上から順に進める。手順 4〜8 は組の状態を変えるので、やり直すときは手順 1 を流し直す。
+
+=== 手順 1. 一覧を見る
+
+`http://admin.lvh.me:5100/google_map_closed_place_checks` を開く。サイドメニューの「レストラン」の中の「Google Map 閉業の紐付け確認」からも開ける。
+
+期待: 7組が「最後の再チェック日時」の新しい順（K1〜K7）に並ぶ。「最後の結果」に「検索結果なし」（K2）と「失敗」（K7）が、ほかの結果と同じ扱いで出る。
+
+image::01-index.png[一覧, 900]
+
+=== 手順 2. 失敗の組の詳細を見る（K7）
+
+K7 の「詳細」を押す。
+
+期待: 「最後の結果」が「失敗 (閉業 place の取得失敗)」と、理由付きで出る。「次の再チェック予定」が昨日の日時で、予定を過ぎている。
+
+image::02-k7-failed.png[K7 の詳細, 900]
+
+=== 手順 3. 再チェックの間隔が延びているのを見る（K2・K3・K4・K5・K6）
+
+K2、K3、K4、K5、K6 の詳細を順に開き、「最後の再チェック日時」と「次の再チェック予定」の差を見る。
+
+期待: 差が順に 7日、14日、28日、56日、90日。付け替えなかった回数（1、2、3、4、5回）に応じて延びている。回数そのものは画面に出ない。
+K2 の「最後の結果」は「検索結果なし」で、K7 と違って括弧の理由が付かない。
+
+=== 手順 4. 未取得の候補へは付け替えられない（K1）
+
+K1 の詳細を開く。候補が3件あり、c は店名などが「未取得」になっている。c の「この候補へ付け替える」を押し、確認ダイアログで OK。
+
+期待: 詳細画面に戻り、「付け替え先の place が未取得です。下の入力欄に place_id を入力して付け替えてください」と出る。紐付けは変わらない。
+
+image::04-k1-not-fetched.png[未取得の候補, 900]
+
+=== 手順 5. 候補から付け替える（K1）
+
+同じ画面で、候補 a の「この候補へ付け替える」を押し、OK。
+
+期待: 一覧に戻り「付け替えました」と出る。K1 は一覧から消える（紐付けが閉業 place を指さなくなったため）。
+ブラウザの戻るか、URL `.../45412000-0000-4000-8000-000000000001` を直接開くと詳細は見られ、「最後の結果」が「手動付け替え」、「次の再チェック予定」が今から7日後に変わっている（回数が0に戻った）。「最後の再チェック日時」は変わらない。
+
+image::05-index-after-k1-relink.png[付け替え後の一覧, 900]
+image::06-k1-after-relink.png[付け替え後の K1, 900]
+
+=== 手順 6. ほかの紐付けが参照する候補へは付け替えられない（K5）
+
+K5 の詳細を開き、候補 `kakunin45412-K5-ref` の「この候補へ付け替える」を押し、OK。
+
+期待: 詳細画面に戻り、「付け替え先の place は、ほかの紐付けから参照されています」と出る。
+（この候補は、店舗「【閉業確認用】洋食 さくら（移転前の登録）」の archived な紐付けが指している。）
+
+image::07-k5-referenced.png[参照済みの候補, 900]
+
+=== 手順 7. 対応不要にする（K4）
+
+K4 の詳細で「対応不要」を押し、OK。
+
+期待: 一覧に戻り「対応不要にしました」と出る。K4 は一覧から消える。URL を直接開けば詳細は見られ、「最後の結果」「次の再チェック予定」は変わっていない（対応不要は回数も予定も動かさない）。
+
+image::08-index-after-k4-dismiss.png[対応不要後の一覧, 900]
+
+=== 手順 8. 入力欄で付け替える（K2）
+
+K2 の詳細を開く。候補は0件で、入力欄だけがある。次の3つを順に試す。
+
+. `https://example.com/maps/place/abc` を入れて「この place へ付け替える」、OK。
++
+期待: すぐに「place_id か Google マップの URL を入力してください」と出る。Google には通信しない。
+. `kakunin45412-nowhere` を入れて押す。
++
+期待: 約60秒待ったあと「place を取得できませんでした」と出る（Google から架空の place を取ろうとして失敗する。取得の再試行があるため時間がかかる）。
+. 実在する営業中の店の place_id か Google マップの URL を入れて押す。
+例: `ChIJoylsI9-LGGAREFepCWo2oeM`（すしざんまい 本店）。Google マップで店を開いて共有した `https://maps.app.goo.gl/...` や、アドレスバーの `https://www.google.com/maps/place/...` でもよい。
++
+期待: 10〜20秒後に一覧へ戻り「付け替えました」と出る。K2 は一覧から消える。
+K2 の詳細を直接開くと「手動付け替え」、次の予定は今から7日後。
+「店舗の Google Map 紐付け画面」を押すと、紐付け先がその店の place（店名・住所が Google から取れている）になっている。
+
+image::10-k2-input-invalid-host.png[受け付けないホスト, 900]
+image::11-k2-input-fetch-failed.png[取得失敗, 900]
+image::13-k2-after-input-relink.png[入力で付け替えた後の K2, 900]
+image::14-k2-restaurant-google-map-link.png[店舗の Google Map 紐付け画面, 900]
+
+=== 手順 9. バッチを流す（K7）
+
+まず dry_run。worktree のルートで実行する。
+
+[source,shell]
+----
+RAILS_LOG_TO_STDOUT=1 DISABLE_SPRING=1 bin/rails runner 'RecheckClosedGoogleMapLinksBatch.run(dry_run: true, limit: 50)'
+----
+
+期待: `start dry_run=true target=1 limit=50 total=N` が出る。target の1件は予定を過ぎている K7。total は未解決の組の数（手順 5・7・8 のあとなら 4）。何も処理せず、Google にも通信しない。
+
+次に、1件だけ本実行する。
+
+[source,shell]
+----
+RAILS_LOG_TO_STDOUT=1 DISABLE_SPRING=1 bin/rails runner 'RecheckClosedGoogleMapLinksBatch.run(limit: 1)'
+----
+
+期待: 約60秒後に `processed web_system_id=... restaurant_id=... status=failed failure_reason=closed_place_fetch_failed` と `finished target=1 failed=1` が出る（閉業 place が架空なので Google から取れない）。
+K7 の詳細を開き直すと、「最後の再チェック日時」が今、「次の再チェック予定」が今から14日後になっている。失敗も回数に数えるので、1回目の7日から2回目の14日に延びた。
+
+image::15-k7-after-batch-run.png[バッチ後の K7, 900]
+
+== 3. やり直す・片付ける
+
+* もう一度最初から: 手順 1 のスクリプトを流し直す。7組が初期状態に戻る。
+* 片付ける: `CLEANUP=1` を付けて流すと、ダミーの紐付け・place・再チェック記録を消し、「【閉業確認用】…」の店舗を非公開にする（店舗の行は残る）。
++
+[source,shell]
+----
+CLEANUP=1 DISABLE_SPRING=1 bin/rails runner docs/req/issue45412-backend-relink-closed-google-maps/check/seed-check-data.rb
+----
+* 手順 8 で取得した実在の店の `google_map_restaurants` の行は残る。害はない。
+
+== 4. エージェントが確かめたこと（2026-10-09）
+
+同じ手順を agent-browser で流し、スクリーンショットを `screenshots/` に残した。番号は手順に対応する（`01-index.png` 〜 `16-index-after-batch-run.png`）。
+
+* 手順 1〜9 の期待どおりに動いた。メッセージの文言は上の「期待」のとおり（画面に出た toastr の script から読み取った）。
+* 入力欄の実在 place は `ChIJoylsI9-LGGAREFepCWo2oeM` で試し、13秒で付け替わった。架空の place_id は61秒で「place を取得できませんでした」。
+* バッチの本実行（`limit: 1`）で K7 の回数が 1→2、次の予定が 7日後→14日後に延びた（`checked_at` 2026-10-09 11:17 JST、`next_recheck_at` 2026-10-23 11:17 JST）。
+* 確認後に手順 1 のスクリプトを流し直してあるので、この文書を読んだ時点では7組が初期状態である。
+* あわせて、PR 本文の「ダミーデータ20組・確認46件」は HEAD `7c94e18` で `verify-batch-e2e.rb` を流し直して 46/46 成功（ログ `verify-batch-e2e-7c94e18-2026-10-09.log`）。

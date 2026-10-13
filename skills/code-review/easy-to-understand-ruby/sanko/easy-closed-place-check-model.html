@@ -1,0 +1,818 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>closed_place_check.rb 入門</title>
+<style>
+:root {
+  --bg: #fbfaf7;
+  --fg: #23211d;
+  --muted: #6b665d;
+  --card: #ffffff;
+  --line: #ddd8cc;
+  --accent: #1c6fd1;
+  --accent-soft: #e8f1fc;
+  --ok: #2b8a3e;
+  --ok-soft: #e9f7ec;
+  --warn: #c92a2a;
+  --warn-soft: #fdecec;
+  --amber: #b85c00;
+  --amber-soft: #fff3e0;
+  --gray: #8f8a80;
+  --gray-soft: #f1efea;
+  --code-bg: #f1eee6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1a18;
+    --fg: #ece8df;
+    --muted: #a9a398;
+    --card: #252420;
+    --line: #3d3a34;
+    --accent: #6aa8f0;
+    --accent-soft: #18283c;
+    --ok: #63c477;
+    --ok-soft: #1a3020;
+    --warn: #ff7676;
+    --warn-soft: #3a1d1d;
+    --amber: #f0a050;
+    --amber-soft: #3a2a14;
+    --gray: #8a857b;
+    --gray-soft: #2c2b27;
+    --code-bg: #2e2c27;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1a18;
+  --fg: #ece8df;
+  --muted: #a9a398;
+  --card: #252420;
+  --line: #3d3a34;
+  --accent: #6aa8f0;
+  --accent-soft: #18283c;
+  --ok: #63c477;
+  --ok-soft: #1a3020;
+  --warn: #ff7676;
+  --warn-soft: #3a1d1d;
+  --amber: #f0a050;
+  --amber-soft: #3a2a14;
+  --gray: #8a857b;
+  --gray-soft: #2c2b27;
+  --code-bg: #2e2c27;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", system-ui, sans-serif;
+  line-height: 1.8;
+  font-size: 16px;
+}
+main { max-width: 820px; margin: 0 auto; padding: 32px 16px 80px; }
+h1 { font-size: 1.6rem; line-height: 1.4; margin: 0 0 8px; }
+h2 {
+  font-size: 1.25rem; margin: 56px 0 12px; padding-bottom: 6px;
+  border-bottom: 2px solid var(--line);
+}
+h2 .num {
+  display: inline-block; min-width: 1.8em; margin-right: 6px; padding: 0 6px;
+  border-radius: 6px; background: var(--fg); color: var(--bg);
+  text-align: center; font-size: 0.95rem;
+}
+h3 { font-size: 1.05rem; margin: 28px 0 8px; }
+p { margin: 10px 0; }
+ul, ol { padding-left: 1.4em; }
+li { margin: 4px 0; }
+.lead { color: var(--muted); margin-top: 0; }
+code {
+  background: var(--code-bg); padding: 1px 6px; border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.86em; word-break: break-all;
+}
+pre {
+  background: var(--code-bg); border-radius: 10px; padding: 12px 14px; margin: 10px 0;
+  overflow-x: auto; font-size: 13px; line-height: 1.6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+pre code { background: none; padding: 0; font-size: inherit; word-break: normal; }
+pre .ln { display: inline-block; width: 2.4em; color: var(--muted); user-select: none; }
+pre .cm { color: var(--ok); }
+pre .mk { display: block; color: var(--accent); font-weight: 700; margin: 6px 0 2px; }
+.oneline {
+  background: var(--card); border: 2px solid var(--fg); border-radius: 14px;
+  padding: 18px 20px; margin: 24px 0; font-size: 1.05rem;
+}
+.oneline strong { background: linear-gradient(transparent 60%, var(--accent-soft) 60%); }
+
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.cmp > div { min-width: 0; }
+.cmp .lbl { font-size: 0.8rem; font-weight: 700; color: var(--muted); }
+.cmp pre { margin: 2px 0 0; height: calc(100% - 1.6em); }
+@media (max-width: 640px) { .cmp { grid-template-columns: 1fr; } }
+
+figure { margin: 22px 0; }
+.figscroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.figscroll svg { display: block; width: 100%; min-width: 560px; height: auto; }
+figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+
+.note {
+  border-left: 5px solid var(--accent); background: var(--accent-soft);
+  padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 18px 0;
+}
+.note.warn-n { border-left-color: var(--warn); background: var(--warn-soft); }
+.note.ok-n { border-left-color: var(--ok); background: var(--ok-soft); }
+.note p { margin: 4px 0; }
+.note ul { margin: 6px 0; }
+
+.step {
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 16px; margin: 12px 0;
+}
+.step h4 { margin: 0 0 4px; font-size: 1rem; }
+.step .sno {
+  display: inline-block; min-width: 1.8em; margin-right: 6px; padding: 0 6px;
+  border-radius: 6px; background: var(--accent); color: var(--bg); text-align: center; font-size: 0.9rem;
+}
+.step pre { margin: 6px 0; }
+.step p { margin: 4px 0; font-size: 0.95rem; }
+
+table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.93rem; }
+th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+th { background: var(--gray-soft); }
+.tablewrap { overflow-x: auto; }
+td code { word-break: normal; white-space: nowrap; }
+.nw2 td:nth-child(2) { white-space: nowrap; }
+
+.f-box { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+.f-blue { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+.f-ok { fill: var(--ok-soft); stroke: var(--ok); stroke-width: 1.5; }
+.f-warn { fill: var(--warn-soft); stroke: var(--warn); stroke-width: 1.5; }
+.f-amber { fill: var(--amber-soft); stroke: var(--amber); stroke-width: 2; }
+.f-gray { fill: var(--gray-soft); stroke: var(--gray); stroke-width: 1.5; stroke-dasharray: 6 4; }
+.f-t { fill: var(--fg); }
+.f-m { fill: var(--muted); }
+.f-tw { fill: var(--warn); }
+.f-tok { fill: var(--ok); }
+.f-ta { fill: var(--amber); }
+.f-tb { fill: var(--accent); }
+.f-line { stroke: var(--fg); stroke-width: 1.5; fill: none; }
+.f-line-d { stroke: var(--muted); stroke-width: 1.5; fill: none; stroke-dasharray: 6 4; }
+.f-line-ok { stroke: var(--ok); stroke-width: 2; fill: none; }
+.f-line-warn { stroke: var(--warn); stroke-width: 2; fill: none; }
+.ah { fill: var(--fg); }
+.ah-m { fill: var(--muted); }
+.ah-ok { fill: var(--ok); }
+.ah-warn { fill: var(--warn); }
+svg text { font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", system-ui, sans-serif; }
+svg .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>closed_place_check.rb を、TypeScript から来た人向けにいちばんやさしく読む</h1>
+<p class="lead">対象: <code>app/models/google_map/closed_place_check.rb</code>（69行、コミット 800239f 時点）。Ruby も Rails も初めての前提で、文法の1文字から説明します。</p>
+
+<div class="oneline">
+このファイルは、<strong>「(お店, 閉業した Google マップのページ) の組ごとに、最後に調べた結果を1行だけ入れておく表」</strong>を Ruby から扱うためのクラスです。<br>
+TypeScript でいうと、<strong>Prisma のモデル定義と、よく使う検索関数が1つのクラスに同居したもの</strong>です。
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">1</span>まず「何の表か」を絵で見る</h2>
+
+<p>AutoReserve（AR）のお店は、Google マップのお店ページに「紐付け」されています。紐付けは <code>restaurant_web_systems</code> という表の1行で、中身は Google マップの URL と、そのページの ID（place ID）です。</p>
+<p>Google マップ側でそのページが「閉業」になると、紐付けが古くなっているかもしれません（お店が移転して、新しいページができている、など）。そこで毎日バッチが Google マップを検索し直します。<strong>その結果を書き込む先が、今回読む表 <code>google_map_closed_place_checks</code></strong> です。</p>
+
+<figure>
+<div class="figscroll">
+<svg viewBox="0 0 720 360" role="img" aria-label="4つの表の関係">
+  <defs>
+    <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+    <marker id="a1m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-m"/></marker>
+  </defs>
+  <!-- B: web systems (top center) -->
+  <rect x="250" y="16" width="220" height="104" rx="10" class="f-box"/>
+  <text x="360" y="40" text-anchor="middle" font-size="13" font-weight="700" class="f-t mono">restaurant_web_systems</text>
+  <text x="360" y="62" text-anchor="middle" font-size="13" class="f-t">紐付け行（URL を持つ）</text>
+  <text x="360" y="84" text-anchor="middle" font-size="12" class="f-m mono">source = google_map</text>
+  <text x="360" y="104" text-anchor="middle" font-size="12" class="f-m mono">source_id = place の ID</text>
+  <!-- A: restaurants (left middle) -->
+  <rect x="20" y="150" width="200" height="80" rx="10" class="f-box"/>
+  <text x="120" y="176" text-anchor="middle" font-size="13" font-weight="700" class="f-t mono">restaurants</text>
+  <text x="120" y="198" text-anchor="middle" font-size="13" class="f-t">AR のお店</text>
+  <text x="120" y="218" text-anchor="middle" font-size="12" class="f-m mono">Restaurant</text>
+  <!-- C: google map restaurants (right middle) -->
+  <rect x="500" y="150" width="200" height="80" rx="10" class="f-box"/>
+  <text x="600" y="176" text-anchor="middle" font-size="13" font-weight="700" class="f-t mono">google_map_restaurants</text>
+  <text x="600" y="198" text-anchor="middle" font-size="13" class="f-t">Google の情報の控え</text>
+  <text x="600" y="218" text-anchor="middle" font-size="12" class="f-m mono">GoogleMap::Restaurant</text>
+  <!-- D: closed place checks (bottom center, highlighted) -->
+  <rect x="230" y="250" width="260" height="96" rx="12" class="f-amber"/>
+  <text x="360" y="276" text-anchor="middle" font-size="13" font-weight="700" class="f-t mono">google_map_closed_place_checks</text>
+  <text x="360" y="298" text-anchor="middle" font-size="13" class="f-t">再チェックの記録（組ごとに1行）</text>
+  <text x="360" y="320" text-anchor="middle" font-size="12" class="f-ta mono">GoogleMap::ClosedPlaceCheck</text>
+  <text x="360" y="338" text-anchor="middle" font-size="12" font-weight="700" class="f-ta">← 今回のファイル</text>
+  <!-- edges -->
+  <path d="M250,96 L160,150" class="f-line" marker-end="url(#a1)"/>
+  <text x="150" y="104" text-anchor="middle" font-size="12" class="f-m mono">restaurant_id</text>
+  <path d="M470,96 L560,150" class="f-line" marker-end="url(#a1)"/>
+  <text x="590" y="96" text-anchor="middle" font-size="12" class="f-m mono">source_id = google_place_id</text>
+  <text x="590" y="114" text-anchor="middle" font-size="12" class="f-m">（data の中に open_status）</text>
+  <path d="M230,300 L110,230" class="f-line" marker-end="url(#a1)"/>
+  <text x="96" y="268" text-anchor="middle" font-size="12" class="f-m mono">restaurant_id</text>
+  <text x="96" y="286" text-anchor="middle" font-size="12" class="f-t">（belongs_to）</text>
+  <path d="M490,282 L548,232" class="f-line-d" marker-end="url(#a1m)"/>
+  <text x="636" y="262" text-anchor="middle" font-size="12" class="f-m mono">closed_google_place_id</text>
+  <text x="636" y="280" text-anchor="middle" font-size="12" class="f-m">（関連の定義はない）</text>
+</svg>
+</div>
+<figcaption>オレンジの表が今回の主役。お店とは <code>restaurant_id</code> でつながり、閉業したページとは ID の文字列でつながる（Rails 上の関連は定義していない）。</figcaption>
+</figure>
+
+<!-- ============================================================ -->
+<h2><span class="num">2</span>コード全文（A〜G の7つに分けて読む）</h2>
+
+<pre><code><span class="mk">── A：表の設計図（自動生成のコメント） ──</span><span class="ln">1</span><span class="cm"># == Schema Information</span>
+<span class="ln">2</span><span class="cm">#</span>
+<span class="ln">3</span><span class="cm"># Table name: google_map_closed_place_checks</span>
+<span class="ln">4</span><span class="cm">#</span>
+<span class="ln">5</span><span class="cm">#  id                         :uuid             not null, primary key</span>
+<span class="ln">6</span><span class="cm">#  candidate_google_place_ids :string           default([]), not null, is an Array</span>
+<span class="ln">7</span><span class="cm">#  checked_at                 :datetime         not null</span>
+<span class="ln">8</span><span class="cm">#  dismissed_at               :datetime</span>
+<span class="ln">9</span><span class="cm">#  failure_reason             :integer</span>
+<span class="ln">10</span><span class="cm">#  result                     :integer          not null</span>
+<span class="ln">11</span><span class="cm">#  created_at                 :datetime         not null</span>
+<span class="ln">12</span><span class="cm">#  updated_at                 :datetime         not null</span>
+<span class="ln">13</span><span class="cm">#  closed_google_place_id     :string           not null</span>
+<span class="ln">14</span><span class="cm">#  relinked_google_place_id   :string</span>
+<span class="ln">15</span><span class="cm">#  restaurant_id              :bigint           not null</span>
+<span class="ln">16</span><span class="cm">#</span>
+<span class="ln">17</span><span class="cm"># Indexes</span>
+<span class="ln">18</span><span class="cm">#</span>
+<span class="ln">19</span><span class="cm">#  idx_on_restaurant_id_closed_google_place_id_fda812d72b  (restaurant_id,closed_google_place_id) UNIQUE</span>
+<span class="ln">20</span><span class="cm">#</span>
+<span class="ln">21</span><span class="cm"># Foreign Keys</span>
+<span class="ln">22</span><span class="cm">#</span>
+<span class="ln">23</span><span class="cm">#  fk_rails_...  (restaurant_id =&gt; restaurants.id) ON DELETE =&gt; cascade</span>
+<span class="ln">24</span><span class="cm">#</span>
+<span class="mk">── B：クラスの宣言 ──</span><span class="ln">25</span>class GoogleMap::ClosedPlaceCheck &lt; ApplicationRecord
+<span class="ln">26</span>  <span class="cm"># Google Map 側で閉業した place に紐付いた AR 店舗の、紐付け先の再チェックの最新結果。</span>
+<span class="ln">27</span>  <span class="cm"># (店舗, 閉業 place) ごとに1件だけ持ち、再チェックのたびに上書きする。</span>
+<span class="ln">28</span>  <span class="cm"># 組がまだ確認を要するかは、この記録ではなく現在の紐付けから決まる (target_web_systems)</span>
+<span class="mk">── C：変更履歴を残す設定 ──</span><span class="ln">29</span>  audited only: :dismissed_at, on: :update
+<span class="ln">30</span>
+<span class="mk">── D：お店とのつながり ──</span><span class="ln">31</span>  belongs_to :restaurant, class_name: "::Restaurant"
+<span class="ln">32</span>
+<span class="mk">── E：結果と失敗理由の選択肢（enum） ──</span><span class="ln">33</span>  enum :result, {
+<span class="ln">34</span>    auto_relinked: 0,
+<span class="ln">35</span>    manually_relinked: 1,
+<span class="ln">36</span>    no_match: 2,
+<span class="ln">37</span>    multiple_matches: 3,
+<span class="ln">38</span>    already_referenced: 4, <span class="cm"># 唯一の候補を、ほかの紐付け行 (archived を含む) が指している</span>
+<span class="ln">39</span>    too_many_candidates: 5,
+<span class="ln">40</span>    failed: 6,
+<span class="ln">41</span>  }, prefix: true
+<span class="ln">42</span>
+<span class="ln">43</span>  enum :failure_reason, {
+<span class="ln">44</span>    closed_place_fetch_failed: 0,
+<span class="ln">45</span>    search_failed: 1, <span class="cm"># 検索結果が0件の場合を含む。PlaceIdDetector は取得の失敗も0件で返すため区別できない</span>
+<span class="ln">46</span>    candidate_fetch_failed: 2,
+<span class="ln">47</span>    unexpected_error: 3,
+<span class="ln">48</span>  }, prefix: true
+<span class="ln">49</span>
+<span class="mk">── F：「未解決の記録」を探す条件（scope） ──</span><span class="ln">50</span>  <span class="cm"># 組が今も再チェックの対象の記録。結果は問わない</span>
+<span class="ln">51</span>  scope :unresolved, -&gt; { where(id: target_web_systems.select("google_map_closed_place_checks.id")) }
+<span class="ln">52</span>
+<span class="mk">── G：「再チェックの対象」を探す条件（クラスメソッド） ──</span><span class="ln">53</span>  <span class="cm"># 組が再チェックの対象の条件を満たす紐付け行。バッチの対象抽出、未解決の一覧、書き込み前の確認が同じ条件を使う。</span>
+<span class="ln">54</span>  <span class="cm"># 組の再チェック記録があれば left join する</span>
+<span class="ln">55</span>  <span class="cm"># @return [ActiveRecord::Relation&lt;RestaurantWebSystem&gt;]</span>
+<span class="ln">56</span>  def self.target_web_systems
+<span class="ln">57</span>    RestaurantWebSystem.status_default.google_map
+<span class="ln">58</span>      .joins(:restaurant)
+<span class="ln">59</span>      .merge(::Restaurant.published.where(for_test: false).where.not(open_status: :permanently_closed))
+<span class="ln">60</span>      .joins("INNER JOIN google_map_restaurants ON google_map_restaurants.google_place_id = restaurant_web_systems.source_id")
+<span class="ln">61</span>      .where("google_map_restaurants.data-&gt;&gt;'open_status' = 'permanently_closed'")
+<span class="ln">62</span>      .joins(&lt;&lt;~SQL.squish)
+<span class="ln">63</span>        LEFT JOIN google_map_closed_place_checks
+<span class="ln">64</span>          ON google_map_closed_place_checks.restaurant_id = restaurant_web_systems.restaurant_id
+<span class="ln">65</span>         AND google_map_closed_place_checks.closed_google_place_id = restaurant_web_systems.source_id
+<span class="ln">66</span>      SQL
+<span class="ln">67</span>      .where(google_map_closed_place_checks: { dismissed_at: nil })
+<span class="ln">68</span>  end
+<span class="ln">69</span>end</code></pre>
+
+<!-- ============================================================ -->
+<h2><span class="num">3</span>このファイルに出てくる Ruby の文法だけ、先に覚える</h2>
+
+<p>全部 TypeScript に言い換えられます。迷ったらこの表に戻ってください。</p>
+
+<div class="tablewrap">
+<table>
+<tr><th>Ruby</th><th>TypeScript でいうと</th><th>このファイルでの例</th></tr>
+<tr><td><code>:result</code>（シンボル）</td><td><code>'result'</code>。名前を表す文字列のようなもの</td><td><code>enum :result</code>、<code>on: :update</code></td></tr>
+<tr><td><code>{ auto_relinked: 0 }</code>（ハッシュ）</td><td><code>{ auto_relinked: 0 }</code>（オブジェクト）</td><td>33〜41行目の対応表</td></tr>
+<tr><td><code>audited only: :dismissed_at</code></td><td><code>audited({ only: 'dismissed_at' })</code>。Ruby は呼び出しのかっこを省ける</td><td>29・31・33行目</td></tr>
+<tr><td><code>nil</code></td><td><code>null</code></td><td><code>dismissed_at: nil</code></td></tr>
+<tr><td><code>-&gt; { ... }</code>（ラムダ）</td><td><code>() =&gt; ...</code></td><td>51行目</td></tr>
+<tr><td><code>def self.foo</code></td><td><code>static foo()</code></td><td>56行目</td></tr>
+<tr><td>最後に書いた式がそのまま戻り値</td><td><code>return</code> を書くのと同じ</td><td>57〜67行目の全体が戻り値</td></tr>
+<tr><td><code>class A &lt; B</code></td><td><code>class A extends B</code></td><td>25行目</td></tr>
+<tr><td><code>GoogleMap::ClosedPlaceCheck</code></td><td>名前空間つきの名前（フォルダの中のクラス）</td><td>25行目</td></tr>
+<tr><td><code>::Restaurant</code></td><td>いちばん外側から探す（絶対パス）</td><td>31・59行目</td></tr>
+<tr><td><code>&lt;&lt;~SQL</code> 〜 <code>SQL</code>（ヒアドキュメント）</td><td>複数行のテンプレート文字列 <code>`...`</code></td><td>62〜66行目</td></tr>
+<tr><td><code># ...</code></td><td><code>// ...</code></td><td>1〜24行目など</td></tr>
+<tr><td><code>foo?</code> / <code>foo!</code></td><td>名前の慣習。<code>?</code> は true/false を返す。<code>!</code> は失敗したら例外を投げる、または中身を書き換える</td><td><code>result_no_match?</code>（あとで出る）</td></tr>
+</table>
+</div>
+
+<div class="note">
+<p><strong>いちばん大事な違い：</strong>クラスの中に直接書いた <code>audited ...</code> や <code>belongs_to ...</code> は、<strong>クラスを読み込んだ瞬間に1回だけ実行される「メソッド呼び出し」</strong>です。TypeScript のデコレーター <code>@Entity()</code> や <code>@ManyToOne()</code> がクラスに機能を足すのと同じ役目です。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">4</span>A：上の長いコメントは「表の設計図」で、プログラムではない</h2>
+
+<p>1〜24行目は <strong>annotaterb</strong> という道具（gem。npm パッケージのようなもの）が DB を読んで自動で書いたコメントです。動作には関係しません。人が読むための設計図です。</p>
+<p>TypeScript の型で書き直すと、こうなります。</p>
+
+<pre><code><span class="cm">// イメージ。Rails ではこの型をどこにも書かない</span>
+type GoogleMapClosedPlaceCheck = {
+  id: string;                           <span class="cm">// uuid</span>
+  restaurant_id: number;                <span class="cm">// どのお店か</span>
+  closed_google_place_id: string;       <span class="cm">// 閉業した Google マップのページの ID</span>
+  result: Result;                       <span class="cm">// 結果（DB には整数で入る。E で説明）</span>
+  failure_reason: FailureReason | null; <span class="cm">// 失敗したときだけ入る</span>
+  candidate_google_place_ids: string[]; <span class="cm">// 候補の ID の一覧。PostgreSQL の配列。最初は []</span>
+  relinked_google_place_id: string | null; <span class="cm">// 付け替えた先</span>
+  checked_at: Date;                     <span class="cm">// 最後に調べた時刻</span>
+  dismissed_at: Date | null;            <span class="cm">// 人が「対応不要」にした時刻</span>
+  created_at: Date;
+  updated_at: Date;
+};</code></pre>
+
+<div class="note warn-n">
+<p><strong>TS の人が最初に驚くところ：</strong>Rails のモデルには、列（フィールド）の定義がどこにもありません。それでも <code>check.checked_at</code> や <code>check.dismissed_at</code> が使えます。Rails が起動時に DB の表を見て、列ごとの読み書きメソッドを自動で作るからです。</p>
+</div>
+
+<p>下の2つは、DB 自体が守るルールです。</p>
+<ul>
+<li><strong>19行目 UNIQUE</strong>：同じ (お店, 閉業ページ) の行は2行作れない。だから「組ごとに1行」が DB で保証される。</li>
+<li><strong>23行目 ON DELETE cascade</strong>：お店を削除すると、そのお店の記録も一緒に消える。</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2><span class="num">5</span>B：<code>class GoogleMap::ClosedPlaceCheck &lt; ApplicationRecord</code></h2>
+
+<div class="cmp">
+<div><div class="lbl">Ruby</div>
+<pre><code>class GoogleMap::ClosedPlaceCheck &lt; ApplicationRecord
+  ...
+end</code></pre></div>
+<div><div class="lbl">TypeScript のイメージ</div>
+<pre><code>export class ClosedPlaceCheck extends ApplicationRecord {
+  ...
+}</code></pre></div>
+</div>
+
+<p>この1行で起きていることは3つです。</p>
+<ol>
+<li><strong>継承するだけで DB 操作が全部使える</strong>。<code>ApplicationRecord</code> の親は Rails の <code>ActiveRecord::Base</code> です。これを継承すると <code>find</code>（ID で1件取る）、<code>where</code>（条件で探す）、<code>update!</code>（保存）などが最初から使えます。</li>
+<li><strong>import 文がいらない</strong>。Rails（Zeitwerk という仕組み）は「ファイルの場所」と「クラス名」を対応させて、使われた瞬間に自動で読み込みます。
+  <br><code>app/models/google_map/closed_place_check.rb</code> ⇔ <code>GoogleMap::ClosedPlaceCheck</code></li>
+<li><strong>表の名前も自動で決まる</strong>。クラス名 <code>ClosedPlaceCheck</code> から <code>closed_place_checks</code>（複数形・スネークケース）を作り、<code>GoogleMap</code> モジュールが決めている接頭辞 <code>google_map_</code> を付けて、<code>google_map_closed_place_checks</code> になります（<code>app/models/google_map.rb</code> の <code>table_name_prefix</code>）。</li>
+</ol>
+<p>このように「名前を規約どおりにすれば設定を書かなくてよい」のが Rails の基本方針です（Convention over Configuration）。</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">6</span>C：<code>audited only: :dismissed_at, on: :update</code></h2>
+
+<div class="cmp">
+<div><div class="lbl">Ruby</div>
+<pre><code>audited only: :dismissed_at, on: :update</code></pre></div>
+<div><div class="lbl">TypeScript のイメージ</div>
+<pre><code>@Audited({ only: ['dismissed_at'], on: ['update'] })
+class ClosedPlaceCheck { ... }</code></pre></div>
+</div>
+
+<p><strong>audited</strong> は「いつ・誰が・どの値をどう変えたか」を <code>audits</code> という別の表に自動で残す gem です。</p>
+<ul>
+<li><code>only: :dismissed_at</code>：<code>dismissed_at</code> 列が変わったときだけ記録する。</li>
+<li><code>on: :update</code>：更新のときだけ記録する。新しく行を作ったときは記録しない。</li>
+</ul>
+<p><strong>なぜ dismissed_at だけか：</strong>この表で人が手で変えるのは「対応不要にする」（<code>dismissed_at</code> に時刻を入れる）だけです。<code>result</code> などはバッチが毎回上書きするので、履歴に残しても役に立ちません。また、紐付けの付け替えの履歴は、紐付け行（<code>RestaurantWebSystem</code>）側の audited が URL の変更として残します。</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">7</span>D：<code>belongs_to :restaurant, class_name: "::Restaurant"</code></h2>
+
+<div class="cmp">
+<div><div class="lbl">Ruby</div>
+<pre><code>belongs_to :restaurant,
+  class_name: "::Restaurant"</code></pre></div>
+<div><div class="lbl">Prisma のイメージ</div>
+<pre><code>model GoogleMapClosedPlaceCheck {
+  restaurant_id BigInt
+  restaurant    Restaurant @relation(
+    fields: [restaurant_id], references: [id])
+}</code></pre></div>
+</div>
+
+<p>「この記録は1つのお店に属する」という宣言です。これだけで次のものが使えるようになります。</p>
+<ul>
+<li><code>check.restaurant</code>：<code>restaurant_id</code> を使ってお店を DB から取ってくる。</li>
+<li><code>check.restaurant = r</code>：<code>restaurant_id</code> に <code>r.id</code> を入れる。</li>
+<li>保存前のチェック：お店が空だと保存できない。実際に試すと <code>valid?</code> が false になり、「Restaurantを入力してください」というエラーが出る。</li>
+<li>検索での結合：<code>.preload(:restaurant)</code>（一覧画面でお店をまとめて読む）などに名前で使える。</li>
+</ul>
+
+<h3><code>class_name: "::Restaurant"</code> の <code>::</code> がないとどうなるか</h3>
+<p>Rails は、関連の名前 <code>:restaurant</code> からクラス名 <code>Restaurant</code> を推測します。ただし探すときは、<strong>今いる名前空間の内側から順に</strong>探します。<code>GoogleMap</code> の中には <code>GoogleMap::Restaurant</code>（Google の情報の控えの表）があるので、そちらが先に見つかってしまいます。</p>
+
+<figure>
+<div class="figscroll">
+<svg viewBox="0 0 720 260" role="img" aria-label="クラス名の探し方">
+  <defs>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+    <marker id="a2ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-ok"/></marker>
+  </defs>
+  <text x="20" y="24" font-size="14" font-weight="700" class="f-t">class_name: "Restaurant"（:: なし）のとき、探す順番</text>
+  <rect x="20" y="40" width="200" height="80" rx="10" class="f-gray"/>
+  <text x="120" y="66" text-anchor="middle" font-size="11" class="f-m mono">GoogleMap::ClosedPlaceCheck</text>
+  <text x="120" y="84" text-anchor="middle" font-size="11" class="f-m mono">::Restaurant</text>
+  <text x="120" y="106" text-anchor="middle" font-size="13" class="f-m">① ない</text>
+  <path d="M220,80 L255,80" class="f-line" marker-end="url(#a2)"/>
+  <rect x="260" y="40" width="200" height="80" rx="10" class="f-warn"/>
+  <text x="360" y="66" text-anchor="middle" font-size="12" font-weight="700" class="f-tw mono">GoogleMap::Restaurant</text>
+  <text x="360" y="88" text-anchor="middle" font-size="13" font-weight="700" class="f-tw">② ある！ここで決まる</text>
+  <text x="360" y="108" text-anchor="middle" font-size="12" class="f-tw">Google の情報の表 → まちがい</text>
+  <path d="M460,80 L495,80" class="f-line-d"/>
+  <rect x="500" y="40" width="200" height="80" rx="10" class="f-gray"/>
+  <text x="600" y="72" text-anchor="middle" font-size="12" class="f-m mono">Restaurant</text>
+  <text x="600" y="96" text-anchor="middle" font-size="13" class="f-m">③ ここまで来ない</text>
+
+  <text x="20" y="160" font-size="14" font-weight="700" class="f-t">class_name: "::Restaurant" のとき</text>
+  <path d="M20,215 L495,215" class="f-line-ok" marker-end="url(#a2ok)"/>
+  <text x="250" y="205" text-anchor="middle" font-size="13" class="f-tok">内側を飛ばして、いちばん外側を直接見る</text>
+  <rect x="500" y="175" width="200" height="80" rx="10" class="f-ok"/>
+  <text x="600" y="205" text-anchor="middle" font-size="12" font-weight="700" class="f-tok mono">::Restaurant</text>
+  <text x="600" y="228" text-anchor="middle" font-size="13" font-weight="700" class="f-tok">AR のお店 → 正解</text>
+</svg>
+</div>
+<figcaption>Rails のコンソールで実際に確かめた結果。<code>"Restaurant"</code> は <code>GoogleMap::Restaurant</code> に、<code>"::Restaurant"</code> は AR のお店の <code>Restaurant</code> になった。</figcaption>
+</figure>
+
+<p>TypeScript でいえば、<code>import { Restaurant } from './restaurant'</code>（同じフォルダの別物）と <code>import { Restaurant } from '@/models/restaurant'</code>（ルートからの絶対パス）の違いです。</p>
+
+<!-- ============================================================ -->
+<h2><span class="num">8</span>E：<code>enum</code>：結果を「名前」で扱い、DB には「数字」で入れる</h2>
+
+<div class="cmp">
+<div><div class="lbl">Ruby</div>
+<pre><code>enum :result, {
+  auto_relinked: 0,
+  manually_relinked: 1,
+  no_match: 2,
+  ...
+  failed: 6,
+}, prefix: true</code></pre></div>
+<div><div class="lbl">TypeScript のイメージ</div>
+<pre><code>const RESULT = {
+  auto_relinked: 0,
+  manually_relinked: 1,
+  no_match: 2,
+  ...
+  failed: 6,
+} as const;
+type Result = keyof typeof RESULT;
+// 'auto_relinked' | 'manually_relinked' | ...</code></pre></div>
+</div>
+
+<p><code>result</code> 列は DB の中では整数（0〜6）です。Ruby からは名前で読み書きします。<code>no_match</code> を例にすると、自動で次のものができます。</p>
+
+<div class="tablewrap">
+<table>
+<tr><th>書き方</th><th>何が起きるか</th></tr>
+<tr><td><code>check.result</code></td><td>文字列 <code>"no_match"</code> が返る（DB の中身は 2）</td></tr>
+<tr><td><code>check.result_no_match?</code></td><td>結果が no_match なら true</td></tr>
+<tr><td><code>check.result_no_match!</code></td><td>結果を no_match に変えて、すぐ DB に保存する</td></tr>
+<tr><td><code>GoogleMap::ClosedPlaceCheck.result_no_match</code></td><td>「結果が no_match の行」を探す条件（SQL は <code>WHERE result = 2</code>）</td></tr>
+<tr><td><code>GoogleMap::ClosedPlaceCheck.not_result_no_match</code></td><td>「結果が no_match でない行」を探す条件</td></tr>
+<tr><td><code>GoogleMap::ClosedPlaceCheck.results</code></td><td>名前と数字の対応表（TS の <code>RESULT</code>）</td></tr>
+<tr><td><code>check.result_i18n</code></td><td>画面用の日本語「一致なし」。enum_help という gem が、<code>config/locales/models/google_map/closed_place_check/ja.yml</code> から引く</td></tr>
+</table>
+</div>
+
+<ul>
+<li><strong>表にない値を入れると即エラー</strong>：<code>new(result: :nope)</code> は <code>ArgumentError: 'nope' is not a valid result</code> になる。TS の型エラーを、実行時に出すイメージ。</li>
+<li><strong><code>prefix: true</code> の理由</strong>：付けないと、メソッド名が <code>check.failed?</code> や <code>ClosedPlaceCheck.failed</code> になる。何の failed か分からず、ほかのメソッド名とぶつかる危険もある。このリポジトリでは付ける決まり（<code>.claude/rules/model.md</code>）。</li>
+<li><strong>数字を明示する理由</strong>：Rails は <code>enum :result, [:auto_relinked, ...]</code> と配列でも書ける。ただし配列だと並び順で数字が決まるので、途中に1つ足すだけで DB に入っている既存の数字の意味がずれる。</li>
+</ul>
+
+<h3>結果（result）の7種類</h3>
+<div class="tablewrap">
+<table class="nw2">
+<tr><th>名前</th><th>画面の表示</th><th>意味</th></tr>
+<tr><td><code>auto_relinked</code></td><td>自動付け替え</td><td>営業中・300m 以内・電話番号・店名の4つがそろう候補がちょうど1件あり、一部だけ一致する候補もなかったので、バッチが付け替えた</td></tr>
+<tr><td><code>manually_relinked</code></td><td>手動付け替え</td><td>管理画面で人が候補を選んで付け替えた</td></tr>
+<tr><td><code>no_match</code></td><td>一致なし</td><td>4つがそろう候補がなかった</td></tr>
+<tr><td><code>multiple_matches</code></td><td>複数一致</td><td>そろう候補が2件以上あった。または、一部だけ一致する候補があった</td></tr>
+<tr><td><code>already_referenced</code></td><td>既存参照あり</td><td>唯一の候補を、ほかの紐付け行（無効化した archived の行も含む）がもう指していた</td></tr>
+<tr><td><code>too_many_candidates</code></td><td>候補過多</td><td>候補が7件以上あったので、取得せずに人の確認へ回した</td></tr>
+<tr><td><code>failed</code></td><td>失敗</td><td>取得か検索に失敗した。理由は次の <code>failure_reason</code> に入る</td></tr>
+</table>
+</div>
+
+<h3>失敗の理由（failure_reason）の4種類</h3>
+<p>失敗したときだけ値が入り、それ以外は <code>nil</code> です（列に not null がない）。</p>
+<div class="tablewrap">
+<table>
+<tr><th>名前</th><th>意味</th></tr>
+<tr><td><code>closed_place_fetch_failed</code></td><td>閉業したページの情報を取り直せなかった</td></tr>
+<tr><td><code>search_failed</code></td><td>検索に失敗した。<strong>検索結果0件もここに入る</strong>。検索の部品（PlaceIdDetector）は、失敗したときも0件を返すので、「本当に0件」と「失敗」を見分けられないため（45行目のコメント）</td></tr>
+<tr><td><code>candidate_fetch_failed</code></td><td>候補のページの情報を1件でも取れなかった</td></tr>
+<tr><td><code>unexpected_error</code></td><td>想定していない例外が起きた</td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">9</span>F：<code>scope :unresolved</code>：「未解決の記録」を探す条件に名前を付ける</h2>
+
+<div class="cmp">
+<div><div class="lbl">Ruby</div>
+<pre><code>scope :unresolved, -&gt; {
+  where(id: target_web_systems
+    .select("google_map_closed_place_checks.id"))
+}</code></pre></div>
+<div><div class="lbl">TypeScript のイメージ</div>
+<pre><code>static unresolved() {
+  return this.where({
+    id: this.target_web_systems()
+      .select('google_map_closed_place_checks.id'),
+  });
+}</code></pre></div>
+</div>
+
+<p><code>scope</code> は「よく使う検索条件に名前を付けて、クラスメソッドにする」機能です。これで <code>GoogleMap::ClosedPlaceCheck.unresolved</code> と呼べます。管理画面の一覧はこう使っています。</p>
+<pre><code>GoogleMap::ClosedPlaceCheck.unresolved
+  .preload(:restaurant)
+  .order(checked_at: :desc, id: :desc)
+  .page(params[:page])</code></pre>
+
+<ul>
+<li><strong><code>-&gt; { }</code>（ラムダ）で包む理由</strong>：Rails の scope は、中身を関数で渡す決まりです。呼ばれるたびに中身を実行するので、条件が毎回新しく作られます。</li>
+<li><strong><code>where(id: 検索条件)</code> は SQL の <code>IN (サブクエリ)</code> になる</strong>：Ruby に ID の配列を持ってくるのではなく、SQL の中に検索を埋め込みます。実際に作られる SQL はこうです（列名は省略）。</li>
+</ul>
+<pre><code>SELECT google_map_closed_place_checks.*
+FROM google_map_closed_place_checks
+WHERE google_map_closed_place_checks.id IN (
+  SELECT google_map_closed_place_checks.id
+  FROM restaurant_web_systems
+  ...（G の target_web_systems の条件がそのまま入る）
+)</code></pre>
+<p>記録がまだない組では、サブクエリの <code>id</code> が NULL になります。SQL では NULL はどの値とも一致しないので、一覧に出るのは「記録がある組」だけです。</p>
+
+<div class="note ok-n">
+<p><strong>なぜ <code>result</code> 列で絞らないのか（28・50行目のコメント）</strong></p>
+<p>紐付け行は、ほかの画面やバッチでも書き換えられます。記録の <code>result</code> は「最後に調べたときの結果」でしかありません。だから「今も対応が必要か」は、毎回いまの紐付けを見て決めます。spec にある2つの例がこれを示しています。</p>
+<ul>
+<li>「別の画面で紐付けを直した店舗は一覧から消える」：<code>result</code> が no_match のままでも、紐付けが閉業ページを指さなくなったので消える。</li>
+<li>「付け替えた後で閉業 place に戻された組は、すぐに一覧へ戻る」：<code>result</code> が付け替え済みでも、紐付けがまた閉業ページを指したので出る。</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="num">10</span>G：<code>target_web_systems</code>：再チェックの対象を探す、このファイルの心臓部</h2>
+
+<p><code>def self.</code> なのでクラスメソッド（TS の <code>static</code>）です。メソッドを1つずつつなげて（メソッドチェーン）、検索条件を少しずつ足していきます。<strong>行の先頭の <code>.</code> は「前の行の続き」</strong>という意味です。</p>
+<p>つないだ条件は、じょうごのように対象を絞り込みます。</p>
+
+<figure>
+<div class="figscroll">
+<svg viewBox="0 0 720 350" role="img" aria-label="対象を絞り込むじょうご">
+  <defs>
+    <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-ok"/></marker>
+  </defs>
+  <rect x="20" y="14" width="680" height="44" rx="8" class="f-box"/>
+  <text x="360" y="42" text-anchor="middle" font-size="13" class="f-t">restaurant_web_systems の全行（あらゆる外部サイトの紐付け）</text>
+  <rect x="60" y="68" width="600" height="44" rx="8" class="f-blue"/>
+  <text x="360" y="96" text-anchor="middle" font-size="13" class="f-t">① 無効化されていない、Google マップの紐付けだけ</text>
+  <rect x="100" y="122" width="520" height="44" rx="8" class="f-blue"/>
+  <text x="360" y="150" text-anchor="middle" font-size="13" class="f-t">② お店が公開中・テスト用でない・AR では閉業にしていない</text>
+  <rect x="140" y="176" width="440" height="44" rx="8" class="f-blue"/>
+  <text x="360" y="204" text-anchor="middle" font-size="13" class="f-t">③ Google マップ側では閉業になっている</text>
+  <rect x="180" y="230" width="360" height="44" rx="8" class="f-blue"/>
+  <text x="360" y="258" text-anchor="middle" font-size="13" class="f-t">④ 人が「対応不要」にしていない</text>
+  <path d="M360,276 L360,302" class="f-line-ok" marker-end="url(#a3)"/>
+  <rect x="200" y="306" width="320" height="38" rx="19" class="f-ok"/>
+  <text x="360" y="330" text-anchor="middle" font-size="13" font-weight="700" class="f-tok">＝ 再チェックの対象の紐付け行</text>
+</svg>
+</div>
+<figcaption>上から順に条件を足すほど、対象が減っていく。</figcaption>
+</figure>
+
+<p>1行ずつ、Ruby と作られる SQL を並べます（SQL は Rails のコンソールで実際に出したもの）。</p>
+
+<div class="step">
+<h4><span class="sno">1</span>出発点：Google マップの有効な紐付け</h4>
+<pre><code>RestaurantWebSystem.status_default.google_map</code></pre>
+<pre><code>FROM restaurant_web_systems
+WHERE restaurant_web_systems.status = 0 AND restaurant_web_systems.source = 16</code></pre>
+<p><code>status_default</code> と <code>google_map</code> は、<code>RestaurantWebSystem</code> 側の enum が作った scope です（E で見た仕組み）。<code>status</code> は prefix 付きなので <code>status_default</code>、<code>source</code> は prefix なしなので <code>google_map</code> という名前になっています。<code>archived</code>（重複などで無効化した行）を除きます。</p>
+</div>
+
+<div class="step">
+<h4><span class="sno">2</span>お店と結合する</h4>
+<pre><code>.joins(:restaurant)</code></pre>
+<pre><code>INNER JOIN restaurants ON restaurants.id = restaurant_web_systems.restaurant_id</code></pre>
+<p><code>RestaurantWebSystem</code> の <code>belongs_to :restaurant</code> を使い、関連の名前だけで JOIN の SQL を作ります。</p>
+</div>
+
+<div class="step">
+<h4><span class="sno">3</span>お店の条件を取り込む</h4>
+<pre><code>.merge(::Restaurant.published.where(for_test: false).where.not(open_status: :permanently_closed))</code></pre>
+<pre><code>AND restaurants.status = 1 AND restaurants.for_test = FALSE AND restaurants.open_status != 2</code></pre>
+<ul>
+<li><code>merge</code>：別のモデル（ここでは <code>Restaurant</code>）の検索条件を、今の検索に合体させる。</li>
+<li><code>published</code>：<code>Restaurant</code> の enum が作った scope。公開中のお店。</li>
+<li><code>where.not(...)</code>：「〜ではない」。<code>:permanently_closed</code> は Rails が enum の数字 2 に置き換える。</li>
+<li>AR 側でも閉業になっているお店は、今回の対象外と決めています（要件定義書の「対象外」）。</li>
+<li><code>::Restaurant</code> の <code>::</code>：このファイルの書き方（<code>class GoogleMap::ClosedPlaceCheck</code>）では、<code>::</code> がなくても AR のお店になります（コンソールで確認済み）。ただし <code>module GoogleMap</code> で囲む書き方のファイル（<code>closed_place_pair.rb</code> など）では、<code>Restaurant</code> は <code>GoogleMap::Restaurant</code> を指します。<code>::</code> を付けると、どちらの書き方でも意味が変わりません。</li>
+</ul>
+</div>
+
+<div class="step">
+<h4><span class="sno">4</span>Google の情報と結合する</h4>
+<pre><code>.joins("INNER JOIN google_map_restaurants ON google_map_restaurants.google_place_id = restaurant_web_systems.source_id")</code></pre>
+<p>紐付け行と <code>google_map_restaurants</code> の間には Rails の関連（<code>belongs_to</code> など）がありません。そのため名前では書けず、SQL を文字列でそのまま書いています。紐付け行の <code>source_id</code>（place ID）で、Google の情報の行を見つけます。</p>
+</div>
+
+<div class="step">
+<h4><span class="sno">5</span>Google 側で閉業のものだけ</h4>
+<pre><code>.where("google_map_restaurants.data-&gt;&gt;'open_status' = 'permanently_closed'")</code></pre>
+<p><code>data</code> は jsonb 列（JSON をそのまま入れられる PostgreSQL の列）です。<code>-&gt;&gt;</code> は PostgreSQL の演算子で、JSON のキーの値を文字列で取り出します。TS でいえば <code>data.open_status === 'permanently_closed'</code> です。この PR では、この条件に合う行だけを集めた索引（<code>index_google_map_restaurants_on_permanently_closed</code>）も追加しています。</p>
+</div>
+
+<div class="step">
+<h4><span class="sno">6</span>記録を「あれば」くっつける（LEFT JOIN）</h4>
+<pre><code>.joins(&lt;&lt;~SQL.squish)
+  LEFT JOIN google_map_closed_place_checks
+    ON google_map_closed_place_checks.restaurant_id = restaurant_web_systems.restaurant_id
+   AND google_map_closed_place_checks.closed_google_place_id = restaurant_web_systems.source_id
+SQL</code></pre>
+<ul>
+<li><code>&lt;&lt;~SQL</code> から <code>SQL</code> までが1つの文字列です（ヒアドキュメント）。<code>~</code> は行頭の字下げを取り除く印です。<code>SQL</code> という語はただの終わりの目印で、<code>END</code> でもかまいません。</li>
+<li><code>.squish</code>：Rails が足した文字列のメソッドで、改行や連続した空白を1つの空白にまとめる。実際に試すと <code>"LEFT JOIN a ON b = c"</code> のように1行になる。</li>
+<li><strong>INNER ではなく LEFT にする理由</strong>：まだ一度も調べていない組には記録がありません。INNER JOIN だと、そういう組が消えてしまいます。LEFT JOIN なら、記録がない組も残り、記録の列はすべて NULL になります。</li>
+</ul>
+</div>
+
+<div class="step">
+<h4><span class="sno">7</span>「対応不要」にした組を外す</h4>
+<pre><code>.where(google_map_closed_place_checks: { dismissed_at: nil })</code></pre>
+<pre><code>AND google_map_closed_place_checks.dismissed_at IS NULL</code></pre>
+<ul>
+<li>ハッシュのキーに表の名前を書くと、別の表の列を条件にできる。</li>
+<li><code>nil</code> を渡すと、Rails は <code>= NULL</code> ではなく <code>IS NULL</code> にしてくれる（SQL の <code>= NULL</code> は常に成り立たない）。</li>
+<li>記録がない組は、LEFT JOIN で <code>dismissed_at</code> も NULL なので、ここを通る。つまり<strong>未チェックの組も対象に入る</strong>。</li>
+</ul>
+</div>
+
+<h3>返ってくるのは「記録」ではなく「紐付け行」</h3>
+<p>このメソッドは <code>ClosedPlaceCheck</code> クラスにありますが、返すのは <code>RestaurantWebSystem</code> の検索条件です（コンソールで見ると型は <code>RestaurantWebSystem::ActiveRecord_Relation</code>）。55行目の <code>@return</code> もそう書いています。</p>
+
+<h3>まだ SQL は実行されていない（遅延評価）</h3>
+<p>このメソッドが返すのは「検索条件のかたまり」（Relation）で、まだ DB には問い合わせていません。<code>count</code> や <code>each</code> などを呼んだときに、初めて SQL が実行されます。TS の Knex や Kysely のクエリビルダーが、<code>await</code> するまで実行されないのと同じです。</p>
+<pre><code>rel = GoogleMap::ClosedPlaceCheck.target_web_systems  <span class="cm"># まだ何も起きない</span>
+rel.count                                              <span class="cm"># ここで SELECT COUNT(*) ... が走る</span>
+rel.exists?(id: 123)                                   <span class="cm"># ここで「1件でもあるか」の SQL が走る</span></code></pre>
+
+<h3>なぜこのクラスに置くのか：3か所が同じ条件を使うから</h3>
+<p>53行目のコメントのとおり、同じ条件を3か所で使います。条件を1か所にまとめておけば、「バッチは対象と判断したのに、一覧には出ない」といったずれが起きません。</p>
+
+<figure>
+<div class="figscroll">
+<svg viewBox="0 0 720 290" role="img" aria-label="1つの条件を3か所が使う">
+  <defs>
+    <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+  </defs>
+  <rect x="225" y="14" width="270" height="70" rx="12" class="f-amber"/>
+  <text x="360" y="42" text-anchor="middle" font-size="14" font-weight="700" class="f-t mono">target_web_systems</text>
+  <text x="360" y="66" text-anchor="middle" font-size="13" class="f-t">再チェックの対象の条件（1か所だけ）</text>
+  <path d="M300,84 L117,166" class="f-line" marker-end="url(#a4)"/>
+  <path d="M360,84 L360,166" class="f-line" marker-end="url(#a4)"/>
+  <path d="M420,84 L602,166" class="f-line" marker-end="url(#a4)"/>
+  <rect x="10" y="170" width="215" height="110" rx="10" class="f-box"/>
+  <text x="117" y="194" text-anchor="middle" font-size="13" font-weight="700" class="f-t">バッチの対象選び</text>
+  <text x="117" y="216" text-anchor="middle" font-size="11" class="f-m mono">ClosedPlaceCheckTargetQuery</text>
+  <text x="117" y="238" text-anchor="middle" font-size="12" class="f-t">＋7日経過・古い順・50件</text>
+  <text x="117" y="260" text-anchor="middle" font-size="12" class="f-m mono">.pluck(:id)</text>
+  <rect x="252" y="170" width="215" height="110" rx="10" class="f-box"/>
+  <text x="360" y="194" text-anchor="middle" font-size="13" font-weight="700" class="f-t">管理画面の一覧</text>
+  <text x="360" y="216" text-anchor="middle" font-size="11" class="f-m mono">scope :unresolved</text>
+  <text x="360" y="238" text-anchor="middle" font-size="12" class="f-t">記録の id で絞る</text>
+  <text x="360" y="260" text-anchor="middle" font-size="12" class="f-m mono">.select(...)</text>
+  <rect x="495" y="170" width="215" height="110" rx="10" class="f-box"/>
+  <text x="602" y="194" text-anchor="middle" font-size="13" font-weight="700" class="f-t">書き込む直前の確認</text>
+  <text x="602" y="216" text-anchor="middle" font-size="11" class="f-m mono">ClosedPlacePair#with_lock</text>
+  <text x="602" y="238" text-anchor="middle" font-size="12" class="f-t">この組はまだ対象か</text>
+  <text x="602" y="260" text-anchor="middle" font-size="12" class="f-m mono">.exists?(...)</text>
+</svg>
+</div>
+<figcaption>同じ Relation に、それぞれが条件や「実行の仕方」を足して使う。バッチはこのほか、ログに出す総数を <code>.count</code> で数えている。</figcaption>
+</figure>
+
+<!-- ============================================================ -->
+<h2><span class="num">11</span>このクラスに「書いていない」こと</h2>
+
+<h3>保存の処理は別のクラスにある</h3>
+<p>記録を書き込むのは <code>app/services/google_map/closed_place_pair.rb</code> の <code>record!</code> です。</p>
+<pre><code>ClosedPlaceCheck.find_or_initialize_by(restaurant_id:, closed_google_place_id:).update!(attributes)</code></pre>
+<ul>
+<li><code>restaurant_id:</code> は <code>restaurant_id: restaurant_id</code> の省略形です（Ruby 3.1 から）。TS の <code>{ restaurant_id }</code> と同じです。</li>
+<li><code>find_or_initialize_by</code>：条件に合う行があれば読み込み、なければ「まだ保存していない新しい行」を作る。</li>
+<li><code>update!</code>：値を入れて保存する。<code>!</code> 付きなので、失敗したら例外を投げる（<code>throw</code>）。<code>!</code> なしの <code>update</code> は false を返すだけ。</li>
+<li>この2つで「あれば上書き、なければ作る」になり、「組ごとに1行、毎回上書き」が実現します。</li>
+</ul>
+
+<h3>入力チェック（validates）がない</h3>
+<p>モデルでの入力チェックは、<code>belongs_to</code> が自動で付ける「お店が必須」だけです。ほかの「空はだめ」（not null）や「同じ組は1行」（UNIQUE）は DB が守っています。違反すると、保存のときに DB がエラーを返します。</p>
+
+<h3>記録の一生</h3>
+<figure>
+<div class="figscroll">
+<svg viewBox="0 0 720 320" role="img" aria-label="記録の一生">
+  <defs>
+    <marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+  </defs>
+  <rect x="10" y="14" width="210" height="96" rx="10" class="f-gray"/>
+  <text x="115" y="44" text-anchor="middle" font-size="13" font-weight="700" class="f-t">① 記録なし</text>
+  <text x="115" y="68" text-anchor="middle" font-size="12" class="f-t">Google 側で閉業になった</text>
+  <text x="115" y="88" text-anchor="middle" font-size="12" class="f-t">まだ調べていない</text>
+  <path d="M220,62 L250,62" class="f-line" marker-end="url(#a5)"/>
+  <rect x="255" y="14" width="210" height="96" rx="10" class="f-blue"/>
+  <text x="360" y="44" text-anchor="middle" font-size="13" font-weight="700" class="f-t">② バッチが調べる</text>
+  <text x="360" y="68" text-anchor="middle" font-size="12" class="f-t">行を作る</text>
+  <text x="360" y="88" text-anchor="middle" font-size="12" class="f-m mono">result / checked_at</text>
+  <path d="M465,62 L495,62" class="f-line" marker-end="url(#a5)"/>
+  <rect x="500" y="14" width="210" height="96" rx="10" class="f-blue"/>
+  <text x="605" y="44" text-anchor="middle" font-size="13" font-weight="700" class="f-t">③ 7日後にまた調べる</text>
+  <text x="605" y="68" text-anchor="middle" font-size="12" class="f-t">同じ行を上書き</text>
+  <text x="605" y="88" text-anchor="middle" font-size="12" class="f-t">（対象のあいだくり返す）</text>
+  <path d="M330,110 L185,180" class="f-line" marker-end="url(#a5)"/>
+  <path d="M390,110 L535,180" class="f-line" marker-end="url(#a5)"/>
+  <text x="360" y="150" text-anchor="middle" font-size="12" class="f-m">どこかの時点で</text>
+  <rect x="20" y="184" width="330" height="124" rx="10" class="f-amber"/>
+  <text x="185" y="212" text-anchor="middle" font-size="13" font-weight="700" class="f-t">④ 人が「対応不要」にする</text>
+  <text x="185" y="238" text-anchor="middle" font-size="12" class="f-t mono">dismissed_at に時刻が入る</text>
+  <text x="185" y="260" text-anchor="middle" font-size="12" class="f-t">audited が履歴を残す（C）</text>
+  <text x="185" y="284" text-anchor="middle" font-size="12" class="f-t">以後は対象外・一覧にも出ない（G の⑦）</text>
+  <rect x="370" y="184" width="330" height="124" rx="10" class="f-ok"/>
+  <text x="535" y="212" text-anchor="middle" font-size="13" font-weight="700" class="f-t">⑤ 紐付けが直る</text>
+  <text x="535" y="238" text-anchor="middle" font-size="12" class="f-t">自動・手動の付け替え、または別の画面</text>
+  <text x="535" y="260" text-anchor="middle" font-size="12" class="f-t">紐付けが閉業ページを指さなくなる</text>
+  <text x="535" y="284" text-anchor="middle" font-size="12" class="f-t">対象外になる。記録の行は残る</text>
+</svg>
+</div>
+<figcaption>行が消えるのは、お店そのものを削除したとき（ON DELETE cascade）だけ。</figcaption>
+</figure>
+
+<!-- ============================================================ -->
+<h2><span class="num">12</span>TypeScript の人がつまずきやすい7つ</h2>
+<ol>
+<li><strong>列の定義がないのに属性が使える</strong>：Rails が DB の表から読み取って作る（A）。</li>
+<li><strong>import がない</strong>：ファイルの場所とクラス名を合わせれば自動で読み込まれる（B）。</li>
+<li><strong>クラスの中の <code>audited</code> や <code>enum</code> は「実行される呼び出し」</strong>：デコレーターと同じ役目（C・D・E）。</li>
+<li><strong>名前空間の中の <code>Restaurant</code> は別物を指すことがある</strong>：迷ったら <code>::</code> を付ける（D・G の3）。</li>
+<li><strong>enum は名前で書き、DB には数字で入る</strong>：<code>check.result</code> は文字列が返る（E）。</li>
+<li><strong>検索条件は実行されるまで SQL にならない</strong>：<code>count</code> や <code>each</code> で初めて走る（G）。</li>
+<li><strong><code>nil</code> を where に渡すと <code>IS NULL</code></strong>：<code>= NULL</code> にはならない（G の7）。</li>
+</ol>
+
+<!-- ============================================================ -->
+<h2><span class="num">13</span>ことば早見表</h2>
+<div class="tablewrap">
+<table>
+<tr><th>ことば</th><th>意味</th></tr>
+<tr><td>place / place ID</td><td>Google マップのお店ページ / その ID</td></tr>
+<tr><td>紐付け行</td><td><code>restaurant_web_systems</code> の1行。AR のお店と外部サイトのページをつなぐ</td></tr>
+<tr><td>組</td><td>(AR のお店, 閉業した place) のペア。この表の1行に当たる</td></tr>
+<tr><td>gem</td><td>Ruby のライブラリ。npm パッケージに当たる</td></tr>
+<tr><td>ActiveRecord</td><td>Rails の DB 操作の仕組み。クラス1つが表1つに対応する</td></tr>
+<tr><td>Relation</td><td>まだ実行していない検索条件のかたまり。メソッドをつなげて条件を足せる</td></tr>
+<tr><td>scope</td><td>名前を付けた検索条件。クラスメソッドとして呼べる</td></tr>
+<tr><td>enum</td><td>名前と数字の対応表。名前で扱い、DB には数字で入れる</td></tr>
+<tr><td>Zeitwerk</td><td>ファイルの場所とクラス名から、自動でファイルを読み込む Rails の仕組み</td></tr>
+<tr><td>annotaterb</td><td>DB の表の設計をモデルの先頭にコメントとして書き込む道具</td></tr>
+<tr><td>audited</td><td>値の変更履歴を <code>audits</code> 表に残す gem</td></tr>
+<tr><td>enum_help</td><td>enum の名前を日本語に直す <code>*_i18n</code> メソッドを足す gem</td></tr>
+<tr><td>jsonb</td><td>JSON をそのまま入れられる PostgreSQL の列の型</td></tr>
+</table>
+</div>
+
+</main>
+</body>
+</html>

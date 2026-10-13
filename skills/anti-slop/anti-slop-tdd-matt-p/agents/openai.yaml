@@ -1,0 +1,4 @@
+interface:
+  display_name: "anti-slop-tdd-matt-p"
+  short_description: "tdd-matt-p の基準でレビューし、問題がある箇所だけ修正する"
+  default_prompt: "$anti-slop-tdd-matt-p を使って、このブランチを tdd-matt-p の基準でレビューし、問題があれば修正してください。問題がなければそのままにしてください。"
