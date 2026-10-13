@@ -1,0 +1,4 @@
+interface:
+  display_name: "pipe-human-grilling-to-implementation"
+  short_description: "事前調査を自動実行し、人間の回答で要件・設計・実装を進める"
+  default_prompt: "Use $pipe-human-grilling-to-implementation with a req-*.adoc file or GitHub issue URL to investigate automatically, decide requirements, design, and implementation planning with me, then implement and validate the result."
