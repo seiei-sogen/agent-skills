@@ -24,4 +24,4 @@ Rails などの callback、validation、scope、シリアライズ、autoload �
 
 文字列、Array、Hash の複製や `freeze` は、呼び出し先の変更と所有権を確認してから整理する。共有した値の変更が別の呼び出しへ漏れる場合は、必要な複製を残す。
 
-コメントは採用済みの規約に従う。Ruby へ TSDoc を適用しない。RSpec または Minitest、構文チェック、採用済みの RuboCop などで確認し、テスト品質のレビューは本体の手順8で行う。
+コメントは採用済みの規約に従う。Ruby へ TSDoc を適用しない。RSpec または Minitest、構文チェック、採用済みの RuboCop などで確認し、テスト品質のレビューは本体の手順7で行う。
