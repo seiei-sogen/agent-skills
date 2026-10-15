@@ -99,7 +99,7 @@ issue から読み取れる事項を草稿にし、未決事項は壁打ちに�
 - `grilling-matt-p` は人間との壁打ちの共通ルールに従い、通常の回答待ちを行う。
 - [要件定義書の契約](../pipe-requirements-to-pr/references/artifact-contracts.md#要件定義書) と [EARS/Gherkin の記法](../pipe-grilling-auto-to-requirements-pr/references/ears-and-gherkin.md) に従う。
 - 採用した判断、代替案、判断から学べる内容は、人間の回答と調査根拠から書く。自動で安全側へ倒して対象外にする手順も、人間への質問に置き換える。
-- 要件の品質改善は `quality-gated-review-improve` で行う。判断を変える改善は人間へ戻す。
+- 要件の品質改善は `quality-gated-review-improve` で行い、[共通の改善ループ上限](../pipe-requirements-to-pr/references/artifact-contracts.md#文書間の品質ゲート) を子スキルにも引き継ぐ。判断を変える改善は人間へ戻す。
 - 子スキルの Phase 4・5 の公開処理は実行しない。
 
 完了には、同じパスの要件定義書に実際の回答と共通理解の確認が反映され、調査 JSON が有効で、要件の品質点が80点以上であることを確認する。
