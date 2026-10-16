@@ -1,6 +1,6 @@
 ---
 name: pipe-human-grilling-to-implementation
-description: AsciiDoc 要件ドラフトまたは GitHub issue を起点に、事前調査を自動実行し、人間との grilling-matt-p で要件・設計・実装計画を決め、実装と検証まで進める。推奨回答の自動採用をせず、各段階の判断に自分で答えたいときに使う。
+description: AsciiDoc 要件ドラフトまたは GitHub issue を起点に、事前調査を自動実行し、人間との grilling-matt-p-anti-kajo で要件・設計・実装計画を決め、実装と検証まで進める。推奨回答の自動採用をせず、各段階の判断に自分で答えたいときに使う。
 ---
 
 # 人間との壁打ちで要件・設計・実装を進める
@@ -15,7 +15,7 @@ description: AsciiDoc 要件ドラフトまたは GitHub issue を起点に、�
 
 - `poteto-mode-start`
 - `pre-investigation-report`
-- `grilling-matt-p`
+- `grilling-matt-p-anti-kajo`
 - `pipe-grilling-auto-to-requirements-pr`
 - `pipe-auto-grilling-design`
 - `pipe-generate-quality-gated-implementation-plan`
@@ -56,14 +56,14 @@ issue 入力では [issue の初期化手順](../pipe-requirements-to-pr/referen
 
 ## 人間との壁打ちの共通ルール
 
-要件定義、設計、実装計画では `grilling-matt-p` の通常モードを使う。
+要件定義、設計、実装計画では `grilling-matt-p-anti-kajo` の通常モードを使う。
 子スキルにある質問待ちの省略や推奨回答の自動採用は行わない。
 
 1. 調査済みの事実と、これから人間が決める判断を分ける。コードや設定で調べられる事実は自動で確認する。
 2. デザインツリーと依存関係を整理する。前提が確定した質問を、番号、選択肢、推奨回答、根拠と影響を付けて一つのラウンドで提示する。
 3. ユーザーの回答を待つ。推奨案、無回答、時間の経過を回答として扱わない。別の未回答質問に依存する問いは次のラウンドへ送る。
 4. 回答から派生した論点を反映し、残るフロンティアを聞く。部分回答の場合は未回答を残し、それに依存する判断を進めない。
-5. 枝をすべて訪れたら、この段階の決定、対象外、残る制約を要約し、共通理解に達したことをユーザーに確認する。確認を得るまで、その判断に基づく次工程へ進まない。
+5. フロンティアが空になったら、この段階の決定、対象外、残る制約を要約し、共通理解に達したことをユーザーに確認する。確認を得るまで、その判断に基づく次工程へ進まない。
 
 各段階の文書に、質問、実際の回答、採用理由、根拠、未回答事項、共通理解の確認を記録する。
 推奨案と実際の回答を区別し、回答のない項目を合意済みにしない。
@@ -96,7 +96,7 @@ issue から読み取れる事項を草稿にし、未決事項は壁打ちに�
 次を段階固有の指示として渡す。
 
 - 事前調査は親の Phase 0 で完了している。必要な追加調査だけを同じレポートへ反映する。
-- `grilling-matt-p` は人間との壁打ちの共通ルールに従い、通常の回答待ちを行う。
+- `grilling-matt-p-anti-kajo` は人間との壁打ちの共通ルールに従い、通常の回答待ちを行う。
 - [要件定義書の契約](../pipe-requirements-to-pr/references/artifact-contracts.md#要件定義書) と [EARS/Gherkin の記法](../pipe-grilling-auto-to-requirements-pr/references/ears-and-gherkin.md) に従う。
 - 採用した判断、代替案、判断から学べる内容は、人間の回答と調査根拠から書く。自動で安全側へ倒して対象外にする手順も、人間への質問に置き換える。
 - 要件の品質改善は `quality-gated-review-improve` で行い、[共通の改善ループ上限](../pipe-requirements-to-pr/references/artifact-contracts.md#文書間の品質ゲート) を子スキルにも引き継ぐ。判断を変える改善は人間へ戻す。

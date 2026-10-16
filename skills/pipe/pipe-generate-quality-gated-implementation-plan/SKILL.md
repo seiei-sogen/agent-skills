@@ -15,7 +15,7 @@ description: 更新済みの AsciiDoc 要件定義書・設計文書と事前調
 各工程を始める前に、対応する `SKILL.md` を最後まで読む。
 
 - `poteto-mode-start`
-- `grilling-matt-p`
+- `grilling-matt-p-anti-kajo`
 - `tdd-matt-p`
 - `quality-gated-review-improve`
 
@@ -48,7 +48,7 @@ implementation-plan-<issue-token>-<topic>.adoc
 
 ## 実装計画を生成する
 
-要件定義書、設計文書、調査レポートを入力に `grilling-matt-p` を使う。
+要件定義書、設計文書、調査レポートを入力に `grilling-matt-p-anti-kajo` を使う。
 この工程では、同スキルの「1問ずつユーザー回答を待つ」を次の自動モードへ置き換える。
 
 1. 事実で解消できる論点は、調査レポートと必要最小限の追加調査で解消する。

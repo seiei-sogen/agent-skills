@@ -15,7 +15,7 @@ description: 確定した AsciiDoc 要件定義書と事前調査 JSON から、
 
 ## 自動壁打ち
 
-工程に入る前に `poteto-mode-start`、`grilling-matt-p`、`quality-gated-review-improve` の `SKILL.md` を読む。poteto-mode が有効なら再起動しない。スキルが見つからなければ代替せず停止する。この工程に限り `grilling-matt-p` の質問待ちを、根拠を調べて推奨回答を自動採用する手順に置き換える。
+工程に入る前に `poteto-mode-start`、`grilling-matt-p-anti-kajo`、`quality-gated-review-improve` の `SKILL.md` を読む。poteto-mode が有効なら再起動しない。スキルが見つからなければ代替せず停止する。この工程に限り `grilling-matt-p-anti-kajo` の質問待ちを、根拠を調べて推奨回答を自動採用する手順に置き換える。
 
 1. 要件の EARS ID、Gherkin シナリオ、調査済みの制約、既存パターンを整理する。確認できない事実は推奨回答で補わない。
 2. コンポーネント境界、データの所有と保存、インターフェースの事前・事後条件、状態・失敗・並行性、移行と運用の論点を依存順に洗い出す。
