@@ -1,6 +1,6 @@
 ---
 name: pipe-grilling-auto-to-requirements-pr
-description: 初期要件定義書ドラフトのローカルパスから、pre-investigation-report の調査 JSON を生成し、その根拠を使って grilling-jp の推奨回答を自動採用し、quality-gated-review-improve の品質ゲート、commit・push、GitHub PR 作成、pr-update-gh による本文更新まで進める。要件ドラフトから PR までの一括実行依頼に使い、調査、壁打ち、推敲、PR 更新だけの依頼には使わない。
+description: 初期要件定義書ドラフトのローカルパスから、pre-investigation-report の調査 JSON を生成し、その根拠を使って grilling-jp の推奨回答を自動採用し、quality-gated-review-improve-anti-kajo の品質ゲート、commit・push、GitHub PR 作成、pr-update-gh による本文更新まで進める。要件ドラフトから PR までの一括実行依頼に使い、調査、壁打ち、推敲、PR 更新だけの依頼には使わない。
 ---
 
 # 要件ドラフトを自動壁打ちして PR にする
@@ -16,7 +16,7 @@ description: 初期要件定義書ドラフトのローカルパスから、pre-
 - `poteto-mode-start`
 - `pre-investigation-report`
 - `grilling-matt-p-anti-kajo`
-- `quality-gated-review-improve`
+- `quality-gated-review-improve-anti-kajo`
 - `pr-update-gh`
 
 指示が衝突する場合は、現在のユーザー指示、この親スキルの段階固有の指示、子スキルの通常指示の順に優先する。子スキルが見つからなければ、同等手順で代替せず、見つからないスキル名を報告して停止する。
@@ -95,7 +95,7 @@ pre-investigation-report-<requirements-slug>.json
 
 ## Phase 3: 調査レポートを根拠に品質ゲートを通す
 
-入力ファイルを唯一の改善対象、調査レポートを根拠として `quality-gated-review-improve` を実行し、最良版を同じ入力ファイルへ反映させる。呼び出し時に両ファイルの役割を明示する。調査レポートを更新した場合は、呼び出し前に最新内容を再読してから品質ゲートを実行する。要件定義書として、特に次を採点と改善の対象に含める。
+入力ファイルを唯一の改善対象、調査レポートを根拠として `quality-gated-review-improve-anti-kajo` を実行し、最良版を同じ入力ファイルへ反映させる。呼び出し時に両ファイルの役割を明示する。調査レポートを更新した場合は、呼び出し前に最新内容を再読してから品質ゲートを実行する。要件定義書として、特に次を採点と改善の対象に含める。
 
 - 目的、読者、対象範囲、対象外が一意に読める。
 - 要件と受け入れ条件が具体的で検証可能である。

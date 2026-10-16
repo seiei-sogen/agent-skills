@@ -17,7 +17,7 @@ description: 更新済みの AsciiDoc 要件定義書・設計文書と事前調
 - `poteto-mode-start`
 - `grilling-matt-p-anti-kajo`
 - `tdd-matt-p`
-- `quality-gated-review-improve`
+- `quality-gated-review-improve-anti-kajo`
 
 子スキルが見つからない場合は同等手順で代替せず、見つからないスキル名を報告して停止する。
 指示が衝突する場合は、現在のユーザー指示、このスキルの工程固有の指示、子スキルの通常指示の順に優先する。
@@ -96,7 +96,7 @@ implementation-plan-<issue-token>-<topic>.adoc
 
 [共通の改善ループ上限](../pipe-requirements-to-pr/references/artifact-contracts.md#文書間の品質ゲート) を適用する。
 
-`quality-gated-review-improve` を使い、実装計画を採点・修正する。
+`quality-gated-review-improve-anti-kajo` を使い、実装計画を採点・修正する。
 要件定義書と設計文書は採点し直さず、[成果物の契約の文書間の品質ゲート](../pipe-requirements-to-pr/references/artifact-contracts.md#文書間の品質ゲート) に従って実装計画との不整合だけを確認する。設計文書を修正した場合は参照する Quint モデルと検証結果の整合も確認する。
 各 EARS 要件と Gherkin シナリオから計画上の担当タスクと完了判定を追えることを確認する。タスクの完了条件に、対応する規則にはない振る舞いや、実行方法のないシナリオがあれば修正する。
 テスト計画も `tdd-matt-p` の基準でレビューし、内部実装への依存、同語反復的な期待値、全テストを先に書く水平スライシングがあれば、品質ゲートの合格前に修正する。

@@ -1,6 +1,6 @@
 ---
 name: quality-gated-review-improve-anti-kajo
-description: Review, score, and improve a provided input until it reaches a quality threshold. Use when the user wants iterative refinement of text, prompts, documents, specifications, plans, skills, or other written artifacts with a quality score target.
+description: Review, score, and improve a provided input until it reaches a quality threshold, pruning improvement candidates with principle-anti-bad-excess so the input does not grow beyond its purpose. Use when the user wants iterative refinement of text, prompts, documents, specifications, plans, skills, or other written artifacts with a quality score target.
 ---
 
 # Quality Gated Review Improve
@@ -8,6 +8,8 @@ description: Review, score, and improve a provided input until it reaches a qual
 このスキルは、ユーザーが提示した `[入力]` に対して、レビュー、改善、採点を繰り返し、100点中80点以上、可能なら90点以上、さらに到達可能なら100点の品質まで引き上げるために使う。
 質が下がる改善しか残っていない場合は、基準点に届いていなくてもループを終了し、その理由を報告する。
 改善を重ねること自体を目的にせず、現在の最良版を守りながら、明確に品質が上がる変更だけを採用する。
+
+開始時に [principle-anti-bad-excess](../../principle/principle-anti-bad-excess/SKILL.md) を読み、改善候補の剪定に適用する。相対パスが使えない環境では、インストール済みの `principle-anti-bad-excess` を読む。同スキルの「実行する」は、ここでは「改善を反映する」と読み替える。
 
 ## 入力
 
@@ -54,11 +56,13 @@ description: Review, score, and improve a provided input until it reaches a qual
 点数だけでなく、減点理由と次に改善すべき点を短く書く。
 採点は絶対評価として扱い、前回との差分だけで高くしない。
 入力にない情報を足して見栄えを良くしただけの改善は、正確性・根拠保持で減点する。
+充実に当たる内容の欠如は減点しない。
+過剰に当たる内容は、入力に元からあるものも目的適合性で減点する。
 
 ## 手順
 
 1. 入力を読む。
-2. 入力の目的、読者、用途、制約、維持すべきトーンを把握する。
+2. 入力の目的、読者、用途、制約、維持すべきトーンを把握する。そのうえで principle-anti-bad-excess の手順 1 に従い、ユーザーや呼び出し元のスキルが明示した要求のすべてと入力の目的から、幹を言い切る。
 3. ファイルの場合は、既存の形式、メタデータ、見出し構造、コードブロック、リンクを壊さないようにする。
 4. 初回レビューを行い、品質を100点満点で採点する。
 5. 点数が100点なら終了する。
@@ -76,6 +80,8 @@ description: Review, score, and improve a provided input until it reaches a qual
    - 現在の点数と減点理由を確認する。
    - 改善すれば点数が上がる箇所だけを候補にする。
    - 意味、事実、制約、トーンを壊す改善案は候補から外す。
+   - 残った候補を principle-anti-bad-excess の手順 2 で剪定する。既存の内容を明確にする、構成を整える、削る、正す候補と、幹の明示された要求を満たすために足す候補は、幹に当たるので残す。それ以外に情報、節、例、説明を足す候補は枝として分類し、必要の更新だけを残す。充実は提案に回し、過剰は切る。
+   - ここで残った候補を、このスキルでいう有効な改善とする。充実と過剰は、点数が上がる見込みがあっても有効な改善に含めない。
 2. 改善
    - レビューで見つけた有効な改善だけを反映する。
    - 元の意図、事実、制約、重要な用語を保つ。
@@ -109,6 +115,7 @@ description: Review, score, and improve a provided input until it reaches a qual
 - 80点未満だが、残る改善案が品質を下げるものだけになった。
 - 80点未満だが、入力不足によりこれ以上は推測で補うしかない。
 - 前回から点数が上がらず、有効な改善候補がなくなった。
+- 残る改善候補が充実と過剰だけになった。
 - 改善ループが8回に達した。
 
 80点未満で終了する場合は、必ず理由を報告する。
@@ -142,6 +149,8 @@ description: Review, score, and improve a provided input until it reaches a qual
 入力が長い場合は、最終版の全文を出すより、ファイル更新または要点報告を優先する。
 ただし、ユーザーが「全文を出して」と指定した場合は全文を提示する。
 
+どちらの場合も、反映した必要の更新と提案に回した充実を、principle-anti-bad-excess の手順 4 の形式で報告の末尾に書く。
+
 ## 判定ルール
 
 - 点数が80点未満の場合は、原則としてレビューと改善を続ける。
@@ -174,6 +183,7 @@ description: Review, score, and improve a provided input until it reaches a qual
 - 90点以上に到達した場合は、100点を目指したか、100点が厳しいため90-99点の範囲で最高点を採用したことが分かる。
 - 最終版が入力より読みやすく、目的に沿っている。
 - 変更により元の意味や事実が壊れていない。
+- 反映した追加がすべて幹の明示された要求か必要の更新に当たり、見送った充実が提案として報告されている。
 - 80点未満で終了する場合は、質を下げる改善しか残っていない理由、または入力不足の理由が報告されている。
 - ファイル編集を求められた場合、またはファイルパスだけで呼ばれた場合は、指定ファイルが更新されている。
 - 可能な範囲で検証し、結果を報告している。

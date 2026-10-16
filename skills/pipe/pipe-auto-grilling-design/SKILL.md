@@ -15,7 +15,7 @@ description: 確定した AsciiDoc 要件定義書と事前調査 JSON から、
 
 ## 自動壁打ち
 
-工程に入る前に `poteto-mode-start`、`grilling-matt-p-anti-kajo`、`quality-gated-review-improve` の `SKILL.md` を読む。poteto-mode が有効なら再起動しない。スキルが見つからなければ代替せず停止する。この工程に限り `grilling-matt-p-anti-kajo` の質問待ちを、根拠を調べて推奨回答を自動採用する手順に置き換える。
+工程に入る前に `poteto-mode-start`、`grilling-matt-p-anti-kajo`、`quality-gated-review-improve-anti-kajo` の `SKILL.md` を読む。poteto-mode が有効なら再起動しない。スキルが見つからなければ代替せず停止する。この工程に限り `grilling-matt-p-anti-kajo` の質問待ちを、根拠を調べて推奨回答を自動採用する手順に置き換える。
 
 1. 要件の EARS ID、Gherkin シナリオ、調査済みの制約、既存パターンを整理する。確認できない事実は推奨回答で補わない。
 2. コンポーネント境界、データの所有と保存、インターフェースの事前・事後条件、状態・失敗・並行性、移行と運用の論点を依存順に洗い出す。
@@ -43,6 +43,6 @@ EARS の常時・状態規則と設計で決めた並行時の扱いを不変条
 
 [共通の改善ループ上限](../pipe-requirements-to-pr/references/artifact-contracts.md#文書間の品質ゲート) を適用する。
 
-`quality-gated-review-improve` で設計文書を採点・修正する。要件定義書は採点し直さず、[成果物の契約の文書間の品質ゲート](../pipe-requirements-to-pr/references/artifact-contracts.md#文書間の品質ゲート) に従って整合だけを確認する。EARS 規則とシナリオから設計上の責務・操作・検証へ追えるか、設計に要件外の振る舞いがないか、Quint を使った場合はその条件を満たし抽象化と結果が正しく説明されているかを確認する。条件を満たさない Quint モデルは削除し、使わない理由を設計文書に書く。モデルで判明した要件の欠落が重大な指摘に当たる場合だけ、根拠を確認して要件を修正する。設計文書が原則90点以上で重大な不整合が0件なら完了する。モデルの必須不変条件に未解決の反例がある場合は次工程へ進めない。
+`quality-gated-review-improve-anti-kajo` で設計文書を採点・修正する。要件定義書は採点し直さず、[成果物の契約の文書間の品質ゲート](../pipe-requirements-to-pr/references/artifact-contracts.md#文書間の品質ゲート) に従って整合だけを確認する。EARS 規則とシナリオから設計上の責務・操作・検証へ追えるか、設計に要件外の振る舞いがないか、Quint を使った場合はその条件を満たし抽象化と結果が正しく説明されているかを確認する。条件を満たさない Quint モデルは削除し、使わない理由を設計文書に書く。モデルで判明した要件の欠落が重大な指摘に当たる場合だけ、根拠を確認して要件を修正する。設計文書が原則90点以上で重大な不整合が0件なら完了する。モデルの必須不変条件に未解決の反例がある場合は次工程へ進めない。
 
 更新した要件定義書、設計文書、Quint ファイル、品質点、Quint の実行結果と残課題を報告する。
