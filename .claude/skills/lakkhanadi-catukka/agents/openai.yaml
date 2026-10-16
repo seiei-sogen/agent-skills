@@ -1,0 +1,9 @@
+# Codex CLI skills 用補助メタデータ
+# 関連 ADR: docs/governance/adr_skill_platform.md
+# 仕様参照: https://developers.openai.com/codex/skills (2026-05 時点)
+# Claude Code はこのファイルを参照しない（無視される）。
+
+policy:
+  # 暗黙呼び出し（自動 trigger による起動）を抑止する。
+  # ユーザーが明示的に skill 名を指定した場合のみ起動する設計（REQ-409）。
+  allow_implicit_invocation: false
