@@ -1,0 +1,4 @@
+interface:
+  display_name: "create-html"
+  short_description: "説明資料を単体HTMLにし、コードをVS Code相当の粒度で色分けする"
+  default_prompt: "$create-html を使って、直前の内容を図と細かなコードの色分けを含むHTMLにしてください。"

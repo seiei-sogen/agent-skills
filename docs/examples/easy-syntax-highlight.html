@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>有効なユーザーの名前だけを取り出す</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172334; background: #f4f7fb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { max-width: 1060px; margin: 0 auto; padding: clamp(20px, 4vw, 48px) 20px 56px; }
+    h1 { margin: 0 0 8px; font-size: clamp(1.65rem, 4vw, 2.5rem); line-height: 1.25; }
+    .lead { margin: 0 0 24px; color: #475569; line-height: 1.7; }
+    .flow { margin: 0 0 24px; padding: 18px; border: 1px solid #d9e3f0; border-radius: 16px; background: #fff; }
+    .flow svg { display: block; width: 100%; height: auto; }
+    .flow figcaption { margin-top: 10px; color: #475569; font-size: .9rem; line-height: 1.5; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .card { min-width: 0; padding: 18px; border: 1px solid #d9e3f0; border-radius: 16px; background: #fff; }
+    .card h2 { margin: 0 0 4px; font-size: 1.2rem; }
+    .card p { margin: 0 0 12px; color: #475569; font-size: .93rem; line-height: 1.55; }
+    .card pre { margin: 0; }
+    .card .hint { margin: 12px 0 0; }
+    .card .hint code { color: #244571; font-weight: 600; }
+    .result { margin: 24px 0 0; padding: 16px 18px; border-radius: 12px; background: #e8f3ec; color: #163e2b; line-height: 1.6; }
+    .result code { font-weight: 700; }
+    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } .flow { overflow-x: auto; } .flow svg { min-width: 570px; } }
+  </style>
+<style id="create-html-code-style">
+pre.shiki {
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 1rem;
+  border-radius: .75rem;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: .9rem;
+  line-height: 1.7;
+  tab-size: 2;
+}
+pre.shiki > code {
+  display: block;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+pre.shiki:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+</style></head>
+<body>
+<main>
+  <h1>有効なユーザーの名前だけを取り出す</h1>
+  <p class="lead">3人のユーザーから、<strong>active が true の人だけ</strong>を残し、<strong>name だけ</strong>を取り出します。下の4つは、同じ処理を言語ごとに書いたものです。</p>
+  <figure class="flow">
+    <svg viewBox="0 0 920 172" role="img" aria-labelledby="flow-title flow-desc" xmlns="http://www.w3.org/2000/svg">
+      <title id="flow-title">3人から有効な2人の名前を取り出す流れ</title>
+      <desc id="flow-desc">入力はアキが有効、ボブが無効、メイが有効。有効なユーザーを選び、名前だけを取り出すと、アキとメイになる。</desc>
+      <rect x="1" y="1" width="280" height="170" rx="12" fill="#edf3fc" stroke="#b9cee9" />
+      <text x="18" y="29" fill="#1b365d" font-size="16" font-weight="700">入力：users</text>
+      <text x="18" y="60" fill="#24364d" font-size="15">アキ　active: true</text>
+      <text x="18" y="92" fill="#24364d" font-size="15">ボブ　active: false</text>
+      <text x="18" y="124" fill="#24364d" font-size="15">メイ　active: true</text>
+      <path d="M296 86h52m-10-10 10 10-10 10" fill="none" stroke="#366a9b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      <rect x="360" y="39" width="188" height="94" rx="12" fill="#eaf4ff" stroke="#a9c7e6" />
+      <text x="376" y="71" fill="#18466e" font-size="15" font-weight="700">① 有効な人を選ぶ</text>
+      <text x="376" y="100" fill="#24364d" font-size="15">アキ・メイ</text>
+      <path d="M563 86h52m-10-10 10 10-10 10" fill="none" stroke="#366a9b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      <rect x="627" y="39" width="292" height="94" rx="12" fill="#e8f3ec" stroke="#a9d1b7" />
+      <text x="643" y="71" fill="#1d5939" font-size="15" font-weight="700">② 名前だけ取り出す</text>
+      <text x="643" y="100" fill="#24364d" font-size="15">["アキ", "メイ"]</text>
+    </svg>
+    <figcaption>①でボブを外し、②で残ったユーザーから名前を読みます。どのコードも、この順序の結果を作ります。</figcaption>
+  </figure>
+  <div class="grid">
+    <section class="card" aria-labelledby="ts-title">
+      <h2 id="ts-title">TypeScript</h2>
+      <p><code>users</code> はユーザーの配列です。</p>
+      <pre tabindex="0" style="background-color:#1E1E1E;color:#D4D4D4" class="shiki"><code class="language-typescript"><span class="line"><span style="color:#569CD6">const</span><span style="color:#4FC1FF"> names</span><span style="color:#D4D4D4"> = </span><span style="color:#9CDCFE">users</span></span>
+<span class="line"><span style="color:#D4D4D4">  .</span><span style="color:#DCDCAA">filter</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">user</span><span style="color:#569CD6"> =&gt;</span><span style="color:#9CDCFE"> user</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">active</span><span style="color:#D4D4D4">)</span></span>
+<span class="line"><span style="color:#D4D4D4">  .</span><span style="color:#DCDCAA">map</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">user</span><span style="color:#569CD6"> =&gt;</span><span style="color:#9CDCFE"> user</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">name</span><span style="color:#D4D4D4">);</span></span></code></pre>
+      <p class="hint"><code>filter</code> が選び、<code>map</code> が名前に置き換えます。</p>
+    </section>
+    <section class="card" aria-labelledby="ruby-title">
+      <h2 id="ruby-title">Ruby</h2>
+      <p><code>users</code> はユーザーの配列です。</p>
+      <pre tabindex="0" style="background-color:#1E1E1E;color:#D4D4D4" class="shiki"><code class="language-ruby"><span class="line"><span style="color:#9CDCFE">names</span><span style="color:#D4D4D4"> = users</span></span>
+<span class="line"><span style="color:#D4D4D4">  .</span><span style="color:#DCDCAA">select</span><span style="color:#D4D4D4"> { |</span><span style="color:#9CDCFE">user</span><span style="color:#D4D4D4">| user[</span><span style="color:#569CD6">:active</span><span style="color:#D4D4D4">] }</span></span>
+<span class="line"><span style="color:#D4D4D4">  .</span><span style="color:#DCDCAA">map</span><span style="color:#D4D4D4"> { |</span><span style="color:#9CDCFE">user</span><span style="color:#D4D4D4">| user[</span><span style="color:#569CD6">:name</span><span style="color:#D4D4D4">] }</span></span></code></pre>
+      <p class="hint"><code>select</code> が選び、<code>map</code> が名前に置き換えます。</p>
+    </section>
+    <section class="card" aria-labelledby="python-title">
+      <h2 id="python-title">Python</h2>
+      <p><code>users</code> はユーザーのリストです。</p>
+      <pre tabindex="0" style="background-color:#1E1E1E;color:#D4D4D4" class="shiki"><code class="language-python"><span class="line"><span style="color:#D4D4D4">names = [user[</span><span style="color:#CE9178">"name"</span><span style="color:#D4D4D4">] </span><span style="color:#C586C0">for</span><span style="color:#D4D4D4"> user </span><span style="color:#C586C0">in</span><span style="color:#D4D4D4"> users </span><span style="color:#C586C0">if</span><span style="color:#D4D4D4"> user[</span><span style="color:#CE9178">"active"</span><span style="color:#D4D4D4">]]</span></span></code></pre>
+      <p class="hint"><code>if</code> で選び、先頭の <code>user["name"]</code> を集めます。</p>
+    </section>
+    <section class="card" aria-labelledby="sql-title">
+      <h2 id="sql-title">SQL</h2>
+      <p><code>users</code> は表です。並び順を保つため <code>id</code> を使います。</p>
+      <pre tabindex="0" style="background-color:#1E1E1E;color:#D4D4D4" class="shiki"><code class="language-sql"><span class="line"><span style="color:#569CD6">SELECT</span><span style="color:#569CD6"> name</span></span>
+<span class="line"><span style="color:#569CD6">FROM</span><span style="color:#D4D4D4"> users</span></span>
+<span class="line"><span style="color:#569CD6">WHERE</span><span style="color:#D4D4D4"> active = TRUE</span></span>
+<span class="line"><span style="color:#569CD6">ORDER BY</span><span style="color:#D4D4D4"> id;</span></span></code></pre>
+      <p class="hint"><code>WHERE</code> が選び、<code>SELECT name</code> が名前の列だけを返します。</p>
+    </section>
+  </div>
+  <section style="margin-top:24px" class="card"><h2>型・関数・値まで含めた例</h2><p><code>User</code> は1人分のデータの形です。名前を取り出す処理を <code>activeNames</code> という関数にまとめています。</p><pre tabindex="0" style="background-color:#1E1E1E;color:#D4D4D4" class="shiki"><code class="language-typescript"><span class="line"><span style="color:#569CD6">type</span><span style="color:#4EC9B0"> User</span><span style="color:#D4D4D4"> = { </span><span style="color:#9CDCFE">id</span><span style="color:#D4D4D4">: </span><span style="color:#4EC9B0">number</span><span style="color:#D4D4D4">; </span><span style="color:#9CDCFE">name</span><span style="color:#D4D4D4">: </span><span style="color:#4EC9B0">string</span><span style="color:#D4D4D4">; </span><span style="color:#9CDCFE">active</span><span style="color:#D4D4D4">: </span><span style="color:#4EC9B0">boolean</span><span style="color:#D4D4D4"> };</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#569CD6">function</span><span style="color:#DCDCAA"> activeNames</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">users</span><span style="color:#D4D4D4">: </span><span style="color:#4EC9B0">User</span><span style="color:#D4D4D4">[]): </span><span style="color:#4EC9B0">string</span><span style="color:#D4D4D4">[] {</span></span>
+<span class="line"><span style="color:#6A9955">  // 有効な人を選んで、名前だけを取り出す</span></span>
+<span class="line"><span style="color:#C586C0">  return</span><span style="color:#9CDCFE"> users</span></span>
+<span class="line"><span style="color:#D4D4D4">    .</span><span style="color:#DCDCAA">filter</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">user</span><span style="color:#569CD6"> =&gt;</span><span style="color:#9CDCFE"> user</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">active</span><span style="color:#D4D4D4">)</span></span>
+<span class="line"><span style="color:#D4D4D4">    .</span><span style="color:#DCDCAA">map</span><span style="color:#D4D4D4">(</span><span style="color:#9CDCFE">user</span><span style="color:#569CD6"> =&gt;</span><span style="color:#9CDCFE"> user</span><span style="color:#D4D4D4">.</span><span style="color:#9CDCFE">name</span><span style="color:#D4D4D4">);</span></span>
+<span class="line"><span style="color:#D4D4D4">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#569CD6">const</span><span style="color:#4FC1FF"> names</span><span style="color:#D4D4D4"> = </span><span style="color:#DCDCAA">activeNames</span><span style="color:#D4D4D4">([</span></span>
+<span class="line"><span style="color:#D4D4D4">  { </span><span style="color:#9CDCFE">id:</span><span style="color:#B5CEA8"> 1</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">name:</span><span style="color:#CE9178"> "アキ"</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">active:</span><span style="color:#569CD6"> true</span><span style="color:#D4D4D4"> },</span></span>
+<span class="line"><span style="color:#D4D4D4">  { </span><span style="color:#9CDCFE">id:</span><span style="color:#B5CEA8"> 2</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">name:</span><span style="color:#CE9178"> "ボブ"</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">active:</span><span style="color:#569CD6"> false</span><span style="color:#D4D4D4"> },</span></span>
+<span class="line"><span style="color:#D4D4D4">  { </span><span style="color:#9CDCFE">id:</span><span style="color:#B5CEA8"> 3</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">name:</span><span style="color:#CE9178"> "メイ"</span><span style="color:#D4D4D4">, </span><span style="color:#9CDCFE">active:</span><span style="color:#569CD6"> true</span><span style="color:#D4D4D4"> },</span></span>
+<span class="line"><span style="color:#D4D4D4">]);</span></span></code></pre></section><p class="result">結果はすべて <code>["アキ", "メイ"]</code>。SQLでは、同じ2つの名前が結果の行として並びます。</p>
+</main>
+</body>
+</html>

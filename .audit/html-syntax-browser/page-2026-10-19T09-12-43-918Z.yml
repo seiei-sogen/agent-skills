@@ -1,0 +1,80 @@
+- main [ref=e2]:
+  - heading "有効なユーザーの名前だけを取り出す" [level=1] [ref=e3]
+  - paragraph [ref=e4]:
+    - text: 3人のユーザーから、
+    - strong [ref=e5]: active が true の人だけ
+    - text: を残し、
+    - strong [ref=e6]: name だけ
+    - text: を取り出します。下の4つは、同じ処理を言語ごとに書いたものです。
+  - figure "①でボブを外し、②で残ったユーザーから名前を読みます。どのコードも、この順序の結果を作ります。" [ref=e7]:
+    - img "3人から有効な2人の名前を取り出す流れ 入力はアキが有効、ボブが無効、メイが有効。有効なユーザーを選び、名前だけを取り出すと、アキとメイになる。" [ref=e8]:
+      - generic [ref=e10]: 入力：users
+      - generic [ref=e11]: "アキ active: true"
+      - generic [ref=e12]: "ボブ active: false"
+      - generic [ref=e13]: "メイ active: true"
+      - generic [ref=e16]: ① 有効な人を選ぶ
+      - generic [ref=e17]: アキ・メイ
+      - generic [ref=e20]: ② 名前だけ取り出す
+      - generic [ref=e21]: "[\"アキ\", \"メイ\"]"
+  - generic [ref=e23]:
+    - region [ref=e24]:
+      - heading "TypeScript" [level=2] [ref=e25]
+      - paragraph [ref=e26]:
+        - code [ref=e27]: users
+        - text: はユーザーの配列です。
+      - code [ref=e29]:
+        - generic [ref=e30]: const names = users
+        - generic [ref=e31]: .filter(user => user.active)
+        - generic [ref=e32]: .map(user => user.name);
+      - paragraph [ref=e33]:
+        - code [ref=e34]: filter
+        - text: が選び、
+        - code [ref=e35]: map
+        - text: が名前に置き換えます。
+    - region [ref=e36]:
+      - heading "Ruby" [level=2] [ref=e37]
+      - paragraph [ref=e38]:
+        - code [ref=e39]: users
+        - text: はユーザーの配列です。
+      - code [ref=e41]:
+        - generic [ref=e42]: names = users
+        - generic [ref=e43]: ".select { |user| user[:active] }"
+        - generic [ref=e44]: ".map { |user| user[:name] }"
+      - paragraph [ref=e45]:
+        - code [ref=e46]: select
+        - text: が選び、
+        - code [ref=e47]: map
+        - text: が名前に置き換えます。
+    - region [ref=e48]:
+      - heading "Python" [level=2] [ref=e49]
+      - paragraph [ref=e50]:
+        - code [ref=e51]: users
+        - text: はユーザーのリストです。
+      - code [ref=e53]:
+        - generic [ref=e54]: names = [user["name"] for user in users if user["active"]]
+      - paragraph [ref=e55]:
+        - code [ref=e56]: if
+        - text: で選び、先頭の
+        - code [ref=e57]: user["name"]
+        - text: を集めます。
+    - region [ref=e58]:
+      - heading "SQL" [level=2] [ref=e59]
+      - paragraph [ref=e60]:
+        - code [ref=e61]: users
+        - text: は表です。並び順を保つため
+        - code [ref=e62]: id
+        - text: を使います。
+      - code [ref=e64]:
+        - generic [ref=e65]: SELECT name
+        - generic [ref=e66]: FROM users
+        - generic [ref=e67]: WHERE active = TRUE
+        - generic [ref=e68]: ORDER BY id;
+      - paragraph [ref=e69]:
+        - code [ref=e70]: WHERE
+        - text: が選び、
+        - code [ref=e71]: SELECT name
+        - text: が名前の列だけを返します。
+  - paragraph [ref=e72]:
+    - text: 結果はすべて
+    - code [ref=e73]: "[\"アキ\", \"メイ\"]"
+    - text: 。SQLでは、同じ2つの名前が結果の行として並びます。

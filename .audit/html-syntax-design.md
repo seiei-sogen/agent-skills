@@ -1,0 +1,13 @@
+# Chosen design
+
+Use candidate A's complete HTML input and two-path CLI. The input data is a document and its ordered pre > code elements. The helper owns syntax coloring and code styles. Callers own prose, diagrams and output names. Markdown would unnecessarily change the caller's composition format.
+
+Parent rubric scores A 10/10 and B 8/10. Independent judge scores A 9/10 and B 8/10, recommending A. Both identify DOM serialization as a fidelity risk; preservation tests cover code text, attributes and SVG. Take B's narrow public command and visual verification of prose and diagrams. Do not add Markdown conversion or configuration options.
+
+Reconciliation: use dark-plus after checking its actual token output. Require an explicit language, including language-text, to prevent forgotten highlighting. Normalize newlines to LF as browsers do. Preserve existing code/pre attributes and replace only highlighted content. Use exclusive output creation rather than silently replace an existing file. All highlighting finishes before writing output. Copy package metadata and scripts into a temporary runtime so Nix-installed skills stay usable.
+
+Principles read and applied: Laziness Protocol keeps one renderer and one caller integration. Model the Domain uses the HTML DOM directly without a new document schema. Prove It Works requires a generated HTML artifact, behavioral checks and a browser inspection.
+
+Validation: both skills pass quick_validate.py, relative references and UI prompts resolve, and npm test passes all three behavior tests. Tests cover six languages including plain text, actual token colors, source preservation, SVG and attributes, idempotence, unknown/missing languages, no-code documents and overwrite protection. The sandbox suppresses Node child-process output, confirmed with a separate minimal child process; the full test runner passes outside that restriction. An independent code and comment reviewer found no required fixes and no code comments to delete. The demonstration and browser check follow separately.
+
+The independent skill trial generated docs/examples/easy-syntax-highlight.html through easy-to-understand and create-html, including a fresh temporary runtime and offline npm ci. The parent added a longer TypeScript example through the same renderer. Final Chromium checks used the actual served HTML in a new offline browser context, with zero network requests and zero external dependencies. Widths 1280px and 390px both match the document scroll width. Five blocks render; the detailed TypeScript example has ten distinct computed token colors. Screenshots were inspected. Extracted TypeScript executes and returns ["アキ","メイ"]. Installed Nix skill copies were not changed.
