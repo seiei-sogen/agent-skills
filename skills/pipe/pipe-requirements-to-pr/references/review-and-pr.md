@@ -4,9 +4,9 @@
 
 ## 共通のレビュー対象
 
-`develop` が存在し、現在の作業ブランチが意図した変更を含むことを確認する。レビュー対象は次の和集合とする。
+親スキルで決めた比較先ブランチ（stacked PR ならスタック上の親ブランチ、それ以外は `develop`）が存在し、現在の作業ブランチが意図した変更を含むことを確認する。レビュー対象は次の和集合とする。
 
-- `develop...HEAD` の commit 済み差分
+- `<比較先ブランチ>...HEAD` の commit 済み差分
 - index の差分
 - working tree の差分
 - 対象となる untracked ファイル
@@ -44,7 +44,7 @@
 
 ### Phase 4 のチェックポイント
 
-親スキルで `commit-push` の完了を確認した後、`develop...HEAD` の差分と commit 履歴を再確認する。現在のブランチを head に持つ PR が Phase 1 で作成した1件だけであることを検索して確かめる。見つからない場合だけ後述の手順で作成する。
+親スキルで `commit-push` の完了を確認した後、`<比較先ブランチ>...HEAD` の差分と commit 履歴を再確認する。現在のブランチを head に持つ PR が Phase 1 で作成した1件だけであることを検索して確かめる。見つからない場合だけ後述の手順で作成する。
 
 ### Phase 9 の最終更新
 
@@ -52,8 +52,8 @@
 2. パイプライン対象のファイルだけを stage する。
 3. リポジトリ規約に沿う commit メッセージで commit する。
 4. 「レビューの進め方」の順序で最終差分を再レビューする。修正した場合は検証、commit、同じ再レビューを繰り返す。
-5. `develop...HEAD` の差分と commit 履歴を再確認する。
-6. 現在のブランチを upstream へ push する。
+5. `<比較先ブランチ>...HEAD` の差分と commit 履歴を再確認する。
+6. `commit-push` の手順で現在のブランチを push する。stacked PR では同スキルが `gh stack sync` で push する。
 
 現在のブランチが `develop` の場合は、要件が不具合修正なら `fix/`、それ以外は `feat/` を先頭にし、`<issue-token>-<topic>` をリポジトリの命名規則に合わせて正規化したブランチを作る。既存の同名ブランチを推測で再利用しない。
 
@@ -63,7 +63,7 @@
 
 現在のブランチを head に持つオープンな PR を正確に検索する。
 
-- 存在しない場合: `develop` を base に `gh pr create --draft --assignee @me` で draft PR を作成する。
+- 存在しない場合: 比較先ブランチを base に `gh pr create --draft --base <比較先ブランチ> --assignee @me` で draft PR を作成する。`gh stack view --json` が 0 で終了する場合は、作成後に `gh stack sync --remote <remote>` を 1 回実行して GitHub 上のスタックへ連結する。
 - 1件存在する場合: draft 状態を維持してその PR を使う。
 - 複数件または状態不明の場合: 推測で選ばず停止する。
 

@@ -15,7 +15,9 @@ assignee には、この環境で `gh` が認証している GitHub ユーザー
 1. Git リポジトリ内であることと、現在のブランチ名を確認する。
 2. `gh pr view --json number,url,title,body,baseRefName,headRefName,state,isDraft,assignees,additions,deletions` を使い、現在のブランチに紐づく PR と追加・削除行数を取得する。`gh api user --jq .login` で認証ユーザーも確認する。
 3. 取得した PR が現在のブランチを head に持つオープンな PR であることを確認する。
+4. stacked PR かを判定する。`gh stack view --json` の終了コードが 0 なら stacked PR で、JSON の `branches[]` から現在のブランチの 1 つ下のブランチ（親）と 1 つ上のブランチ（子）、それぞれの `pr.number` を控える。終了コードが 2 で、かつ `baseRefName` が `gh repo view --json defaultBranchRef --jq .defaultBranchRef.name` の既定ブランチと異なる場合も stacked PR として扱い、親は `baseRefName`、親 PR は `gh pr list --head <baseRefName> --state open --json number,url` で探す。どちらでもなければ通常の PR とする。
 
+stacked PR で `baseRefName` がスタック上の親ブランチと異なる場合は、base を変更せず、その食い違いを報告に含める。
 ブランチが取得できない、PR が見つからない、または PR がオープンでない場合は更新しない。
 別のブランチや PR を推測で選ばず、判明した状態をユーザーへ伝える。
 
@@ -23,6 +25,7 @@ assignee には、この環境で `gh` が認証している GitHub ユーザー
 
 PR のタイトル、既存本文、base ブランチ、コミット履歴、変更ファイル一覧、差分を確認する。
 PR 上の実際の差分は `gh pr diff` を優先し、差分が大きい場合は変更ファイル一覧と重要な差分を絞って読む。
+stacked PR では `gh pr diff` と `additions`、`deletions` は親ブランチとの差分なので、下の層の変更を本文に含めない。
 
 調査結果から、次を分けて整理する。
 
@@ -74,6 +77,7 @@ PR 上の実際の差分は `gh pr diff` を優先し、差分が大きい場合
 - **TODO**：別 PR に回したこと、別対応が必要なことを書く。
 - **レビューアーに確認してほしいこと**：こちらで決めた仕様や、判断・確認を求める点を書く。
 
+stacked PR では、修正対象の末尾に「親 PR #<番号> の上に積んだ stacked PR」を 1 行で書き、子 PR があればその番号も添える。
 テンプレートがない場合は、既定構成の「修正対象」欄を使い、TODO とレビューアーへの確認事項の見出しを末尾に追加する。理由が読者の理解に役立ち、根拠もある場合だけ、`変更する理由` などの短いセクションを追加する。
 
 ## 本文を書く
@@ -132,4 +136,4 @@ gh pr edit <PR番号> --body-file <本文ファイル> --add-assignee @me
 更新後は `gh pr view <PR番号> --json url,body,isDraft,assignees` で再取得し、意図した本文、更新前と同じ draft 状態、認証ユーザーの assignee への追加を確認する。
 更新に失敗した場合は別の PR へ切り替えたり、同じ操作を無制限に繰り返したりせず、エラーを報告する。
 
-最後に、更新した PR の番号と URL、使ったテンプレートのファイル名（なければ「テンプレートなし」）、本文の文字数と適用上限、上限超過時はその理由、および本文に書いた「対象」と「内容」を簡潔に報告する。
+最後に、更新した PR の番号と URL、使ったテンプレートのファイル名（なければ「テンプレートなし」）、本文の文字数と適用上限、上限超過時はその理由、stacked PR なら親 PR の番号、および本文に書いた「対象」と「内容」を簡潔に報告する。

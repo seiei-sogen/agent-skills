@@ -45,6 +45,8 @@ push 先はコミット前に確定する。
 - push 先が存在しない、または複数候補から一意に決められない場合は、コミット前にユーザーへ確認する。
 - push 先に含まれていない既存のローカルコミットがある場合は、その一覧を示す。今回の push でそれらも送信されることをユーザーへ確認してから進める。
 
+stacked PR のブランチかを `gh stack view --json` の終了コードで判定する。0 なら stacked で、push は `gh stack sync --remote <確定した remote>` で行う。同コマンドは fetch、親ブランチへの rebase、`--force-with-lease` による push をスタック全体へ行うため、JSON の `branches[]` のうち現在のブランチ以外で remote と tip が異なるものがあれば、その一覧を示してユーザーへ確認してから進める。終了コードが 2 なら通常の `git push` とする。それ以外の終了コードは stderr を添えて報告し、コミット前に停止する。
+
 ## 3. コミット件名を作る
 
 差分全体の主目的を日本語の短い 1 文で表す。
@@ -83,7 +85,7 @@ issue ID を付ける場合、`#` は 1 つ、issue ID と変更要約の間は�
 2. `git diff --cached` と `git status --short` を再確認し、コミット対象が手順 1 で確認した範囲と一致することを確かめる。
 3. `git commit -m '<件名>'` で 1 回コミットする。commit hook が失敗した場合は回避せず、エラーと現在の状態を報告して終了する。
 4. 作成されたコミットの件名と hash を確認する。
-5. upstream がある場合は `git push` を 1 回実行する。upstream を新設する場合は `git push --set-upstream origin <現在のブランチ>` を 1 回実行する。
+5. upstream がある場合は `git push` を 1 回実行する。upstream を新設する場合は `git push --set-upstream origin <現在のブランチ>` を 1 回実行する。stacked の場合は代わりに `gh stack sync --remote <remote>` を 1 回実行する。終了コード 3（rebase 競合）はスタックが rebase 前へ復元済みなので、`gh stack rebase` で解消する旨を報告して終了する。stderr に `Sync aborted` が出た場合はローカルとリモートのスタックが分岐しており、push されていないことを報告して終了する。
 6. push が失敗した場合は、force push、rebase、pull、追加コミットへ進まず、ローカルに作成済みのコミット hash とエラーを報告する。
 
 ## 5. 完了を報告する
@@ -93,7 +95,7 @@ push 後に、ローカルの `HEAD` と upstream の追跡参照が同じ commi
 
 - ブランチ名から取得した issue ID。取得していない場合は `なし`
 - 実際のコミット件名
-- コミット hash
+- コミット hash。`gh stack sync` で rebase された場合は rebase 前後の hash
 - push した remote とブランチ
 - 作業ツリーに残っている変更の有無
 - 実行した検証と、実行していない検証
