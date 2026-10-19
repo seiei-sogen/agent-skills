@@ -7,13 +7,13 @@ description: 現在の開発タスクを、実行中の Claude Code または Co
 
 このスキルと一緒に渡されたユーザーの依頼全体を、poteto-mode で実行する対象タスクとして扱う。
 
-実行中のホストを確認し、`pstack@pstack-claude` プラグインの `pstack:poteto-mode` を次の方法で呼び出す。
+実行中のホストを確認し、`/poteto-mode` or `pstack:poteto-mode` を次の方法で呼び出す。
 
-- Claude Code では `/pstack:poteto-mode <ユーザーの依頼>` を実行する。
+- Claude Code では `/poteto-mode <ユーザーの依頼>` を実行する。
 - Codex では `pstack:poteto-mode` スキルを使い、ユーザーの依頼をそのまま対象タスクにする。
 
-以後の作業手順は、呼び出した `pstack:poteto-mode` を唯一のソースとして完了まで従う。
+以後の作業手順は、呼び出した `/poteto-mode` or `pstack:poteto-mode` に基づいて完了まで行う。
 
 対象タスクが渡されていない場合は、何を進めるかをユーザーに確認する。
 
-`pstack:poteto-mode` が見つからない場合は、`pstack@pstack-claude` が未導入または未読み込みであることと、導入元の `https://github.com/michael-denyer/pstack-claude` を伝える。
+`/poteto-mode` or `pstack:poteto-mode` が見つからない場合は、`pstack@cursor-plugins` or `pstack@pstack-claude` が未導入または未読み込みであることを伝える。
