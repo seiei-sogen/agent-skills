@@ -1,6 +1,6 @@
 ---
 name: pipe-grilling-auto-to-requirements-pr
-description: 初期要件定義書ドラフトのローカルパスから、pre-investigation-report の調査 JSON を生成し、その根拠を使って grilling-jp の推奨回答を自動採用し、quality-gated-review-improve-anti-kajo の品質ゲート、commit・push、GitHub PR 作成、pr-update-gh による本文更新まで進める。要件ドラフトから PR までの一括実行依頼に使い、調査、壁打ち、推敲、PR 更新だけの依頼には使わない。
+description: 初期要件定義書ドラフトのローカルパスから、pre-investigation-report の調査 JSON を生成し、その根拠を使って grilling-jp の推奨回答を自動採用し、quality-gated-review-improve-anti-kajo の品質ゲート、commit・push、GitHub PR 作成、gh-update-pr による本文更新まで進める。要件ドラフトから PR までの一括実行依頼に使い、調査、壁打ち、推敲、PR 更新だけの依頼には使わない。
 ---
 
 # 要件ドラフトを自動壁打ちして PR にする
@@ -17,7 +17,7 @@ description: 初期要件定義書ドラフトのローカルパスから、pre-
 - `pre-investigation-report`
 - `grilling-matt-p-anti-kajo`
 - `quality-gated-review-improve-anti-kajo`
-- `pr-update-gh`
+- `gh-update-pr`
 
 指示が衝突する場合は、現在のユーザー指示、この親スキルの段階固有の指示、子スキルの通常指示の順に優先する。子スキルが見つからなければ、同等手順で代替せず、見つからないスキル名を報告して停止する。
 
@@ -129,9 +129,9 @@ stage する差分がなく、再利用できる PR もない場合は、PR を�
 
 push 後、現在のブランチに紐づくオープンな PR を再確認する。PR がなければ、既定ブランチを base、現在のブランチを head として `gh pr create --draft --assignee @me` で1件作成する。assignee はこの環境で `gh` が認証している GitHub ユーザーとし、`gh api user --jq .login` で確認する。タイトルは「どの要件をどう具体化したか」が初見で分かる短い日本語にする。初期本文には少なくとも、修正対象（変更・追加する機能と、該当する場合は対応する画面）、調査で判明した主要な制約、決めたこと、品質ゲートの結果、TODO、レビューアーに確認してほしいことを記載する。TODO と確認事項がなければ「なし」と書く。
 
-既存 PR は draft 状態を維持して再利用する。ユーザーが明示的に指示しない限り、工程完了や品質ゲート合格を理由に `gh pr ready` などで draft を解除しない。既存の assignee は維持し、`pr-update-gh` で認証ユーザーを追加する。
+既存 PR は draft 状態を維持して再利用する。ユーザーが明示的に指示しない限り、工程完了や品質ゲート合格を理由に `gh pr ready` などで draft を解除しない。既存の assignee は維持し、`gh-update-pr` で認証ユーザーを追加する。
 
-PR が存在する状態になってから `pr-update-gh` を実行する。同スキルへ次の品質要求を追加する。
+PR が存在する状態になってから `gh-update-pr` を実行する。同スキルへ次の品質要求を追加する。
 
 - リポジトリや機能の前提知識がない読者でも「何を決め、何が変わるか」を理解できる。
 - 専門用語や略語は最初に短く説明する。
