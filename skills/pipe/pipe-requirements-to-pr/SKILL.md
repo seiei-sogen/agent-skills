@@ -31,7 +31,7 @@ description: 既存の AsciiDoc 要件定義書 req-*.adoc、または GitHub is
 
 GitHub issue URL を入力にする場合だけ、`git-suggest-branch-name` も利用できることを確認し、issue 初期化を始める前にその `SKILL.md` を最後まで読む。
 Quint モデルがある対象を実装する場合は、`quint-execute-spec` を利用できることを確認し、Phase 5 の前にその `SKILL.md` を読む。
-対象リポジトリの `.claude/skills/` または `.agents/skills/` に、pstack の `create-verification-skill` で作った実証スキル（`verify-ar-web`、`verify-auto-reserve` など `verify-` で始まるスキル）がある場合は、Phase 5 の前に変更する機能を扱うものを選び、その `SKILL.md` と機能マップを最後まで読む。
+pstack の `create-verification-skill` で作った実証スキル（`verify-auto-reserve`、`verify-ar-web` など `verify-` で始まるスキル）がある場合は、Phase 5 の「動いているアプリで実証する」の規則で選び、実証の前にその `SKILL.md` と機能マップを最後まで読む。
 
 指示が衝突する場合は、現在のユーザー指示、この親スキルの段階固有の指示、子スキルの通常指示の順に優先する。子スキルが見つからなければ、その工程を同等手順で代替せず、見つからないスキル名を報告して停止する。
 
@@ -134,9 +134,30 @@ Git リポジトリ、`develop`、現在のブランチ、作業ツリー、適�
 
 計画外の変更が必要になったら、要件・設計文書・Quint モデル・計画の整合を確認して更新してから実装する。Quint の不変条件を通すためだけにモデルを弱めず、要件の根拠と検査結果を確認する。対象外の既存問題は修正せず記録に留める。
 
-全タスクの実装と検証を終えたら、動いているアプリで要件を実証する。実証スキルで対象アプリを起動して操作し、実証スキルに手順がない画面操作は `agent-browser` で行う。実証スキルがない場合は `agent-browser` だけで行い、画面のない要件は API の応答や実行コマンドの出力で確かめる。
+### 動いているアプリで実証する
 
-要件定義書の EARS 規則と Gherkin シナリオごとに実際の入口から操作し、pass、fail、未検証と証拠の場所を実装計画に記録する。未検証は、起動・認証・接続先の不足で操作できない場合だけとし、その理由を書く。fail は原因を直し、対象を絞った検証と実証をやり直す。最大3巡で fail が0件になったら Phase 6 へ進む。3巡後も fail が残る場合は Phase 9 の最終更新へ進まず停止し、既存 PR の URL と残った fail を報告する。
+全タスクの実装と検証を終えたら、動いているアプリで要件を実証する。
+
+実証スキルは、対象リポジトリの `.claude/skills/` または `.agents/skills/` にある `verify-` で始まるスキルから、変更する機能を扱うものを選ぶ。対象リポジトリが `auto_reserve` か `auto_reserve_front` のときは、EARS 規則と Gherkin シナリオごとに、期待結果を観測する場所が「操作対象」に当たる側の実証スキルを次の表から選ぶ。
+
+| 側 | 実証スキル | 場所 | 操作対象 |
+| --- | --- | --- | --- |
+| バックエンド | `verify-auto-reserve` | `/home/agir_wsl/develop/ghq_repos/github.com.fujita-kazuhiko/hello-ai/auto_reserve/.claude/skills/verify-auto-reserve` | AutoReserve API、Respo API、admin 画面 |
+| フロント | `verify-ar-web` | `/home/agir_wsl/develop/ghq_repos/github.com.fujita-kazuhiko/hello-ai/auto_reserve_front/.claude/skills/verify-ar-web` | ar_web の Web 画面 |
+
+表の場所は `SKILL.md` を読む先である。パイプラインを実行している側の実証スキルは、パイプラインの worktree のルートで実行する。
+
+バックエンドの変更がフロントの画面に現れる要件と、フロントの変更がバックエンドの変更に依存する要件では、両方の実証スキルを使う。
+
+- パイプラインを実行していない側（もう一方の側）は、そのリポジトリの `git worktree list` に出る checkout から、依存する未マージの変更を含むもの、なければ既定ブランチのものを選んで実証スキルを実行する。必要な変更がどの checkout にもなければ、その側は起動せず未検証とする。
+- ar_web の API 接続先は、ar_web の README にある `NEXT_PUBLIC_API_BASE_URL` に、`verify-auto-reserve` の Doctor を通したバックエンドの origin へ `/api` を付けた値を入れて指定する。
+- ar_web がそのバックエンドへ接続したことを、ar_web のリクエスト先のホストで確かめる。ほかの接続先で得た ar_web の結果は、バックエンドの変更の証拠にしない。
+
+起動、Doctor、証拠、後片付けは実証スキルの手順に従う。実証スキルに手順がない画面操作は `agent-browser` で行い、証拠はその画面を受け持つ実証スキルの Evidence の場所へ残す。画面のない要件は API の応答や実行コマンドの出力で確かめる。実証スキルがない場合は `agent-browser` だけで行う。
+
+要件定義書の EARS 規則と Gherkin シナリオごとに、要件に関わる入口を機能マップにないものも含めてすべて実際に操作し、pass、fail、未検証、使った実証スキルまたはツール、証拠の場所を実装計画に記録する。
+
+未検証にするのは、起動・認証・接続先の不足や、実証スキルの手順で検証用データを用意できないことで操作できない場合と、もう一方の側に必要な変更がどの checkout にもない場合だけとし、その理由を書く。fail は原因を直し、対象を絞った検証と実証をやり直す。最大3巡で fail が0件になったら Phase 6 へ進む。3巡後も fail が残る場合は Phase 9 の最終更新へ進まず停止し、既存 PR の URL と残った fail を報告する。
 
 ## Phase 6: 比較先ブランチとの差分レビュー
 
@@ -156,9 +177,9 @@ Git リポジトリ、`develop`、現在のブランチ、作業ツリー、適�
 
 出力ディレクトリはローカルの確認環境とデータに結び付くため PR に含めない。`commit-push` が拾わないよう、`git rev-parse --git-path info/exclude` が示すファイルへ出力ディレクトリを追記する。
 
-`user-story-review` が要件と実装の食い違いを「要確認」とした場合や、ストーリーの期待結果を観測できなかった場合は、Phase 5 へ戻って実装を直し、Phase 6 のレビューと再実証を経てから、影響するストーリーを作り直す。この差し戻しは最大2回とし、なお残る場合は Phase 9 の最終更新へ進まず停止し、既存 PR の URL と残った食い違いを報告する。
+`user-story-review` が要件と実装の食い違いを「要確認」とした場合や、Phase 5 で未検証とした理由以外でストーリーの期待結果を観測できなかった場合は、Phase 5 へ戻って実装を直し、Phase 6 のレビューと再実証を経てから、影響するストーリーを作り直す。この差し戻しは最大2回とし、なお残る場合は Phase 9 の最終更新へ進まず停止し、既存 PR の URL と残った食い違いを報告する。
 
-`user-story-review` の完了条件を満たし、要確認が0件になったら Phase 8 へ進む。起動・認証・接続先の不足による未実施の項目だけが残って HTML が草案になった場合は、未実施の項目と理由を残課題に記録して進む。
+`user-story-review` の完了条件を満たし、要確認が0件になったら Phase 8 へ進む。Phase 5 で未検証とした理由による未実施の項目だけが残って HTML が草案になった場合は、未実施の項目と理由を残課題に記録して進む。
 
 ## Phase 8: レビューガイド
 
