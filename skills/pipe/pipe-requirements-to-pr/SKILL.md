@@ -145,19 +145,19 @@ Git リポジトリ、`develop`、現在のブランチ、作業ツリー、適�
 | バックエンド | `verify-auto-reserve` | `/home/agir_wsl/develop/ghq_repos/github.com.fujita-kazuhiko/hello-ai/auto_reserve/.claude/skills/verify-auto-reserve` | AutoReserve API、Respo API、admin 画面 |
 | フロント | `verify-ar-web` | `/home/agir_wsl/develop/ghq_repos/github.com.fujita-kazuhiko/hello-ai/auto_reserve_front/.claude/skills/verify-ar-web` | ar_web の Web 画面 |
 
-表の場所は `SKILL.md` を読む先である。パイプラインを実行している側の実証スキルは、パイプラインの worktree のルートで実行する。
+表の場所は `SKILL.md` を読む先である。実証スキルは、使う checkout のルートで実行する。パイプラインを実行している側は、パイプラインの worktree を使う。実証スキルのフォルダは git の管理外なので checkout にないことがある。その場合は、`SKILL.md` の同梱スクリプトのパスを表の場所に読み替えて呼び、作業ディレクトリはその checkout のルートのままにする。
 
 バックエンドの変更がフロントの画面に現れる要件と、フロントの変更がバックエンドの変更に依存する要件では、両方の実証スキルを使う。
 
-- パイプラインを実行していない側（もう一方の側）は、そのリポジトリの `git worktree list` に出る checkout から、依存する未マージの変更を含むもの、なければ既定ブランチのものを選んで実証スキルを実行する。必要な変更がどの checkout にもなければ、その側は起動せず未検証とする。
-- ar_web の API 接続先は、ar_web の README にある `NEXT_PUBLIC_API_BASE_URL` に、`verify-auto-reserve` の Doctor を通したバックエンドの origin へ `/api` を付けた値を入れて指定する。
-- ar_web がそのバックエンドへ接続したことを、ar_web のリクエスト先のホストで確かめる。ほかの接続先で得た ar_web の結果は、バックエンドの変更の証拠にしない。
+- パイプラインを実行していない側（もう一方の側）は、そのリポジトリの `git worktree list` に出る checkout から、要件のためにその側へ変更が要るかで選んで実証スキルを実行する。変更が要らず既存のコードのまま期待結果が出るなら、既定ブランチの checkout を使う。変更が要るなら、それを含む checkout を使い、どの checkout にもなければ、その側は起動せず未検証とする。
+- ar_web の API 接続先は、ar_web の README にある `NEXT_PUBLIC_API_BASE_URL` に、`verify-auto-reserve` の Doctor を通したバックエンドの origin へ `/api` を付けた値を入れて指定する。この値を付けて ar_web を新しく起動する。同じ checkout に別の接続先の既存サーバーがあって起動できない場合は、止めずに接続先の不足として未検証とする。
+- ar_web がそのバックエンドへ接続したことを、`verify-auto-reserve` の `server.log` に ar_web の操作に対応するリクエストが記録されたことで確かめる。ほかの接続先で得た ar_web の結果は、バックエンドの変更の証拠にしない。
 
 起動、Doctor、証拠、後片付けは実証スキルの手順に従う。実証スキルに手順がない画面操作は `agent-browser` で行い、証拠はその画面を受け持つ実証スキルの Evidence の場所へ残す。画面のない要件は API の応答や実行コマンドの出力で確かめる。実証スキルがない場合は `agent-browser` だけで行う。
 
-要件定義書の EARS 規則と Gherkin シナリオごとに、要件に関わる入口を機能マップにないものも含めてすべて実際に操作し、pass、fail、未検証、使った実証スキルまたはツール、証拠の場所を実装計画に記録する。
+要件定義書の EARS 規則と Gherkin シナリオごとに、その規則・シナリオが示す入口を機能マップにないものも含めてすべて実際に操作し、pass、fail、未検証、使った実証スキルまたはツール、証拠の場所を実装計画に記録する。
 
-未検証にするのは、起動・認証・接続先の不足や、実証スキルの手順で検証用データを用意できないことで操作できない場合と、もう一方の側に必要な変更がどの checkout にもない場合だけとし、その理由を書く。fail は原因を直し、対象を絞った検証と実証をやり直す。最大3巡で fail が0件になったら Phase 6 へ進む。3巡後も fail が残る場合は Phase 9 の最終更新へ進まず停止し、既存 PR の URL と残った fail を報告する。
+未検証にするのは、起動・認証・接続先の不足や、実証スキルが許す方法を試しても検証用データを用意できず操作できない場合と、もう一方の側に必要な変更がどの checkout にもない場合だけとし、その理由を書く。fail は原因を直し、対象を絞った検証と実証をやり直す。最大3巡で fail が0件になったら Phase 6 へ進む。3巡後も fail が残る場合は Phase 9 の最終更新へ進まず停止し、既存 PR の URL と残った fail を報告する。
 
 ## Phase 6: 比較先ブランチとの差分レビュー
 
