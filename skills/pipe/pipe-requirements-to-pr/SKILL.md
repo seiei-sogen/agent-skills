@@ -19,6 +19,7 @@ description: 既存の AsciiDoc 要件定義書 req-*.adoc、または GitHub is
 - `pipe-generate-quality-gated-implementation-plan`
 - `pipe-implement-and-verify`
 - `tdd-matt-p`
+- `superpowers:test-driven-development`
 - `commit-push`
 - `ponytail:ponytail-review`
 - `user-story-review`
@@ -129,7 +130,7 @@ Phase 3 の最終版の要件定義書、設計文書、実装計画を入力に
 
 `ponytail:ponytail-review` で過剰設計を洗い出す。差分に TypeScript または JavaScript が含まれる場合は `anti-slop-code-general` も使い、防御的な過剰実装、見せかけの型安全、不要なヘルパー、冗長な実行時チェックを洗い出す。含まれない場合は省略し、省略した理由を最終報告に残す。
 
-`anti-slop-code-general` のレビューと修正が終わった後に、`tdd-matt-p` で生成・変更したテストをレビューする。TypeScript / JavaScript がなく前者を省略した場合も、テストがあれば実行する。[レビューと PR](references/review-and-pr.md) の基準に従い、AI slop的なテストやアンチパターンに該当するテストを削除または修正し、必要な振る舞いの検証を残して再実行する。
+`anti-slop-code-general` のレビューと修正が終わった後に、[成果物の契約のテスト方針](references/artifact-contracts.md#テスト方針) の基準で生成・変更したテストをレビューする。TypeScript / JavaScript がなく前者を省略した場合も、テストがあれば実行する。[レビューと PR](references/review-and-pr.md) の基準に従い、AI slop的なテストやアンチパターンに該当するテストを削除または修正し、必要な振る舞いの検証を残して再実行する。
 
 各スキルの所見に加えて、正しさ、回帰、エラー処理、セキュリティ、データ損失、契約、境界条件、テスト、保守性を確認する。根拠のある指摘は修正して検証を再実行し、修正したファイルと、それが関わる EARS ID・シナリオを記録する。単純化の指摘であっても、要件定義書、設計文書、実装計画で決めた挙動、公開 API、永続化形式、セキュリティ検査、外部入力に対する正当な防御的チェックは変えない。最大3巡で、重大または高重要度の未解決指摘が0件になったらレビューを終える。安全に直せない重大指摘が残る場合は Phase 9 の最終更新へ進まず停止し、既存 PR の URL と未解決指摘を報告する。
 
