@@ -1,7 +1,7 @@
 # 成果物の契約
 
 このファイルは `pipe-requirements-to-pr` の開始時、要件更新時、設計・実装計画作成時、レビューガイド作成時に参照する。
-子パイプラインの `pipe-grilling-auto-to-requirements-pr`、`pipe-auto-grilling-design`、`pipe-generate-quality-gated-implementation-plan` も、成果物の名前と内容はこの契約に従う。
+子パイプラインの `pipe-grilling-auto-to-requirements-pr`、`pipe-auto-grilling-design`、`pipe-generate-quality-gated-implementation-plan`、`pipe-implement-and-verify` も、成果物の名前と内容はこの契約に従う。
 
 ## 識別子と配置
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "pipe-implement-and-verify"
+  short_description: "実装計画を実装し、動いているアプリで要件を実証する"
+  default_prompt: "$pipe-implement-and-verify を使い、要件定義書、設計文書、実装計画から実装し、動いているアプリで要件を実証してください。"
