@@ -1,0 +1,4 @@
+interface:
+  display_name: "pipe-temp-verify"
+  short_description: "確定済み計画から実装・実証・レビュー・PR更新まで進める"
+  default_prompt: "$pipe-temp-verify を使い、要件定義書のパス、実証スキルのパス、証跡ディレクトリを渡して、pipe-requirements-to-pr の Phase 5 から Phase 9 まで進めてください。"
