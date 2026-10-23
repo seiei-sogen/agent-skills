@@ -22,6 +22,7 @@ description: 既存の AsciiDoc 要件定義書 req-*.adoc、または GitHub is
 - `superpowers:test-driven-development`
 - `commit-push`
 - `ponytail:ponytail-review`
+- `shared-code-impact-review`
 - `user-story-review`
 - `review-guide`
 - `asciidoc-to-colorful-html`
@@ -130,11 +131,13 @@ Phase 3 の最終版の要件定義書、設計文書、実装計画を入力に
 
 `ponytail:ponytail-review` で過剰設計を洗い出す。差分に TypeScript または JavaScript が含まれる場合は `anti-slop-code-general` も使い、防御的な過剰実装、見せかけの型安全、不要なヘルパー、冗長な実行時チェックを洗い出す。含まれない場合は省略し、省略した理由を最終報告に残す。
 
-`anti-slop-code-general` のレビューと修正が終わった後に、[成果物の契約のテスト方針](references/artifact-contracts.md#テスト方針) の基準で生成・変更したテストをレビューする。TypeScript / JavaScript がなく前者を省略した場合も、テストがあれば実行する。[レビューと PR](references/review-and-pr.md) の基準に従い、AI slop的なテストやアンチパターンに該当するテストを削除または修正し、必要な振る舞いの検証を残して再実行する。
+[shared-code-impact-review](../../code-review/shared-code-impact-review/SKILL.md) を使い、変更した共通処理が今回の修正対象以外へ与える影響を確認する。意図しない影響があれば、対象だけに必要な処理を切り分けるなどして修正し、修正対象とほかの利用箇所の両方を検証する。言語を問わず実施し、共通処理の変更がない場合はその根拠を記録する。未解決の影響と未確認の範囲はレビューの残課題に含める。
+
+上記のコードレビューと修正が終わった後に、[成果物の契約のテスト方針](references/artifact-contracts.md#テスト方針) の基準で生成・変更したテストをレビューする。TypeScript / JavaScript がなく `anti-slop-code-general` を省略した場合も、テストがあれば実行する。[レビューと PR](references/review-and-pr.md) の基準に従い、AI slop的なテストやアンチパターンに該当するテストを削除または修正し、必要な振る舞いの検証を残して再実行する。
 
 各スキルの所見に加えて、正しさ、回帰、エラー処理、セキュリティ、データ損失、契約、境界条件、テスト、保守性を確認する。根拠のある指摘は修正して検証を再実行し、修正したファイルと、それが関わる EARS ID・シナリオを記録する。単純化の指摘であっても、要件定義書、設計文書、実装計画で決めた挙動、公開 API、永続化形式、セキュリティ検査、外部入力に対する正当な防御的チェックは変えない。最大3巡で、重大または高重要度の未解決指摘が0件になったらレビューを終える。安全に直せない重大指摘が残る場合は Phase 9 の最終更新へ進まず停止し、既存 PR の URL と未解決指摘を報告する。
 
-レビューを終えたら、記録した EARS ID・シナリオだけを `pipe-implement-and-verify` の「動いているアプリで実証する」の手順で実証し直し、実装計画の実証結果を更新する。レビューで実装を修正しなかった場合は再実証を省き、その理由を記録する。fail が出たら原因を直し、その修正を上記の基準でレビューしてから同じ EARS ID・シナリオを実証し直す。再実証は最大2巡とし、fail が0件になったら Phase 7 へ進む。2巡後も fail が残る場合は Phase 9 の最終更新へ進まず停止し、既存 PR の URL と残った fail を報告する。
+レビューを終えたら、記録した EARS ID・シナリオを `pipe-implement-and-verify` の「動いているアプリで実証する」の手順で実証し直し、実装計画の実証結果を更新する。今回の EARS ID がない既存利用箇所も、共通処理の影響確認で記録した利用経路と維持すべき挙動を検証し、方法と結果を実装計画に記録する。レビューで実装を修正しなかった場合は再実証を省き、その理由を記録する。fail が出たら原因を直し、その修正を上記の基準でレビューしてから同じ EARS ID・シナリオと既存利用箇所を再検証する。再実証は最大2巡とし、fail が0件になったら Phase 7 へ進む。2巡後も fail が残る場合は Phase 9 の最終更新へ進まず停止し、既存 PR の URL と残った fail を報告する。
 
 ## Phase 7: ユーザーストーリー確認 HTML
 
