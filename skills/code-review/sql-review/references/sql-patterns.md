@@ -20,18 +20,11 @@ SQL は PostgreSQL の構文で書いてある。MySQL など他の DBMS では�
 
 ```sql
 -- 見積もりだけ
-EXPLAIN SELECT * FROM users WHERE email = 'user@example.com';
+EXPLAIN SELECT id, email FROM users WHERE email = 'user@example.com';
 
--- 実際に実行して実測値を取る（SELECT にだけ使う）
-EXPLAIN ANALYZE
-SELECT * FROM users WHERE email = 'user@example.com';
-
--- バッファの読み取り量も取る
-EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
-SELECT u.*, o.order_total
-FROM users u
-JOIN orders o ON u.id = o.user_id
-WHERE u.created_at > NOW() - INTERVAL '30 days';
+-- 実際に実行して実測値とバッファ読み取り量を取る（SELECT にだけ使う）
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, email FROM users WHERE email = 'user@example.com';
 ```
 
 | 項目 | 読み方 |
@@ -81,13 +74,6 @@ CREATE INDEX idx_users_lower_email ON users(LOWER(email));
 -- カバリングインデックス。SELECT する列を含めて Index Only Scan を狙う
 CREATE INDEX idx_users_email_covering ON users(email)
 INCLUDE (name, created_at);
-
--- 全文検索
-CREATE INDEX idx_posts_search ON posts
-USING GIN(to_tsvector('english', title || ' ' || body));
-
--- JSONB
-CREATE INDEX idx_metadata ON events USING GIN(metadata);
 ```
 
 インデックスは `INSERT`、`UPDATE`、`DELETE` のたびに更新されるので、追加するほど書き込みが遅くなる。
@@ -104,10 +90,10 @@ CREATE INDEX idx_metadata ON events USING GIN(metadata);
 | 書き方 | 理由 | 修正 |
 | --- | --- | --- |
 | `WHERE LOWER(email) = ...` のように列に関数を適用 | インデックスは列の値で作られており、関数を適用した値では引けない | 式インデックスを作るか、正規化した値を格納する |
-| 暗黙の型変換。MySQL で文字列の列を数値と比較する、PostgreSQL で `bigint` の列に `numeric` のパラメータをバインドする、`text` の列を `integer` にキャストして比較するなど | 列側に変換が入りインデックスを使えない | 比較する値の型を列に合わせる |
-| `LIKE '%abc'` や `LIKE '%abc%'` の前方ワイルドカード | B-Tree は先頭からしか辿れない | 中間一致は `pg_trgm` 拡張の GIN インデックス（`gin_trgm_ops`）を使う。後方一致は `reverse(col) text_pattern_ops` の式インデックスを作り、`reverse(col) LIKE reverse('abc') || '%'` で問い合わせる |
-| C 以外の照合順序の列への `LIKE 'abc%'` | 照合順序が C でないと B-Tree は前方一致にも使われない | `text_pattern_ops` を指定したインデックスを作る |
-| `OR` でつないだ別の列の条件 | 単一インデックスで両方を絞れない | `UNION ALL` に分けて一意キーで重複を除くか、各列にインデックスを置いて Bitmap Scan を狙う。`UNION` は一意な列を選んでいないと重複行が畳まれる |
+| 暗黙の型変換。MySQL で文字列の列を数値と比較する、PostgreSQL で `bigint` の列に `numeric` のパラメータをバインドするなど | 列側に変換が入りインデックスを使えない | 比較する値の型を列に合わせる |
+| `LIKE '%abc%'` のような前方ワイルドカード | B-Tree は先頭からしか辿れない | `pg_trgm` 拡張の GIN インデックス（`gin_trgm_ops`）を使う |
+| `LIKE 'abc%'` でインデックスが使われない | 照合順序が C でないと B-Tree は前方一致に使われない | `text_pattern_ops` を指定したインデックスを作る |
+| `OR` でつないだ別の列の条件 | 単一インデックスで両方を絞れない | 各列にインデックスを置いて Bitmap Scan を狙うか、`UNION` に分ける（重複の扱いが変わるので「仕様変更が必要」） |
 | 複合インデックスの先頭列を条件に使わない | 先頭列から順にしか辿れない | 列順を変えるか、条件に合う別のインデックスを作る |
 
 ```sql
@@ -117,7 +103,7 @@ SELECT * FROM users WHERE LOWER(email) = 'user@example.com';
 -- 修正案 1: 式インデックスを作る
 CREATE INDEX idx_users_email_lower ON users(LOWER(email));
 
--- 修正案 2: 正規化した値を格納して等価比較にする（既存データの正規化と書き込み側の変更が必要）
+-- 修正案 2: 正規化した値を格納して等価比較にする（仕様変更が必要。既存データの正規化と書き込み側の変更を伴う）
 SELECT * FROM users WHERE email = 'user@example.com';
 ```
 
@@ -181,20 +167,19 @@ WHERE created_at > NOW() - INTERVAL '7 days';
 
 ### 絞り込みの位置
 
-PostgreSQL のプランナーは、`WHERE` の条件を結合より前に押し下げるので、内部結合では条件を `ON` と `WHERE` のどちらに置いても性能に影響しない。
-カンマ結合と `JOIN ... ON` の書き分けも同様だが、結合順の最適化は明示 `JOIN` では `join_collapse_limit`、カンマ結合では `from_collapse_limit`（いずれも既定 8）までのテーブル数でしか行われない。
-外部結合の NULL 側の列への `WHERE` 条件も、プランナーが内部結合に縮約して押し下げるので性能の問題ではない。意図の確認は正しさのレビューに任せる。
+プランナーは `WHERE` の条件を結合より前に押し下げるので、内部結合では条件を `ON` と `WHERE` のどちらに置いても、カンマ結合と `JOIN ... ON` のどちらで書いても、性能には影響しない。
 押し下げられない次の形だけを指摘する。条件を移す修正案は結果が変わりうるので、「仕様変更が必要」と明記する。
 
 | 形 | 理由 | 修正 |
 | --- | --- | --- |
 | `LIMIT` を含むサブクエリや CTE への外側の条件 | 行数を確定してからでないと絞れない | 条件をサブクエリの中に移す |
-| 集約、`DISTINCT`、ウィンドウ関数を含むサブクエリへの、`GROUP BY`・`DISTINCT`・`PARTITION BY` 列以外の条件 | その列は集約後にしか評価できない | 条件を集約前の列に書き換えられないか検討する |
-| PostgreSQL 11 以前の CTE、または 12 以降で複数回参照される CTE | 実体化され、外側の条件が入らない | サブクエリに書き換える。12 以降は、1 回だけ参照される副作用のない非再帰 CTE がインライン化される |
+| 集約やウィンドウ関数を含むサブクエリの外側に、本来は集約前に絞れる行の条件（日付、テナントなど）がある | 全行を集約してから捨てる。集約値への条件や `rn = 1` のような順位の条件は対象外 | 条件をサブクエリの中に移す |
+| PostgreSQL 11 以前の CTE、または複数回参照される CTE | 実体化され、外側の条件が入らない | 12 以降は `WITH x AS NOT MATERIALIZED (...)` を指定する。11 以前はサブクエリに書き換え、複数回参照なら計算の重複との損得を実行計画で比べる |
 
 ### 相関サブクエリ
 
-外側の行ごとにサブクエリが実行される。
+`SELECT` 句などスカラー位置の相関サブクエリは、外側の行ごとに実行される（実行計画の SubPlan と `loops`）。外側の行数が多く、内側をインデックスで引けない場合に指摘する。
+`WHERE EXISTS (...)` や `IN (...)` の相関サブクエリは準結合に変換されるので対象外とする。
 
 ```sql
 -- 修正前
@@ -251,8 +236,8 @@ ORM では、`includes`、`preload`、`eager_load`、`select_related`、`prefetc
 ## 7. 集約
 
 ```sql
--- 修正前: 行の条件を HAVING に置いている。PostgreSQL は集約を含まない HAVING 条件を
--- 自動で WHERE に移すので性能差はほぼない。DBMS によっては集約後に捨てるので、WHERE に置くのが確実
+-- 修正前: 行の条件を HAVING に置いている。PostgreSQL は自動で WHERE に移すので性能差はほぼないが、
+-- DBMS によっては集約後に捨てる
 SELECT user_id, status, COUNT(*) AS order_count
 FROM orders
 GROUP BY user_id, status
@@ -303,13 +288,12 @@ ORM のループ内 `save` や `update` を `insert_all`、`update_all` など�
 INSERT INTO users (name, email) VALUES ('Alice', 'alice@example.com');
 INSERT INTO users (name, email) VALUES ('Bob', 'bob@example.com');
 
--- 修正後: 複数行をまとめる。autocommit の生 SQL では全件が 1 文で成功または失敗するようになる（トランザクション境界の変更）
+-- 修正後: 複数行をまとめる。autocommit なら全件が 1 文で成功または失敗するようになる（「仕様変更が必要」）
 INSERT INTO users (name, email) VALUES
     ('Alice', 'alice@example.com'),
     ('Bob', 'bob@example.com');
 
--- 大量の場合: COPY で読み込む。サーバー側のファイルを読む形は特別な権限が要るので、
--- クライアントから流し込む STDIN 形式（psql の \copy やドライバの copy API）を使う
+-- 大量の場合: クライアントから流し込む COPY（psql の \copy やドライバの copy API）を使う
 COPY users (name, email) FROM STDIN CSV HEADER;
 ```
 
@@ -321,7 +305,7 @@ UPDATE users SET status = 'active' WHERE id = 2;
 -- 修正後: IN でまとめる
 UPDATE users
 SET status = 'active'
-WHERE id IN (1, 2, 3, 4, 5);
+WHERE id IN (1, 2);
 
 -- 行ごとに値が違う場合: 一時テーブルと結合して更新する
 CREATE TEMP TABLE temp_user_updates (id INT, new_status VARCHAR);
@@ -338,13 +322,14 @@ WHERE u.id = t.id;
 | 確認項目 | 問題になる理由 |
 | --- | --- |
 | 追加するインデックスが既存のものと重複していないか | 書き込みコストと容量だけが増える |
-| 既存クエリが使っていないインデックスが残っていないか | 同上。削除は実行状況の確認後に限る |
-| 大きいテーブルへのインデックス作成が書き込みを止めないか | 止めるかは DBMS とバージョンで確認する。PostgreSQL の通常の `CREATE INDEX` は作成中の書き込みを止める。`CONCURRENTLY` は書き込みを止めないが、トランザクション内では使えず、失敗すると INVALID なインデックスが残るので確認して削除する。MySQL の InnoDB は既定でオンラインに作成する |
-| 全行の書き換えを伴う DDL がないか | バイナリ互換でない型変更（`int` から `bigint` など）、揮発性のデフォルト値（`gen_random_uuid()` など）付きの列追加、PostgreSQL 10 以前の揮発性でないデフォルト値付き列追加は、テーブルを書き換える間ロックする。`varchar` の拡大や `varchar` から `text` への変更は書き換えない。書き換える場合は新しい列に段階的に移行する |
-| 全行の検証を伴う制約追加がないか | `CHECK`、外部キーの追加は全行を検証する間ロックする。`NOT VALID` で追加してから `VALIDATE CONSTRAINT` で検証する。`NOT NULL` は `NOT VALID` を使えないので、PostgreSQL 12 以降では `CHECK (col IS NOT NULL) NOT VALID` を追加して検証してから `SET NOT NULL` にする |
-| `VACUUM FULL` や `CONCURRENTLY` なしの `REINDEX` がないか | 実行中はテーブルを排他ロックする。`REINDEX CONCURRENTLY`（PostgreSQL 12 以降）か、停止時間を取れる時間帯に限る |
-| データ型が用途に対して大きすぎないか | 行が大きくなり、インデックスも大きくなる |
-| 巨大な時系列テーブルを範囲で絞るクエリが多いか | パーティションで読む範囲を限定できる |
+| 既存クエリが使っていないインデックスが残っていないか | 同上。削除は次をすべて満たす場合に限る。主キー、一意制約、排他制約、外部キーを支えるインデックスではない。プライマリとすべてのレプリカの統計ビューで未使用である。統計の観測期間（`stats_reset` 以降）に月次バッチなど低頻度の処理が含まれている |
+| 差分で削除・変更するインデックス、列、制約に依存する既存クエリや外部キーがないか | 依存するクエリは Seq Scan に落ち、外部キーは参照に失敗する。利用箇所をリポジトリ全体で検索して根拠に書く |
+| 大きいテーブルへのインデックス作成が書き込みを止めないか | PostgreSQL の通常の `CREATE INDEX` は作成中の書き込みを止める。`CREATE INDEX CONCURRENTLY` は止めないが、トランザクション内では使えず、失敗すると INVALID なインデックスが残る。MySQL の InnoDB は既定でオンラインに作成する |
+| 全行の書き換えを伴う DDL がないか | 互換のない型変更（`int` から `bigint` など）や、揮発性のデフォルト値付きの列追加は、書き換えの間ロックする。新しい列に段階的に移行する |
+| 全行の検証を伴う制約追加がないか | `CHECK` と外部キーは `NOT VALID` で追加してから `VALIDATE CONSTRAINT` で検証する。`NOT NULL` は `CHECK (col IS NOT NULL) NOT VALID` を検証してから `SET NOT NULL` にする（PostgreSQL 12 以降） |
+| `VACUUM FULL` や `CONCURRENTLY` なしの `REINDEX` がないか | `VACUUM FULL` はテーブルを排他ロックする。`REINDEX` は書き込みと、そのインデックスを使う読み取りを止める。`REINDEX CONCURRENTLY`（PostgreSQL 12 以降）か、停止時間を取れる時間帯に限る |
+| パーティション化済みテーブルへのクエリが、パーティションキーの条件を関数適用なしで持っているか | ないと全パーティションを読む（計画に全パーティションが並ぶ） |
+| 巨大な時系列テーブルを範囲で絞るクエリが多いか | パーティションで読む範囲を限定できる。導入は主キーにパーティションキーを含めるなど移行を伴うので、コストを併記して提案する |
 
 ```sql
 -- 日付で範囲パーティション
