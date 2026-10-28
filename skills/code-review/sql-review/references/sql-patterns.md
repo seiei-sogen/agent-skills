@@ -39,11 +39,12 @@ SELECT id, email FROM users WHERE email = 'user@example.com';
 | rows | 見積もり行数。`EXPLAIN ANALYZE` の実測 `rows` と大きく違えば、統計が古いか条件の選択率を誤っている |
 | actual time | 実測時間。ループ回数（`loops`）を掛けた値が実際の合計 |
 
-見積もりと実測の乖離が大きい場合は、統計が古い可能性がある。`ANALYZE <table>` で統計を更新してよいかをユーザーに確認してから判断する。
+見積もりと実測の乖離が大きい場合は、統計が古い可能性がある。根拠に「要確認: 統計の鮮度」と書いて指摘を続け、`ANALYZE <table>` による更新はユーザーの許可があれば行う。
+パーティション化済みテーブルへのクエリは、パーティションキーの条件を関数適用なしで持っているかを確認する。ないと計画に全パーティションが並ぶ。
 
 ### ヒント句とプランナー設定
 
-差分に MySQL の `USE INDEX` や `FORCE INDEX`、PostgreSQL の `SET enable_nestloop = OFF` や `max_parallel_workers_per_gather` の変更があれば、計画を固定している。
+差分に MySQL の `USE INDEX` や `FORCE INDEX`、PostgreSQL の `SET enable_nestloop = OFF` の変更があれば、計画を固定または誘導している。`max_parallel_workers_per_gather` のような並列度の設定は、ワーカー数がほかのクエリに与える影響を確認する。
 統計の更新やインデックスの追加で同じ計画を得られないかを先に確認する。固定した計画はデータ分布が変わると劣化し、セッション設定は同じセッションのほかのクエリにも影響する。
 残す場合は、影響範囲（クエリ単位か、セッション単位か）と、固定が必要な理由を根拠に書く。
 
@@ -81,8 +82,9 @@ INCLUDE (name, created_at);
 
 | 確認項目 | 判断 |
 | --- | --- |
-| 結合に使う外部キー列にインデックスがあるか | ないと結合のたびに子テーブルを全件読む。親の削除や更新でも子の検索が走る |
-| `ORDER BY ... LIMIT` の並び順に合うインデックスがあるか | ないと全件を並べ替えてから先頭を取る。並び順と同じ列順・方向のインデックスで先頭だけ読める |
+| 結合に使う外部キー列にインデックスがあるか | 親を少数に絞って子を引く結合で、ないと子テーブルを全件読む。親の削除や更新でも子の検索が走る |
+| `ORDER BY ... LIMIT` の並び順に合うインデックスがあるか | ないと全件を並べ替えてから先頭を取る。列順が一致し、方向がすべて同じかすべて逆のインデックスで先頭だけ読める。方向を合わせる必要があるのは ASC と DESC が混在する場合だけ |
+| 等価条件と並び替えを組み合わせたクエリに、等価条件の列を先頭、範囲条件や `ORDER BY` の列を後ろに置いた複合インデックスがあるか | `WHERE status = 'paid' ORDER BY created_at DESC LIMIT 20` には `(status, created_at)`。`status` だけの単独インデックスでは並べ替えが残る。条件の値が固定なら部分インデックス `ON orders(created_at) WHERE status = 'paid'` でもよい |
 | 値の種類が少ない列（`status` など）に単独インデックスを足していないか | 選択性が低く使われにくい。部分インデックスか、絞り込み列を先頭にした複合インデックスを検討する |
 
 ## 3. インデックスが効かない書き方
@@ -129,7 +131,7 @@ SELECT * FROM users
 ORDER BY created_at DESC
 LIMIT 20 OFFSET 100000;
 
--- 修正後: 直前のページの最後の値を条件にする（カーソル方式。API の仕様変更が必要）
+-- 修正後: 直前のページの最後の値を条件にする（カーソル方式。仕様変更が必要。API のページ指定が変わる）
 SELECT * FROM users
 WHERE created_at < '2024-01-15 10:30:00'
 ORDER BY created_at DESC
@@ -141,8 +143,8 @@ WHERE (created_at, id) < ('2024-01-15 10:30:00', 12345)
 ORDER BY created_at DESC, id DESC
 LIMIT 20;
 
--- 並び順と同じインデックスが必要
-CREATE INDEX idx_users_cursor ON users(created_at DESC, id DESC);
+-- 並び順と列順が一致するインデックスが必要（方向はすべて同じなら逆向きでも使える）
+CREATE INDEX idx_users_cursor ON users(created_at, id);
 ```
 
 ### 全件 COUNT
@@ -168,18 +170,19 @@ WHERE created_at > NOW() - INTERVAL '7 days';
 ### 絞り込みの位置
 
 プランナーは `WHERE` の条件を結合より前に押し下げるので、内部結合では条件を `ON` と `WHERE` のどちらに置いても、カンマ結合と `JOIN ... ON` のどちらで書いても、性能には影響しない。
-押し下げられない次の形だけを指摘する。条件を移す修正案は結果が変わりうるので、「仕様変更が必要」と明記する。
+グループ化列やウィンドウ関数の `PARTITION BY` 列だけを参照する外側の条件も、集約サブクエリの中へ押し下げられる。
+押し下げられない次の形だけを指摘する。
 
 | 形 | 理由 | 修正 |
 | --- | --- | --- |
-| `LIMIT` を含むサブクエリや CTE への外側の条件 | 行数を確定してからでないと絞れない | 条件をサブクエリの中に移す |
-| 集約やウィンドウ関数を含むサブクエリの外側に、本来は集約前に絞れる行の条件（日付、テナントなど）がある | 全行を集約してから捨てる。集約値への条件や `rn = 1` のような順位の条件は対象外 | 条件をサブクエリの中に移す |
-| PostgreSQL 11 以前の CTE、または複数回参照される CTE | 実体化され、外側の条件が入らない | 12 以降は `WITH x AS NOT MATERIALIZED (...)` を指定する。11 以前はサブクエリに書き換え、複数回参照なら計算の重複との損得を実行計画で比べる |
+| `LIMIT` を含むサブクエリや CTE への外側の条件 | 行数を確定してからでないと絞れない | 条件をサブクエリの中に移す。結果が変わるので「仕様変更が必要」とし、「要確認: 意図」を併記する |
+| PostgreSQL 11 以前の CTE、または複数回参照される CTE | 実体化され、外側の条件が入らない | 12 以降は `WITH x AS NOT MATERIALIZED (...)` を指定する。11 以前はサブクエリに書き換える。どちらも複数回参照なら計算の重複との損得を実行計画で比べる。揮発性関数やデータ変更を含む CTE を除き結果は変わらないので「仕様変更が必要」は付けない |
 
 ### 相関サブクエリ
 
-`SELECT` 句などスカラー位置の相関サブクエリは、外側の行ごとに実行される（実行計画の SubPlan と `loops`）。外側の行数が多く、内側をインデックスで引けない場合に指摘する。
-`WHERE EXISTS (...)` や `IN (...)` の相関サブクエリは準結合に変換されるので対象外とする。
+`SELECT` 句などスカラー位置の相関サブクエリは、外側の行ごとに実行される（実行計画の SubPlan と `loops`）。外側の行数が多い場合は、内側にインデックスがあっても `loops` と実測を見て判断する。
+`WHERE EXISTS (...)` と相関のない `IN (...)` は準結合に変換されるので、相関サブクエリとしては対象外とする。結合列のインデックスは 2 節で確認し、準結合になったかは実行計画で確かめる。
+`NOT IN` は相関の有無にかかわらず SubPlan になり、`work_mem` に収まらないと行ごとに走査する。`NOT EXISTS` への書き換えを検討する。両側の列が `NOT NULL` ならば結果は同じで、NULL を取りうる場合だけ「仕様変更が必要」とする。
 
 ```sql
 -- 修正前
@@ -236,8 +239,8 @@ ORM では、`includes`、`preload`、`eager_load`、`select_related`、`prefetc
 ## 7. 集約
 
 ```sql
--- 修正前: 行の条件を HAVING に置いている。PostgreSQL は自動で WHERE に移すので性能差はほぼないが、
--- DBMS によっては集約後に捨てる
+-- 修正前: 行の条件を HAVING に置いている。PostgreSQL は自動で WHERE に移すので性能差はほぼない。
+-- DBMS によっては集約後に捨てるので、WHERE に置くのが確実
 SELECT user_id, status, COUNT(*) AS order_count
 FROM orders
 GROUP BY user_id, status
@@ -257,38 +260,20 @@ CREATE INDEX idx_orders_status_user ON orders(status, user_id);
 同じ集約を繰り返し参照する場合は、マテリアライズドビューで事前計算する。
 結果の鮮度が変わるので「仕様変更が必要」とし、更新タイミングと鮮度の要件を確認してから提案する。
 
-```sql
-CREATE MATERIALIZED VIEW user_order_summary AS
-SELECT
-    u.id,
-    u.name,
-    COUNT(o.id) AS total_orders,
-    SUM(o.total) AS total_spent,
-    MAX(o.created_at) AS last_order_date
-FROM users u
-LEFT JOIN orders o ON u.id = o.user_id
-GROUP BY u.id, u.name;
-
-CREATE INDEX idx_user_summary_spent ON user_order_summary(total_spent DESC);
-
--- CONCURRENTLY な更新には一意インデックスが必要
-CREATE UNIQUE INDEX idx_user_summary_id ON user_order_summary(id);
-
--- 更新。CONCURRENTLY なら更新中も参照できる
-REFRESH MATERIALIZED VIEW CONCURRENTLY user_order_summary;
-```
+`REFRESH MATERIALIZED VIEW CONCURRENTLY` で更新中も参照できるが、一意インデックスが必要になる。
 
 ## 8. 書き込みの一括化
 
-ORM のループ内 `save` や `update` を `insert_all`、`update_all` などの一括操作に置き換えると、バリデーションとコールバックが動かず、トランザクションの単位も変わる。
-この置き換えは「仕様変更が必要」と明記する。
+一括化は、autocommit なら複数の文が 1 文で成功または失敗するようになり、トランザクションの単位が変わる。
+ORM のループ内 `save` や `update` を `insert_all`、`update_all` などに置き換えると、さらにバリデーションとコールバックが動かなくなる。
+この節の修正案にはすべて「仕様変更が必要」を付ける。
 
 ```sql
 -- 修正前: 1 行ずつ INSERT
 INSERT INTO users (name, email) VALUES ('Alice', 'alice@example.com');
 INSERT INTO users (name, email) VALUES ('Bob', 'bob@example.com');
 
--- 修正後: 複数行をまとめる。autocommit なら全件が 1 文で成功または失敗するようになる（「仕様変更が必要」）
+-- 修正後: 複数行をまとめる
 INSERT INTO users (name, email) VALUES
     ('Alice', 'alice@example.com'),
     ('Bob', 'bob@example.com');
@@ -321,39 +306,23 @@ WHERE u.id = t.id;
 
 | 確認項目 | 問題になる理由 |
 | --- | --- |
-| 追加するインデックスが既存のものと重複していないか | 書き込みコストと容量だけが増える |
-| 既存クエリが使っていないインデックスが残っていないか | 同上。削除は次をすべて満たす場合に限る。主キー、一意制約、排他制約、外部キーを支えるインデックスではない。プライマリとすべてのレプリカの統計ビューで未使用である。統計の観測期間（`stats_reset` 以降）に月次バッチなど低頻度の処理が含まれている |
-| 差分で削除・変更するインデックス、列、制約に依存する既存クエリや外部キーがないか | 依存するクエリは Seq Scan に落ち、外部キーは参照に失敗する。利用箇所をリポジトリ全体で検索して根拠に書く |
-| 大きいテーブルへのインデックス作成が書き込みを止めないか | PostgreSQL の通常の `CREATE INDEX` は作成中の書き込みを止める。`CREATE INDEX CONCURRENTLY` は止めないが、トランザクション内では使えず、失敗すると INVALID なインデックスが残る。MySQL の InnoDB は既定でオンラインに作成する |
-| 全行の書き換えを伴う DDL がないか | 互換のない型変更（`int` から `bigint` など）や、揮発性のデフォルト値付きの列追加は、書き換えの間ロックする。新しい列に段階的に移行する |
+| 差分で追加・変更したインデックスが、既存のインデックスと重複していないか | 書き込みコストと容量だけが増える。既存の未使用インデックスの削除を提案する場合は、下記「インデックス削除の条件」を満たす場合に限る |
+| 追加・変更する列の型が、結合や比較の相手の列と一致し、値に対して過大でないか | 不一致は 3 節の暗黙の型変換を招く。過大な型は行とインデックスを大きくする |
+| 差分で削除・変更するインデックス、列、制約に依存する既存クエリや外部キーがないか | 同じ先頭列を持つ残りのインデックスで賄えなければ、依存するクエリは Seq Scan に落ちる。外部キーの参照側インデックスを消すと、PostgreSQL では親の削除・更新時に子テーブルを全件読む。MySQL では外部キーが必要とするインデックスは削除できない。利用箇所をリポジトリ全体で検索して根拠に書く |
+| 大きいテーブルへのインデックス作成や削除が書き込みを止めないか | PostgreSQL の通常の `CREATE INDEX` は書き込みを止め、`DROP INDEX` は読み取りも含めてテーブルへのアクセスを止める。`CONCURRENTLY` を付ければ止めないが、トランザクション内では使えないので単独のマイグレーションに分ける。作成に失敗すると INVALID なインデックスが残るので、`DROP INDEX CONCURRENTLY` してから再作成する。MySQL の InnoDB は既定でオンラインに作成する |
+| 全行の書き換えを伴う DDL がないか | 互換のない型変更（`int` から `bigint` など）や、揮発性のデフォルト値付きの列追加は、書き換えの間ロックする。PostgreSQL 10 以前はデフォルト値付きの列追加がすべて書き換えを伴う。新しい列に段階的に移行する |
 | 全行の検証を伴う制約追加がないか | `CHECK` と外部キーは `NOT VALID` で追加してから `VALIDATE CONSTRAINT` で検証する。`NOT NULL` は `CHECK (col IS NOT NULL) NOT VALID` を検証してから `SET NOT NULL` にする（PostgreSQL 12 以降） |
 | `VACUUM FULL` や `CONCURRENTLY` なしの `REINDEX` がないか | `VACUUM FULL` はテーブルを排他ロックする。`REINDEX` は書き込みと、そのインデックスを使う読み取りを止める。`REINDEX CONCURRENTLY`（PostgreSQL 12 以降）か、停止時間を取れる時間帯に限る |
-| パーティション化済みテーブルへのクエリが、パーティションキーの条件を関数適用なしで持っているか | ないと全パーティションを読む（計画に全パーティションが並ぶ） |
-| 巨大な時系列テーブルを範囲で絞るクエリが多いか | パーティションで読む範囲を限定できる。導入は主キーにパーティションキーを含めるなど移行を伴うので、コストを併記して提案する |
 
-```sql
--- 日付で範囲パーティション
-CREATE TABLE orders (
-    id SERIAL,
-    user_id INT,
-    total DECIMAL,
-    created_at TIMESTAMP
-) PARTITION BY RANGE (created_at);
+インデックス削除の条件。次をすべて満たす場合に限る。
 
-CREATE TABLE orders_2024_q1 PARTITION OF orders
-    FOR VALUES FROM ('2024-01-01') TO ('2024-04-01');
-
-CREATE TABLE orders_2024_q2 PARTITION OF orders
-    FOR VALUES FROM ('2024-04-01') TO ('2024-07-01');
-
--- created_at の条件があれば該当パーティションだけを読む
-SELECT * FROM orders
-WHERE created_at >= '2024-02-01' AND created_at < '2024-03-01';
-```
+- 主キー、一意制約、排他制約、外部キーを支えるインデックスではない
+- プライマリとすべてのレプリカの統計ビューで未使用である
+- 統計の観測期間（`stats_reset` 以降）に、月次バッチなど低頻度の処理が含まれている
 
 ## 10. 実行状況を調べるクエリ
 
-接続先が指定されている場合に、指摘の根拠として使う。
+接続先（SKILL.md の定義）がある場合に、指摘の根拠として使う。
 
 ```sql
 -- 平均実行時間が長いクエリ（pg_stat_statements が有効な場合）
