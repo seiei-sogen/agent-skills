@@ -39,7 +39,7 @@ WHERE u.created_at > NOW() - INTERVAL '30 days';
 | Seq Scan | テーブル全体を読む。大きいテーブルでは遅い。小さいテーブルや大半の行を返す条件では妥当 |
 | Index Scan | インデックスで行を絞り、テーブルを読む |
 | Index Only Scan | インデックスだけで完結する。`Heap Fetches` が少なければ最も速い |
-| Nested Loop | 結合の一方が小さいときは妥当。両方が大きいと遅い |
+| Nested Loop | 外側が小さいか、内側をインデックスで引けるなら妥当。外側の行数が多く内側をインデックスで引けないと遅い |
 | Hash Join | 大きい集合同士の結合に向く |
 | Merge Join | 両方がソート済みのときに向く |
 | cost | 見積もりコスト。絶対値ではなく、変更前後や代替案との比較に使う |
@@ -71,7 +71,7 @@ CREATE INDEX idx_users_email ON users(email);
 -- 複合インデックス。列順が重要で、先頭列が条件にないと効きにくい
 CREATE INDEX idx_orders_user_status ON orders(user_id, status);
 
--- 部分インデックス。条件に合う行だけを索引して小さく保つ
+-- 部分インデックス。条件に合う行だけをインデックスに含めて小さく保つ
 CREATE INDEX idx_active_users ON users(email)
 WHERE status = 'active';
 
@@ -103,7 +103,7 @@ CREATE INDEX idx_metadata ON events USING GIN(metadata);
 
 | 書き方 | 理由 | 修正 |
 | --- | --- | --- |
-| `WHERE LOWER(email) = ...` のように列に関数を適用 | 索引された値と比較する値が一致しない | 式インデックスを作るか、正規化した値を格納する |
+| `WHERE LOWER(email) = ...` のように列に関数を適用 | インデックスは列の値で作られており、関数を適用した値では引けない | 式インデックスを作るか、正規化した値を格納する |
 | 暗黙の型変換。MySQL で文字列の列を数値と比較する、PostgreSQL で `bigint` の列に `numeric` のパラメータをバインドする、`text` の列を `integer` にキャストして比較するなど | 列側に変換が入りインデックスを使えない | 比較する値の型を列に合わせる |
 | `LIKE '%abc'` や `LIKE '%abc%'` の前方ワイルドカード | B-Tree は先頭からしか辿れない | 中間一致は `pg_trgm` 拡張の GIN インデックス（`gin_trgm_ops`）を使う。後方一致は `reverse(col) text_pattern_ops` の式インデックスを作り、`reverse(col) LIKE reverse('abc') || '%'` で問い合わせる |
 | C 以外の照合順序の列への `LIKE 'abc%'` | 照合順序が C でないと B-Tree は前方一致にも使われない | `text_pattern_ops` を指定したインデックスを作る |
@@ -117,7 +117,7 @@ SELECT * FROM users WHERE LOWER(email) = 'user@example.com';
 -- 修正案 1: 式インデックスを作る
 CREATE INDEX idx_users_email_lower ON users(LOWER(email));
 
--- 修正案 2: 正規化した値を格納して等価比較にする
+-- 修正案 2: 正規化した値を格納して等価比較にする（既存データの正規化と書き込み側の変更が必要）
 SELECT * FROM users WHERE email = 'user@example.com';
 ```
 
@@ -143,7 +143,7 @@ SELECT * FROM users
 ORDER BY created_at DESC
 LIMIT 20 OFFSET 100000;
 
--- 修正後: 直前のページの最後の値を条件にする（カーソル方式）
+-- 修正後: 直前のページの最後の値を条件にする（カーソル方式。API の仕様変更が必要）
 SELECT * FROM users
 WHERE created_at < '2024-01-15 10:30:00'
 ORDER BY created_at DESC
@@ -165,7 +165,7 @@ CREATE INDEX idx_users_cursor ON users(created_at DESC, id DESC);
 -- 修正前: 全行を数える
 SELECT COUNT(*) FROM orders;
 
--- 概算でよい場合: 統計情報を使う
+-- 概算でよい場合（仕様変更が必要）: 統計情報を使う
 SELECT reltuples::bigint AS estimate
 FROM pg_class
 WHERE relname = 'orders';
@@ -181,7 +181,8 @@ WHERE created_at > NOW() - INTERVAL '7 days';
 
 ### 絞り込みの位置
 
-PostgreSQL のプランナーは、`WHERE` の条件を結合より前に押し下げるので、カンマ結合と `JOIN ... ON` の書き分けや、条件を `ON` と `WHERE` のどちらに置くかは、結合するテーブルが `join_collapse_limit`（既定 8）以下なら内部結合では性能に影響しない。
+PostgreSQL のプランナーは、`WHERE` の条件を結合より前に押し下げるので、内部結合では条件を `ON` と `WHERE` のどちらに置いても性能に影響しない。
+カンマ結合と `JOIN ... ON` の書き分けも同様だが、結合順の最適化は明示 `JOIN` では `join_collapse_limit`、カンマ結合では `from_collapse_limit`（いずれも既定 8）までのテーブル数でしか行われない。
 外部結合の NULL 側の列への `WHERE` 条件も、プランナーが内部結合に縮約して押し下げるので性能の問題ではない。意図の確認は正しさのレビューに任せる。
 押し下げられない次の形だけを指摘する。条件を移す修正案は結果が変わりうるので、「仕様変更が必要」と明記する。
 
@@ -251,7 +252,7 @@ ORM では、`includes`、`preload`、`eager_load`、`select_related`、`prefetc
 
 ```sql
 -- 修正前: 行の条件を HAVING に置いている。PostgreSQL は集約を含まない HAVING 条件を
--- 自動で WHERE に移すので性能差はほぼない。他の DBMS では全行を集約してから捨てる
+-- 自動で WHERE に移すので性能差はほぼない。DBMS によっては集約後に捨てるので、WHERE に置くのが確実
 SELECT user_id, status, COUNT(*) AS order_count
 FROM orders
 GROUP BY user_id, status
@@ -269,7 +270,7 @@ CREATE INDEX idx_orders_status_user ON orders(status, user_id);
 ```
 
 同じ集約を繰り返し参照する場合は、マテリアライズドビューで事前計算する。
-更新タイミングと鮮度の要件を確認してから提案する。
+結果の鮮度が変わるので「仕様変更が必要」とし、更新タイミングと鮮度の要件を確認してから提案する。
 
 ```sql
 CREATE MATERIALIZED VIEW user_order_summary AS
@@ -302,7 +303,7 @@ ORM のループ内 `save` や `update` を `insert_all`、`update_all` など�
 INSERT INTO users (name, email) VALUES ('Alice', 'alice@example.com');
 INSERT INTO users (name, email) VALUES ('Bob', 'bob@example.com');
 
--- 修正後: 複数行をまとめる
+-- 修正後: 複数行をまとめる。autocommit の生 SQL では全件が 1 文で成功または失敗するようになる（トランザクション境界の変更）
 INSERT INTO users (name, email) VALUES
     ('Alice', 'alice@example.com'),
     ('Bob', 'bob@example.com');
@@ -338,8 +339,8 @@ WHERE u.id = t.id;
 | --- | --- |
 | 追加するインデックスが既存のものと重複していないか | 書き込みコストと容量だけが増える |
 | 既存クエリが使っていないインデックスが残っていないか | 同上。削除は実行状況の確認後に限る |
-| 大きいテーブルへのインデックス作成がテーブルをロックしないか | ロックするかは DBMS とバージョンで確認する。PostgreSQL では `CREATE INDEX CONCURRENTLY` でロックを避けられるが、トランザクション内では使えない。MySQL の InnoDB は既定でオンラインに作成する |
-| 全行の書き換えを伴う DDL がないか | 列の型変更、PostgreSQL 10 以前の揮発性でないデフォルト値付き列追加は、テーブルを書き換える間ロックする。新しい列に段階的に移行する |
+| 大きいテーブルへのインデックス作成が書き込みを止めないか | 止めるかは DBMS とバージョンで確認する。PostgreSQL の通常の `CREATE INDEX` は作成中の書き込みを止める。`CONCURRENTLY` は書き込みを止めないが、トランザクション内では使えず、失敗すると INVALID なインデックスが残るので確認して削除する。MySQL の InnoDB は既定でオンラインに作成する |
+| 全行の書き換えを伴う DDL がないか | バイナリ互換でない型変更（`int` から `bigint` など）、揮発性のデフォルト値（`gen_random_uuid()` など）付きの列追加、PostgreSQL 10 以前の揮発性でないデフォルト値付き列追加は、テーブルを書き換える間ロックする。`varchar` の拡大や `varchar` から `text` への変更は書き換えない。書き換える場合は新しい列に段階的に移行する |
 | 全行の検証を伴う制約追加がないか | `CHECK`、外部キーの追加は全行を検証する間ロックする。`NOT VALID` で追加してから `VALIDATE CONSTRAINT` で検証する。`NOT NULL` は `NOT VALID` を使えないので、PostgreSQL 12 以降では `CHECK (col IS NOT NULL) NOT VALID` を追加して検証してから `SET NOT NULL` にする |
 | `VACUUM FULL` や `CONCURRENTLY` なしの `REINDEX` がないか | 実行中はテーブルを排他ロックする。`REINDEX CONCURRENTLY`（PostgreSQL 12 以降）か、停止時間を取れる時間帯に限る |
 | データ型が用途に対して大きすぎないか | 行が大きくなり、インデックスも大きくなる |
