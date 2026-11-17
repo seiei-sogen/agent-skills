@@ -11,7 +11,7 @@ output="${input}.kwja.txt"
 temporary=$(mktemp "${output}.tmp.XXXXXX")
 trap 'rm -f -- "$temporary"' EXIT
 
-kwja --tasks typo,char,seq2seq,word --filename "$input" > "$temporary"
+kwja --tasks typo,char,word --filename "$input" > "$temporary"
 if [[ ! -s $temporary ]]; then
   printf 'KWJA produced no output for %s\n' "$input" >&2
   exit 1

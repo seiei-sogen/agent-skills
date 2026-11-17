@@ -15,7 +15,8 @@ description: KWJA で日本語テキストファイルを解析し、タイポ�
 bash "<このスキルのディレクトリ>/scripts/analyze.sh" "<入力ファイルの絶対パス>"
 ```
 
-スクリプトは KWJA の `typo,char,seq2seq,word` を実行する。
+スクリプトは KWJA の `typo,char,word` を実行する。
+`seq2seq` は実行しない。読みと代表表記の精度は下がるため、読みに頼る判定は入力テキストで確かめる。
 出力先は同じ階層の `<入力ファイル名>.kwja.txt`。たとえば `article.txt` なら `article.txt.kwja.txt` になる。
 解析結果は KNP 形式で保存し、標準出力には保存先のパスを返す。
 既存の出力ファイルは KWJA が成功した場合だけ置き換える。

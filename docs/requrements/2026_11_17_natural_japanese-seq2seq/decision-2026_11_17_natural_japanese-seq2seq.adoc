@@ -1,0 +1,145 @@
+= natural-japanese-rewriter の高速化: seq2seq を外し、分析メモをスクリプトで作る
+:revdate: 2026-11-17
+:toc:
+:toc-title: 目次
+:sectnums:
+
+== 決定
+
+. `japanese-kwja-analyze` の KWJA 実行から `seq2seq` タスクを外す。タスク指定は `typo,char,word` にする。
+. 分析メモのうち KWJA の出力から決まる部分は、`natural-japanese-rewrite-analyzer/scripts/build_memo.py` が作る。LLM はこの部分を書かない。
+. 分析メモの形式を `schema_version: 3` に変える。KWJA が出力しない語義候補、格フレーム、項スロット、旧形式の `verb`、`args`、`omitted_args` を削る。
+
+== 背景
+
+`natural-japanese-rewriter` は 1 回の実行に時間がかかる。
+当初の仮説は「KWJA の出力(KNP 形式)が大きく、LLM が読むのに時間がかかる。出力を決定論的に木へ整形すれば速くなる」だった。
+この仮説を計測で確かめた。
+
+== 計測
+
+条件は次のとおり。
+
+* 入力: スキル文書から抜き出した日本語 1,498 字、30 行、KWJA の解析で 37 文
+* モード: デストロイモード、`polish`
+* モデル: Claude Opus 5.5
+* マシン: Apple M4、メモリ 16GB
+* KWJA: 2.6.0(`uv tool install --python 3.11 kwja`)、モデルサイズは既定の `base`
+
+通し実行は各構成 1 回である。
+改修前の 2 構成は同時に実行した。
+差が数十秒の比較は、誤差と区別できない。
+
+=== 通し実行の時間
+
+[cols="3,>2,>2,>2", options="header"]
+|===
+| 項目 | 改修前 | KNP を圧縮した木を読ませる | 改修後
+
+| 全体 | 1,059 秒 | 1,001 秒 | 651 秒
+| KWJA などのツール実行 | 124 秒 | 4 秒(KWJA は事前実行) | 22 秒
+| LLM の生成待ち | 936 秒 | 997 秒 | 629 秒
+| 出力トークン | 99,387 | 111,903 | 70,126
+| 最長の 1 応答 | 57,657 トークン、528 秒 | 70,902 トークン、632 秒 | 24,303 トークン、165 秒
+| 分析メモの大きさ | 254KB | 238KB | 92KB
+| リライト本文の大きさ | 4.5KB | 4.2KB | 4.4KB
+|===
+
+「KNP を圧縮した木を読ませる」は、当初の仮説をそのまま試した構成である。
+KNP を約 1/4.5 の大きさの木に整形して LLM に読ませ、ほかの手順は変えなかった。
+
+=== KWJA 単体の時間
+
+[cols="2,>3,>3,>2", options="header"]
+|===
+| 入力 | `typo,char,seq2seq,word` | `typo,char,word` または `char,word` | KNP の大きさ
+
+| 300 字 | 31〜34 秒(3 回) | 11.5 秒 | 22KB
+| 1,500 字 | 112 秒(2 回) | 13〜16 秒(3 回) | 131KB
+| 5,000 字 | 334 秒 | 23 秒 | 420KB
+|===
+
+モデルを取得する初回実行は 2,175 秒かかった。
+この時間は上の表に含めていない。
+
+=== seq2seq を外したときの解析結果の差
+
+1,500 字の入力で、`typo,char,seq2seq,word` と `typo,char,word` の出力を比べた。
+文 ID に含まれる実行時刻は除いて比較した。
+
+* 基本句・文節の行は 704 行のうち 12 行が変わった。
+* 形態素の行は 831 行のうち 77 行が変わった。読みだけが違う行を除くと 48 行である。
+* 分かち書きの差は 1 か所だった。
+* `typo` の有無では差が 0 行だった。KWJA は入力が長いとタイポ修正を自分でスキップする。
+
+== 決定の理由
+
+=== 時間の約 9 割は LLM が書く時間だった
+
+改修前の 1,059 秒のうち、936 秒は LLM の生成待ちだった。
+最長の 1 応答は、分析メモを組み立てる工程である。
+4KB の入力に対して、分析メモは約 250KB あった。
+
+=== 読む量を減らしても速くならなかった
+
+圧縮した木を読ませた構成は 1,001 秒で、改修前との差は 58 秒だった。
+1 回ずつの計測では、この差は誤差と区別できない。
+KNP 131KB を読む時間は、4 回の読み込みで十数秒だった。
+当初の仮説は、読む側ではなく書く側に当てると効く。
+
+=== 分析メモは機械的に作れる
+
+通し実行をした 2 つのエージェントは、どちらも自分でメモ生成スクリプトを書いていた。
+分析メモの述語、項、指示対象、橋渡し照応、談話関係は、KNP のタグから一意に決まる。
+この部分を LLM に書かせると、時間がかかるうえ、実行のたびに結果が変わり得る。
+
+=== 旧形式の枠はほぼ `unknown` で埋まっていた
+
+`schema_version: 2` は、述語ごとに語義候補、格フレーム、項スロットの枠を持つ。
+KWJA はこれらを出力しない。
+枠は `unknown` で埋まり、メモを大きくするだけだった。
+
+=== seq2seq は KWJA の時間の約 9 割を占め、リライトで使う情報をほとんど変えない
+
+`seq2seq` は読み、原形、代表表記を付ける。
+リライトで使う係り受け、述語項構造、共参照、談話関係は `word` モジュールが出力する。
+読みを手がかりにする規則は、話し言葉向けの 2 つだけである(`word-choice.use-immediately-understandable-spoken-words` と `word-choice.avoid-confusing-homophones-in-speech`)。
+`seq2seq` ありの出力には、「推敲」が「推<unk>」になる箇所もあった。
+
+== 採用しなかった案
+
+KNP を圧縮した木に整形して LLM に読ませるだけの案::
+計測で効果を確認できなかった。分析メモを LLM が書く工程が残るためである。
+
+`typo` も外す案::
+1,500 字で差は約 3 秒だった。短い入力ではタイポ修正が働くため、残した。
+
+KWJA を常駐させてモデルの読み込みを省く案::
+`char,word` の 300 字で 11.5 秒かかる。この大半はモデルの読み込みと推測するが、内訳は測っていない。全体 651 秒に対して小さいため、見送った。
+
+== 変更したファイル
+
+* `skills/natural-japanese/japanese-kwja-analyze/scripts/analyze.sh`: タスク指定を `typo,char,word` にした。
+* `skills/natural-japanese/japanese-kwja-analyze/SKILL.md`: タスク指定と、読みの精度についての注意を書き換えた。
+* `skills/natural-japanese/natural-japanese-rewrite-analyzer/scripts/build_memo.py`: 新規。KNP から `<解析用テキスト>.memo.yaml` を作る。
+* `skills/natural-japanese/natural-japanese-rewrite-analyzer/tests/`: 新規。2 文ぶんの KNP と、スクリプトの出力を確かめるテスト。
+* `skills/natural-japanese/natural-japanese-rewrite-analyzer/SKILL.md`: スクリプトを実行し、LLM が埋めるキーだけを書く手順にした。
+* `skills/natural-japanese/natural-japanese-rewrite-analyzer/manifest.json`: スクリプトとテストを加えた。
+* `skills/natural-japanese/natural-japanese-rewriter/SKILL.md`: 分析メモの項目名を `schema_version: 3` に合わせた。
+
+テストは次のコマンドで実行する。
+
+[source,bash]
+----
+uv run skills/natural-japanese/natural-japanese-rewrite-analyzer/tests/test_build_memo.py
+----
+
+== 影響と残る課題
+
+* 読みと代表表記の精度が下がる。たとえば「KWJA」の読みが「がWじゃ」になる。読みに頼る判定は、入力テキストで確かめる必要がある。
+* `phrases` には、行数の多い素性(`体言`、`動態述語`、`状態述語`、`節-主辞`、`レベル`)と、形態素ごとの品詞・読みを載せていない。必要な場合は `.kwja.txt` の該当する文を読む。
+* 改修後も、時間の約 97% は LLM の生成待ちである。残りは、`ambiguities`、`rewrite_targets`、48 規則の判定を書く工程と、本文の生成である。
+* 48 規則の判定結果を書く場所が、手順書で決まっていない。改修後の実行では、エージェントが分析メモに `rule_status` キーを足した。
+* セーフモードは測っていない。セーフモードは候補文に Phase 1 と Phase 2 をやり直すため、今回の短縮が巡回の回数ぶん効くと推測する。
+* リライト本文の品質は比較していない。確認したのは、30 行の配置と保護範囲が保たれたことまでである。
+* `build_memo.py` は `uv` を必要とする。初回実行で `rhoknp` を取得する。

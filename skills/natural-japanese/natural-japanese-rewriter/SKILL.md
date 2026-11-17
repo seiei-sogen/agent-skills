@@ -26,7 +26,7 @@ KWJA の解析ファイルから述語、項、指示対象を読み取り、媒
 ## 子スキルと優先順位
 
 Phase 1 で [japanese-kwja-analyze](../japanese-kwja-analyze/SKILL.md) と [natural-japanese-rewrite-analyzer](../natural-japanese-rewrite-analyzer/SKILL.md) を読む。
-前者が KWJA の解析ファイルを生成し、後者がその結果をリライト用の分析メモに整理する。
+前者が KWJA の解析ファイルを生成し、後者のスクリプトがその結果から分析メモを作る。LLM は分析メモの KWJA 由来部分を書かない。
 タイポ修正、分かち書き、単語正規化、形態素解析、固有表現認識、言語素性付与、係り受け解析、述語項構造解析、橋渡し照応解析、共参照解析、談話関係解析には KWJA の結果を使う。
 LLM はその結果と原文を読み、自然さ、媒体、発話意図を判断して文章を生成する。
 
@@ -61,7 +61,7 @@ LLM による言語解析や規則の判定で代行せず、対象ファイル�
 出力は `polish` / `diagnostic` の区別ではなく Phase 6 の「レビューだけ」「監査だけ」の規定に従い、`（LLM 判断）` もその規定で付ける。解析ファイルのパスは原文用だけを示す。
 
 1〜2文や UI 文言でも Phase の順序と48規則の照合は変えず、`not-applicable` を素早く済ませて出力を増やさない。
-分析メモの必須トップレベルキーは空配列でも保持し、省略項を除く内部内容は必要なノードと制約だけに簡略化できる。
+分析メモはスクリプトが作った部分をそのまま使い、LLM が埋めるキーは空配列でも保持する。
 
 ## リライトの優先順位
 
@@ -124,20 +124,20 @@ ID は安定した公開識別子として扱い、省略、改名、再利用�
 | `sentence.avoid-ambiguous-suspensive-clauses` | 複数の意味に取れる中止法を避ける。 | 節構造・談話関係 | 中止節の係り先候補が複数ある（係り受け、`ambiguities`） | P1 |
 | `sentence.clarify-suspensive-clause-attachment` | 中止した部分が、後続するどの語句や述語につながるかを明確にする。 | 係り受け | 中止節の係り先（文節・基本句の係り先） | P1 |
 | `sentence.use-punctuation-to-clarify-attachment` | `sentence.clarify-suspensive-clause-attachment` の具体策として句読点を工夫し、中止した部分の接続先を明確にする。 | 係り受け | `sentence.clarify-suspensive-clause-attachment` と同じ手がかり。修正手段が句読点 | P1 |
-| `sentence.clarify-subject-predicate-correspondence` | 主語と述語の照応関係を明確にする。 | 述語項構造 | 各述語のガ格の項（`arguments` の `role`、`referent`、`recoverability`） | P1 |
+| `sentence.clarify-subject-predicate-correspondence` | 主語と述語の照応関係を明確にする。 | 述語項構造 | 各述語のガ格の項（`arguments` の `role`、`at`、`entity`、`recoverability`） | P1 |
 | `sentence.retain-required-predicates` | 文の意味に必要な述語を省略しない。 | 述語項構造 | 項があるのに述語が欠ける節（`predicates` と係り受け） | P1 |
 | `sentence.keep-subject-and-predicate-close` | 主語と述語を、理解を妨げない範囲で近くに置く。 | 係り受け | ガ格の項と述語の基本句距離 | P1 |
-| `sentence.state-changed-subject-explicitly` | 文の途中で主語を変える場合は、新しい主語を明示する。一意に復元できない主語は補わない。 | 述語項構造 | 並列述語または文間でガ格の `referent` が切り替わる箇所（共有項と主体切り替えの検査） | P1 |
-| `sentence.clarify-parallel-elements` | 何と何が並列なのかを、文法形式も含めて明確にする。 | 係り受け | 並列関係と同形の助詞（係り受け、`surface_particle`） | P1 |
-| `sentence.avoid-repeating-equivalent-particles` | 同じ形で同じ意味の助詞を、一文に二つ以上使わない。助詞を落とすと意味が壊れる場合は、文を分けて解消する。 | 述語項構造 | 同一述語の `arguments` と `adjuncts` で `surface_particle` が重複する | P1 |
-| `sentence.retain-required-particles` | 意味関係を示すために必要な助詞を落とさない。 | 述語項構造 | `realization: overt` なのに `surface_particle` が欠ける項 | P1 |
-| `sentence.ensure-adverb-predicate-concord` | 「決して〜ない」など、副詞と後続表現の呼応を明確にする。 | 係り受け | 副詞の係り先述語の `polarity` と `modality`（言語素性） | P1 |
+| `sentence.state-changed-subject-explicitly` | 文の途中で主語を変える場合は、新しい主語を明示する。一意に復元できない主語は補わない。 | 述語項構造 | 並列述語または文間でガ格の参照先（`at`、`entity`、`referent`）が切り替わる箇所（共有項と主体切り替えの検査） | P1 |
+| `sentence.clarify-parallel-elements` | 何と何が並列なのかを、文法形式も含めて明確にする。 | 係り受け | 並列関係と同形の助詞（`phrases` の係り種別 `P`、`particle`） | P1 |
+| `sentence.avoid-repeating-equivalent-particles` | 同じ形で同じ意味の助詞を、一文に二つ以上使わない。助詞を落とすと意味が壊れる場合は、文を分けて解消する。 | 述語項構造 | 同一述語の `arguments` の `particle` と、その述語に係る `phrases` の助詞が重複する | P1 |
+| `sentence.retain-required-particles` | 意味関係を示すために必要な助詞を落とさない。 | 述語項構造 | `realization: overt` なのに `particle` が `null` の項 | P1 |
+| `sentence.ensure-adverb-predicate-concord` | 「決して〜ない」など、副詞と後続表現の呼応を明確にする。 | 係り受け | 副詞の係り先述語の `polarity` と `phrases` の素性（否定表現、モダリティ） | P1 |
 | `sentence.keep-modifier-and-modified-word-close` | 修飾語と被修飾語を、なるべく近くに置く。 | 係り受け | 修飾文節と被修飾文節の距離 | P1 |
 | `sentence.clarify-modifier-scope` | 修飾語がどの語句にかかるかを明確にする。 | 係り受け | 修飾文節の係り先候補が複数ある（`ambiguities`） | P1 |
 | `sentence.clarify-negation-scope` | 打消しの語が何を否定しているかを明確にする。 | 述語項構造 | `polarity: negative` の述語と否定が係る範囲 | P1 |
 | `sentence.avoid-overlong-modifiers` | 長すぎる修飾語を避ける。 | 係り受け | 連体修飾節の長さ（基本句数）と入れ子 | P1 |
 | `sentence.split-overlong-modifiers-into-sentences` | 修飾語が長くなる場合は、内容を別の文に分ける。 | 節構造・談話関係 | `sentence.avoid-overlong-modifiers` と同じ手がかり。修正手段が文分割 | P1 |
-| `sentence.minimize-passive-voice` | 受身形は、能動形の方が自然で動作主も明確な場合に減らす。一意に復元できない動作主は補わない。 | 述語項構造 | `voice: passive` と動作主の `recoverability` | P1 |
+| `sentence.minimize-passive-voice` | 受身形は、能動形の方が自然で動作主も明確な場合に減らす。一意に復元できない動作主は補わない。 | 述語項構造 | `voice_hint` と動作主の `recoverability`。受身か可能かは本文で判断する | P1 |
 
 ### 語の選び方
 
@@ -150,10 +150,10 @@ ID は安定した公開識別子として扱い、省略、改名、再利用�
 | `word-choice.maintain-terminology-register-consistency` | 文章全体の調子や用語体系から浮く、ちぐはぐな表現を避ける。 | 形態素・語彙 | 同一概念の表記揺れ（基本形、単語正規化） | P1 |
 | `word-choice.choose-reader-appropriate-terms` | 読み手の知識、立場、目的に合う用語を選ぶ。 | 語用論・モダリティ | 読み手と媒体（Phase 2 の語用論と文体） | P2 |
 | `word-choice.handle-directive-language-carefully` | 読み手へ指示する表現は、必要な強さを保ちながら威圧的または不明確にならないようにする。 | 語用論・モダリティ | 発話行為が指示・依頼であること、requested action、`modality` | P2 |
-| `word-choice.match-expression-to-facts` | 入力内で確認できる事実に合う表現を使う。根拠なく断定を強めない。 | 語用論・モダリティ | `modality`、断定の強さ、`graph_invariants` | P2 |
+| `word-choice.match-expression-to-facts` | 入力内で確認できる事実に合う表現を使う。根拠なく断定を強めない。 | 語用論・モダリティ | `phrases` のモダリティ素性、断定の強さ、`graph_invariants` | P2 |
 | `word-choice.verify-metaphor-appropriateness` | 比喩が内容、読み手、文体に合っているか確認する。 | 文体 | 比喩表現と媒体 | LLM |
 | `word-choice.follow-established-usage` | 一般に定着した自然な語法を優先する。固有の用語法は保護する。 | 形態素・語彙 | 慣用的な語法。固有の用語法は `protected_ranges` で保護 | LLM |
-| `word-choice.avoid-translationese` | 日本語として不自然な直訳調を避ける。 | 文体 | 翻訳調の型（受身の連続、無生物主語、「〜に関して」）と `voice` | LLM |
+| `word-choice.avoid-translationese` | 日本語として不自然な直訳調を避ける。 | 文体 | 翻訳調の型（受身の連続、無生物主語、「〜に関して」）と `voice_hint` | LLM |
 | `word-choice.simplify-overly-formal-literary-or-technical-terms` | 堅すぎる漢語、文語、専門用語は、正確さを失わない場合だけ平易にする。 | 形態素・語彙 | 漢語・文語（形態素の品詞・語種）。固有表現と技術用語は保護 | P1 |
 | `word-choice.limit-loanwords-and-foreign-words` | 外来語や外国語を乱用しない。固有名称や技術的に必要な語は保持する。 | 形態素・語彙 | 外来語・外国語（形態素の語種。素性の有無は未確定事項）。固有名称と技術的に必要な語は保護 | P1 |
 | `word-choice.use-immediately-understandable-spoken-words` | 話し言葉では、聞いただけですぐ理解できる語を選ぶ。 | 文体 | 媒体が話し言葉のときだけ。読み（形態素解析） | P2 |
@@ -178,18 +178,18 @@ ID は安定した公開識別子として扱い、省略、改名、再利用�
 ## Phase 1: KWJA の解析ファイルから分析メモを作る
 
 `natural-japanese-rewrite-analyzer` に原文と対象範囲を渡す。
-同スキルの手順で `japanese-kwja-analyze` を実行し、生成された `.kwja.txt` を入力に分析メモを作る。
-解析用テキストの準備、原文との対応付け、KNP の読み取り、分析メモのスキーマは同スキルの契約に従う。
+同スキルの手順で `japanese-kwja-analyze` と `build_memo.py` を実行し、生成された `.memo.yaml` を読んで LLM が埋めるキーを書く。
+解析用テキストの準備、原文との対応付け、分析メモの読み方は同スキルの契約に従う。
 
-生成へ進む前に `analysis_source.input_file` と `analysis_source.result_file` の実ファイルを読み、対象範囲の全文が処理されたことを確認する。
-長い解析結果は文 ID を保持して分割して読み、文をまたぐ照応と談話関係も追う。
+生成へ進む前に `.memo.yaml` の全文を読み、`sentences` が対象範囲の全文に対応することを確認する。
+`.kwja.txt` は全文を読まない。長い分析メモは文番号を保持して分割して読み、文をまたぐ照応と談話関係も追う。
 コマンドの成功やファイルパスの取得だけで分析完了としない。
 同じ実行内で内容が変わっていない入力の解析結果は再利用し、親スキルから重複実行しない。
 
 KWJA にない語義、項、関係は `unknown` または曖昧さとして残す。
 デストロイモードでは `graph_invariants` と `rewrite_policy` を原文の分析資料として扱い、書き直しの制限にはしない。
 
-完了条件: 対象テキストに対応する KWJA の解析ファイルを読み終え、子スキルの出力契約を満たす分析メモがあり、各判断を原文と解析ファイルへたどれる。
+完了条件: 対象テキストに対応する分析メモを読み終え、子スキルの完了条件を満たし、各判断を原文と分析メモの文番号・基本句番号へたどれる。
 
 ## Phase 2: 上位レイヤーの制約を固定する
 
@@ -231,10 +231,10 @@ Phase 1 の意味グラフを土台に、下位から上位へ次を分析する
 - 意味関係は明確だが、翻訳調、冗長、過度に硬い表現、周囲と不整合な文体が読みやすさを損なう
 - 意味役割を変えずに直せる、不自然な語順、助詞、重複がある
 
-分析メモで `realization` が `zero` または `unresolved` の項を省略項とし、次のとおり扱う。同じ文の中で明示済みの項と同じ `referent` を指す項は `keep` とする。原文内の表現から一意に復元できる項（`recoverability: clear` で、`referent` の指す `entities` の `text` が原文中に現れる表現である項。外界照応は含めない）は `repair` とし、Phase 4 で明示する。それ以外の項は補わない。`recoverability` が `ambiguous` の項は `confirm`、残りは `keep` とする。
+分析メモで `realization: zero` の項を省略項とし、次のとおり扱う。同じ文の中で明示済みの項と同じ参照先（`at` または `entity`）を指す項は `keep` とする。原文内の表現から一意に復元できる項（`recoverability: clear` で、`at` の参照先が原文中に現れる表現であり、`ambiguities` に記録されていない項。外界照応は含めない）は `repair` とし、Phase 4 で明示する。それ以外の項は補わない。`recoverability` が `ambiguous` の項は `confirm`、残りは `keep` とする。
 
 48規則をすべて照合し、各 ID を4状態のいずれかにする。判定の材料は ID 表の出所に従う。`P4` の `output.line-break-each-line` は、改行単位の指定の有無から状態をここで決め、Phase 4 の生成時に規則本文のとおり適用する。
-出所が `P1` でも、手がかりとなる素性やタグが KWJA 出力にない規則は `LLM` 出所として原文から判定し、その旨を記録する。素性がないことを理由に `not-applicable` としない。`LLM` 出所の判定は `rewrite_targets` の要素に `source: llm` として記録し、`predicates`、`arguments`、`entities`、`issues`、`ambiguities` には KWJA 出力にない根拠を書き込まない。
+出所が `P1` でも、手がかりとなる素性やタグが KWJA 出力にない規則は `LLM` 出所として原文から判定し、その旨を記録する。素性がないことを理由に `not-applicable` としない。`LLM` 出所の判定は `rewrite_targets` の要素に `source: llm` として記録し、スクリプトが作った部分、`issues`、`ambiguities` には KWJA 出力にない根拠を書き込まない。
 
 Phase 3 でこの親スキルが分析メモの `rewrite_targets` に要素を追記する。各要素は、少なくとも `decision`（`repair` / `keep` / `confirm`）、`rule_ids`、`source`（`kwja` / `llm`）を持つ。`rule_ids` は主 ID を先頭に置いて関連 ID を続け、空配列でもよい。上の修復一覧で選んだ箇所にも該当 ID を付ける。
 
