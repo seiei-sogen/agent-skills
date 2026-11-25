@@ -1,0 +1,5 @@
+interface:
+  display_name: "git-ac-update"
+  short_description: "AICROSS 配下の develop・main を gp で pull し、ワークツリーを gur で rebase します"
+policy:
+  allow_implicit_invocation: false
