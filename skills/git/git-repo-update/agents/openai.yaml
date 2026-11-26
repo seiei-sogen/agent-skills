@@ -1,0 +1,5 @@
+interface:
+  display_name: "git-repo-update"
+  short_description: "日報の開いた PR のワークツリーを作り直し、AICROSS 配下を gp で pull、ワークツリーを gur で rebase します"
+policy:
+  allow_implicit_invocation: false

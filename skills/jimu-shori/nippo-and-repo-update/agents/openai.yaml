@@ -1,0 +1,5 @@
+interface:
+  display_name: "nippo-and-repo-update"
+  short_description: "日報を Backlog と GitHub から更新し、続けて AICROSS 配下のリポジトリを更新します"
+policy:
+  allow_implicit_invocation: false
