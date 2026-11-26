@@ -15,11 +15,11 @@ mkdir -p "$t/bin"
 export GH_FAKE_TMP=$t
 cat >"$t/bin/gh" <<'EOF'
 #!/usr/bin/env bash
-# 開いた PR は feat-ok・feat-conflict・fix/gone・feat-stale・feat-diverged・feat-pruned・feat-dirty で、base はどれも develop。feat-merged はマージ済み。
-# pr update-branch は、feat-ok なら別の clone で origin/develop をマージして push し、GitHub 側のマージを再現する。
+# 開いた PR は feat-ok・feat-conflict・fix/gone・feat-stale・feat-diverged・feat-pruned・feat-dirty・feat-overlap・feat-pullconf で、base はどれも develop。feat-merged はマージ済み。
+# pr update-branch は、feat-ok と feat-pullconf なら別の clone で origin/develop をマージして push し、GitHub 側のマージを再現する。
 if [ "$1 $2" = "pr update-branch" ]; then
   b=$(git branch --show-current)
-  [ "$b" = feat-ok ] || exit 1
+  case $b in feat-ok | feat-pullconf) ;; *) exit 1 ;; esac
   s=$(mktemp -d "$GH_FAKE_TMP/server.XXXX")
   git clone -q "$(git remote get-url origin)" "$s" && git -C "$s" switch -q "$b" &&
     git -C "$s" merge -q --no-edit origin/develop && git -C "$s" push -q origin "$b"
@@ -35,7 +35,7 @@ if [ "$1 $2" = "pr view" ]; then
 fi
 [ "$1 $2" = "pr list" ] || exit 1
 while [ $# -gt 0 ]; do [ "$1" = --head ] && head=$2; shift; done
-case $head in feat-ok | feat-conflict | fix/gone | feat-stale | feat-diverged | feat-pruned | feat-dirty) echo develop ;; esac
+case $head in feat-ok | feat-conflict | fix/gone | feat-stale | feat-diverged | feat-pruned | feat-dirty | feat-overlap | feat-pullconf) echo develop ;; esac
 EOF
 chmod +x "$t/bin/gh"
 export PATH="$t/bin:$PATH"
@@ -49,7 +49,7 @@ git -C "$t/seed" push -q origin main
 git -C "$t/seed" switch -qc develop
 commit "$t/seed" dev1 dev.txt
 git -C "$t/seed" push -q origin develop
-for b in feat-ok feat-conflict feat-nopr fix/gone feat-stale feat-diverged feat-merged feat-pruned feat-dirty; do
+for b in feat-ok feat-conflict feat-nopr fix/gone feat-stale feat-diverged feat-merged feat-pruned feat-dirty feat-overlap feat-pullconf; do
   git -C "$t/seed" switch -qc "$b" develop
   commit "$t/seed" "$b" "$([ $b = feat-conflict ] && echo shared.txt || echo ${b//\//-}.txt)"
   git -C "$t/seed" push -q origin "$b"
@@ -66,8 +66,12 @@ git -C "$root/app" branch -q feat-diverged origin/develop
 # feat-pruned はディレクトリだけ消え、ワークツリーの登録が残った状態。
 git -C "$root/app" worktree add -q "$root/.worktrees/app-feat-pruned" feat-pruned && rm -rf "$root/.worktrees/app-feat-pruned"
 commit "$root/app" local-only develop-local.txt && git -C "$root/app" branch -qf feat-diverged HEAD && git -C "$root/app" reset -q --hard origin/develop
-for b in feat-ok feat-conflict feat-nopr feat-dirty; do git -C "$root/app" worktree add -q "$root/.worktrees/app-$b" "$b"; done
-touch "$root/.worktrees/app-feat-dirty/untracked.txt"
+for b in feat-ok feat-conflict feat-nopr feat-dirty feat-overlap feat-pullconf; do git -C "$root/app" worktree add -q "$root/.worktrees/app-$b" "$b"; done
+# 未コミットの変更。gum と同じく、マージと重ならなければマージを進め、重なれば git が止める。
+touch "$root/.worktrees/app-feat-dirty/untracked.txt" "$root/.worktrees/app-feat-conflict/untracked.txt"
+echo local >"$root/.worktrees/app-feat-overlap/shared.txt"
+# feat-pullconf は push 前のコミットが、GitHub 側でマージした結果（origin/feat-pullconf）と競合する。
+commit "$root/.worktrees/app-feat-pullconf" local-change shared.txt
 # マージなら、元のコミットは SHA を変えずに残る。
 orig_ok=$(git -C "$t/seed" rev-parse feat-ok) orig_gone=$(git -C "$t/seed" rev-parse fix/gone)
 git -C "$root/app" worktree add -q --detach "$root/.worktrees/app-detached" develop
@@ -97,9 +101,12 @@ expect() { # expect <RESULT> <BRANCH> <PATH の末尾> [NOTE の一部]
 }
 expect OK develop /app
 expect OK feat-ok /app-feat-ok
-expect CONFLICT feat-conflict /app-feat-conflict
+expect CONFLICT feat-conflict /app-feat-conflict "merge origin/develop"
+expect CONFLICT feat-conflict /app-feat-conflict "未追跡"
+expect CONFLICT feat-pullconf /app-feat-pullconf "merge origin/feat-pullconf"
 expect SKIP feat-nopr /app-feat-nopr "開いた PR がなく"
-expect SKIP feat-dirty /app-feat-dirty "未追跡"
+expect OK feat-dirty /app-feat-dirty
+expect FAIL feat-overlap /app-feat-overlap "merge origin/develop"
 expect SKIP - /app-detached "detached"
 expect SKIP chore/x /other "develop / main / master ではない"
 expect OK fix/gone /app-fix-gone "作成"
@@ -124,9 +131,15 @@ git -C "$root/app" merge-base --is-ancestor "$orig_ok" feat-ok && git -C "$root/
   { echo "NG: 元のコミットの SHA が変わった（rebase された）" >&2; fail=1; }
 [ "$(git -C "$root/app" rev-parse feat-ok)" = "$(git -C "$root/app" rev-parse origin/feat-ok)" ] ||
   { echo "NG: GitHub 側でマージした feat-ok を手元へ取り込んでいない" >&2; fail=1; }
-git -C "$root/.worktrees/app-feat-conflict" rev-parse -q --verify MERGE_HEAD >/dev/null ||
-  { echo "NG: feat-conflict がマージの途中で止まっていない" >&2; fail=1; }
-! git -C "$root/app" merge-base --is-ancestor origin/develop feat-dirty ||
-  { echo "NG: 未追跡のファイルがある feat-dirty をマージした" >&2; fail=1; }
+for b in feat-conflict feat-pullconf; do
+  git -C "$root/.worktrees/app-$b" rev-parse -q --verify MERGE_HEAD >/dev/null && grep -q "^|||||||" "$root/.worktrees/app-$b/shared.txt" ||
+    { echo "NG: $b がマージの途中で止まっていない、または競合マーカーが zdiff3 ではない" >&2; fail=1; }
+done
+git -C "$root/app" merge-base --is-ancestor origin/develop feat-dirty && [ -f "$root/.worktrees/app-feat-dirty/untracked.txt" ] ||
+  { echo "NG: 未追跡のファイルがある feat-dirty をマージしていない、またはファイルが消えた" >&2; fail=1; }
+{ ! git -C "$root/app" merge-base --is-ancestor origin/develop feat-overlap &&
+  [ "$(cat "$root/.worktrees/app-feat-overlap/shared.txt")" = local ] &&
+  ! git -C "$root/.worktrees/app-feat-overlap" rev-parse -q --verify MERGE_HEAD >/dev/null; } ||
+  { echo "NG: マージと重なる未コミットの編集がある feat-overlap で、編集が消えたかマージが進んだ" >&2; fail=1; }
 [ "$fail" = 0 ] || { cat "$t/log" >&2; exit 1; }
 echo "PASS"

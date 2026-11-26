@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # AICROSS 配下の各リポジトリを更新する。先に、日報に載っている開いた PR のうちワークツリーがないものを git-wt で作る。
-# そのうえで元のワークツリー（develop / main / master）は fish の gp で pull し、git-wt のワークツリーには PR の base をマージする。
+# そのうえで元のワークツリー（develop / main / master）は fish の gp で pull し、git-wt のワークツリーには fish の gum と同じ手順で PR の base をマージする。
 # rebase と違ってコミットの SHA が変わらないので、force push が要らない。最後に結果を TSV で標準出力へ出す。
 #   使い方: git-repo-update.sh [root] [nippo]
 #     root の既定は ~/develop/github.com/AICROSS、nippo の既定は enterprise-agent-ssot の ai-cross-memo/nippo/nippo.md、なければ nippo.adoc
@@ -33,12 +33,18 @@ stuck() {
 
 has_worktree() { git -C "$1" worktree list --porcelain | grep -qxF "branch refs/heads/$2"; }
 
-# PR があれば GitHub 側で base をマージして取り込み、できなければ（競合や PR なし）手元で origin/<target> をマージする。
-# 競合したときのマーカーは、解消に使う git-upstream-sync と同じ zdiff3 にする。
+# fish の gum（linux-xdg-config-dotfiles の alias_git.fish）と同じ手順。
+# PR があれば GitHub 側で base をマージし、その結果を pull --no-rebase で取り込む。できなければ（競合や PR なし）手元で origin/<target> をマージする。
+# gum と同じく --autostash は付けず、未コミットの変更は残したまま進める。マージが触るファイルと重なれば git が止める。
+# 競合したときのマーカーは、解消に使う git-upstream-sync と同じ zdiff3 にする。取り込んだ元の ref を src に入れる。
 merge_base() { # merge_base <path> <branch> <target> <PR の base（PR がなければ空）>
-  local ref=origin/$3
-  if [ -n "$4" ] && (cd "$1" && gh pr update-branch); then ref=origin/$2; fi
-  git -C "$1" fetch origin && git -C "$1" -c merge.conflictstyle=zdiff3 merge --no-edit "$ref"
+  src=origin/$3
+  if [ -n "$4" ] && (cd "$1" && gh pr update-branch); then
+    src=origin/$2
+    git -C "$1" -c merge.conflictstyle=zdiff3 pull --no-rebase --no-edit origin "$2"
+  else
+    git -C "$1" fetch origin && git -C "$1" -c merge.conflictstyle=zdiff3 merge --no-edit "$src"
+  fi
 }
 
 # 自動の後片付けでワークツリーだけ消えた、開いた PR のブランチを作り直す。作ったものは下のループでマージの対象になる。
@@ -90,6 +96,7 @@ for repo in "$root"/*/; do
   base=
   # worktree list の先頭が元のワークツリー。ブランチ名は - で始まれないので、detached HEAD を - で表す。
   while IFS=$'\t' read -r -u 3 kind path branch prunable; do
+    dirty=
     if [ "$kind" = base ]; then
       base=$branch
       case $branch in
@@ -107,8 +114,8 @@ for repo in "$root"/*/; do
       (cd "$path" && fish -c gp) >&2
       code=$?
     else
-      # 競合を解消する git-upstream-sync は git add -A でコミットするので、未コミットの変更や未追跡のファイルを巻き込まないよう飛ばす。
-      if [ -n "$(git -C "$path" status --porcelain)" ]; then add SKIP worktree "$branch" "$path" "未コミットの変更か未追跡のファイルがある"; continue; fi
+      # gum と同じくマージは進めるが、競合を解消する git-upstream-sync は git add -A でコミットするので、競合したときに NOTE で知らせる。
+      [ -z "$(git -C "$path" status --porcelain)" ] || dirty="未コミットの変更か未追跡のファイルがある"
       pr_base=$(cd "$path" && gh pr list --head "$branch" --state open --json baseRefName --jq '.[0].baseRefName // empty') ||
         { add FAIL worktree "$branch" "$path" "gh pr list に失敗"; continue; }
       # PR がなければ origin/HEAD をマージ先にする。元のブランチと違えば（develop で開発し main が既定のリポジトリなど）決めずに飛ばす。
@@ -119,13 +126,13 @@ for repo in "$root"/*/; do
         continue
       fi
       target=${pr_base:-$default}
-      cmd="merge origin/$target"
-      echo "== $cmd: $path ($branch)" >&2
+      echo "== merge origin/$target: $path ($branch)" >&2
       merge_base "$path" "$branch" "$target" "$pr_base" >&2
       code=$?
+      cmd="merge $src"
     fi
     if stuck "$path"; then
-      add CONFLICT "$kind" "$branch" "$path" "$cmd が競合で止まった"
+      add CONFLICT "$kind" "$branch" "$path" "$cmd が競合で止まった${dirty:+。$dirty}"
     elif [ "$code" -ne 0 ]; then
       add FAIL "$kind" "$branch" "$path" "$cmd が終了コード $code で失敗"
     else
