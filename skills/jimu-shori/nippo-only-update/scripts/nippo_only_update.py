@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""日報 nippo.adoc に、自分が担当で「完了」以外の Backlog 課題のうち載っていないものを足し、
+"""日報（nippo.md か nippo.adoc）に、自分が担当で「完了」以外の Backlog 課題のうち載っていないものを足し、
 載っている課題ごとに、Backlog のステータス行を最新にし、足りない PR とブランチを足す。
 
-使い方: nippo_only_update.py [nippo.adoc]
+使い方: nippo_only_update.py [日報のパス]
+  パスを省くと nippo/ の nippo.md、なければ nippo.adoc を使う。
   書き換える前の内容を <file>.bak に残し、差分を標準出力へ出す。
   Backlog の接続先は環境変数 BACKLOG_DOMAIN・BACKLOG_API_KEY、なければ ~/.claude.json の backlog MCP の env を使う。
   終了コード: 0 = 成功（変更なしを含む）、1 = 取得に失敗した課題や PR がある、2 = 設定やファイルがない
@@ -21,7 +22,9 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-DEFAULT_FILE = Path.home() / "develop/github.com.sogen/seiei-sogen/enterprise-agent-ssot/enterprises/ai-cross-memo/nippo/nippo.adoc"
+NIPPO_DIR = Path.home() / "develop/github.com.sogen/seiei-sogen/enterprise-agent-ssot/enterprises/ai-cross-memo/nippo"
+# 日報の書式は拡張子によらず同じ。両方あるときは md を使う。
+DEFAULT_FILES = [NIPPO_DIR / "nippo.md", NIPPO_DIR / "nippo.adoc"]
 OWNER = "AICROSS"
 # リポジトリと日報の見出し。並びが、課題の中で見出しを置く順になる。
 REPOS = {
@@ -214,9 +217,10 @@ def fetch_prs(repo):
 
 
 def main():
-    path = Path(sys.argv[1]).expanduser() if len(sys.argv) > 1 else DEFAULT_FILE
-    if not path.exists():
-        print(f"{path} がありません。", file=sys.stderr)
+    paths = [Path(sys.argv[1]).expanduser()] if len(sys.argv) > 1 else DEFAULT_FILES
+    path = next((p for p in paths if p.exists()), None)
+    if not path:
+        print("日報がありません: " + "、".join(map(str, paths)), file=sys.stderr)
         return 2
     config = backlog_config()
     if not config:

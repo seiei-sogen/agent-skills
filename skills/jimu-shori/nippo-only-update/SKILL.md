@@ -1,21 +1,22 @@
 ---
 name: nippo-only-update
-description: 日報 nippo.adoc に、自分が担当で「完了」以外の Backlog 課題のうち載っていないものを足し、載っている課題ごとに、Backlog のステータス行を最新にし、BE・FE・IaC など課題に関連する GitHub PR とブランチ名のうち足りないものを、日報の体裁で足す。日報の課題情報を更新してほしいと頼まれたときに使い、日報の文章の作成には使わない。
+description: 日報（nippo.md か nippo.adoc）に、自分が担当で「完了」以外の Backlog 課題のうち載っていないものを足し、載っている課題ごとに、Backlog のステータス行を最新にし、BE・FE・IaC など課題に関連する GitHub PR とブランチ名のうち足りないものを、日報の体裁で足す。日報の課題情報を更新してほしいと頼まれたときに使い、日報の文章の作成には使わない。
 ---
 
 # nippo-only-update
 
-`~/develop/github.com.sogen/seiei-sogen/enterprise-agent-ssot/enterprises/ai-cross-memo/nippo/nippo.adoc` を、Backlog と GitHub の情報で最新にする。
+日報 `~/develop/github.com.sogen/seiei-sogen/enterprise-agent-ssot/enterprises/ai-cross-memo/nippo/nippo.md`（なければ同じフォルダの `nippo.adoc`）を、Backlog と GitHub の情報で最新にする。
+日報の書き方は拡張子によらず同じで、両方あるときは `nippo.md` を使う。
 照合と書き換えは `scripts/nippo_only_update.py` が行う。
 
 ## 1. スクリプトを実行する
 
 ```sh
-python3 "<このスキルのディレクトリ>/scripts/nippo_only_update.py" [nippo.adoc のパス]
+python3 "<このスキルのディレクトリ>/scripts/nippo_only_update.py" [日報のパス]
 ```
 
 パスを省くと上の日報を書き換える。
-書き換えたときは、前の内容を `nippo.adoc.bak` に残し、標準出力に unified diff を出す。
+書き換えたときは、前の内容を `<日報のファイル名>.bak`（`nippo.md.bak` など）に残し、標準出力に unified diff を出す。
 最後に `== 報告`（足した課題、課題ごとの変更、足さなかった PR）と `== 失敗` が続く。
 
 | 終了コード | 意味 | 次にやること |
@@ -42,7 +43,7 @@ Backlog の接続先は、環境変数 `BACKLOG_DOMAIN`・`BACKLOG_API_KEY`、�
 
 diff を読み、タイトルが課題キーで始まるだけの、本筋と違う PR（リリース用のデータ準備など）が足されていないかを見る。
 不要なら、その3行を日報から消す。
-全体を戻すときは `nippo.adoc.bak` で上書きする。
+全体を戻すときは `<日報のファイル名>.bak` で上書きする。
 
 ## 3. 報告する
 
