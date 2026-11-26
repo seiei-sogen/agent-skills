@@ -1,0 +1,4 @@
+interface:
+  display_name: "genshi-software-factory"
+  short_description: "開いている issue を2つの作業役に分けて、調査からマージまで並べて進める"
+  default_prompt: "$genshi-software-factory を使ってください。"
