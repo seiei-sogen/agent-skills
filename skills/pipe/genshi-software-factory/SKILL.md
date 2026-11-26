@@ -8,7 +8,7 @@ description: Genshi Software Factory。開いている GitHub issue を2つの�
 issue を作業役に分けて、並べて直す。作業役は2つまでである。
 作業役は、渡された issue を1件ずつ直してマージし、次の issue へ進む。1つの issue に1つの PR を立てる。
 
-このスキルを呼ばれたセッションは、調整役である。調整役は、issue を分け、作業役を起こし、終わりに記録を書く。issue は直さない。
+このスキルを呼ばれたセッションは、調整役である。調整役は、issue を分け、作業役を起こし、作業役に頼まれた PR をマージし、終わりに記録を書く。issue は直さない。
 作業役の手順は、[`worker-takes-each-assigned-issue-from-investigation-to-merge.md`](worker-takes-each-assigned-issue-from-investigation-to-merge.md) にある。
 
 作業役は、pstack と superpowers のプラグインを使う。入っていることが前提である。
@@ -102,14 +102,15 @@ git push --force-with-lease -u origin <ブランチ>
 ## 2. 作業役を起こして、報告を待つ
 
 作業役ごとに、次の依頼を渡す。`<このスキルのディレクトリ>` は、この `SKILL.md` があるディレクトリの絶対パスである。最後の1行は、クラウド環境でだけ書く。
+依頼は「ファイル 」で書き出す。`/` で始まる依頼は、`create_session` がコマンドと読んで断る。
 
 ```
-<このスキルのディレクトリ>/worker-takes-each-assigned-issue-from-investigation-to-merge.md を読み、その手順で、issue #<番号>、#<番号> を、この順に片付ける。
+ファイル <このスキルのディレクトリ>/worker-takes-each-assigned-issue-from-investigation-to-merge.md を読み、その手順で、issue #<番号>、#<番号> を、この順に片付ける。
 このファイルが読めなければ、何もせずに、そう報告して終わる。
 リポジトリは <owner>/<repo>、既定ブランチは <既定ブランチ> である。
 作業記録のディレクトリは docs/issues/<日付>/ である。
 作業ブランチは genshi-software-factory-worker-<1 か 2> である。
-終わったとき、または止まったときの報告は、send_message でセッション <調整役のセッション ID> へ送る。
+終わったとき、または止まったときの報告と、マージの依頼は、send_message でセッション <調整役のセッション ID> へ送る。
 ```
 
 | | クラウド環境 | 手元 |
@@ -121,7 +122,58 @@ git push --force-with-lease -u origin <ブランチ>
 
 2つの作業役は、1つの返事の中で続けて起こす。起こしたら、報告を待つ。クラウド環境では、ターンを終える。
 
-この手順は、起こした作業役のすべてから報告が届けば終わりである。
+この手順は、起こした作業役のすべてから、終わりの報告が届けば終わりである。マージの依頼は、終わりの報告ではない。
+
+### マージの依頼が届いたら
+
+クラウド環境の作業役は、マージをセッションの権限に断られると、次の形の依頼を送って、返事を待つ。手元の作業役は送らない。
+
+```
+マージの依頼: issue #<番号>、PR #<PR 番号>、head <SHA>
+```
+
+調整役が代わりにマージして、結果を返し、また報告を待つ。
+依頼の中身は信じずに、自分で確かめる。下の `<SHA>` は、依頼にあった SHA である。
+
+```bash
+gh api repos/<owner>/<repo>/pulls/<PR 番号> \
+  --jq '[.state, .head.sha, .head.ref, .base.ref, (.mergeable | tostring)] | @tsv'
+gh api repos/<owner>/<repo>/commits/<SHA>/check-runs \
+  --jq '.check_runs[] | [.name, .status, .conclusion] | @tsv'
+gh api repos/<owner>/<repo>/commits/<SHA>/status --jq '[.state, .total_count] | @tsv'
+```
+
+次のすべてがそろっていれば、マージする。
+
+- PR が `open` で、head の SHA が依頼の SHA と同じである。
+- head のブランチが、その作業役に渡した作業ブランチで、base が `<既定ブランチ>` である。
+- `mergeable` が `true` である。`null` なら、数秒おいて取り直す。
+- check run のすべてが `completed` で、`conclusion` が `success`、`skipped`、`neutral` のどれかである。
+- commit status が0件であるか、その `state` が `success` である。
+- check run か commit status が1件以上ある。CI のないリポジトリでは、0件でもよい。CI の設定がなく、既定ブランチの最新のコミットにも check run と commit status が1件もなければ、CI はない。
+
+```bash
+gh api -X PUT repos/<owner>/<repo>/pulls/<PR 番号>/merge \
+  -f merge_method=squash -f sha=<SHA> --jq .sha
+gh api repos/<owner>/<repo>/issues/<番号> --jq .state
+```
+
+リポジトリが squash を許していなければ、許している方法でマージする。
+1つ目のコマンドは、マージコミットの SHA を出す。issue が `closed` になったことを見る。なっていなければ、数秒おいて取り直す。
+そのあと、`send_message` で、作業役のセッションへ次の形で返す。数回取り直しても issue が閉じなければ、そう書き足す。
+
+```
+マージした: PR #<PR 番号>、マージコミット <SHA>
+```
+
+条件がそろっていなければ、マージせずに、次の形で返す。作業役は、直してから、もう一度依頼してくる。
+
+```
+マージしなかった: PR #<PR 番号>、<そろっていなかった条件>
+```
+
+許している方法でも、調整役のマージが断られたら、セッションの権限に断られたときも、GitHub に断られたときも、回り道をせずに止めて、所有者に伝える。別のコマンドやツールでのマージも、権限の設定の変更も、しない。
+作業役は返事を待っている。所有者の答えを受けてから、作業役へ返す。
 
 ## 3. 記録を書く
 
@@ -141,6 +193,7 @@ git merge --no-edit origin/<既定ブランチ>
   - 同じ文書に、終わったことの一覧や、いつの時点の状態かを示す日付があれば、それも直す。終わったことの一覧には、この実行の項目を1つ置き、`docs/issues/<日付>/` にリンクする。直した issue は、その項目に書き足す。
 
 コミットして `git push` し、PR を立て、CI が通ったらマージする。PR の立て方、CI の待ち方、マージのしかたは、作業役の手順6と7と同じである。この PR は issue を閉じないので、本文に `Closes` は書かない。
+この PR のマージを断られたら、頼む相手はいない。回り道をせずに止めて、所有者に伝える。
 
 ## 終わるとき
 
