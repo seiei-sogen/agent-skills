@@ -11,14 +11,16 @@ issue を作業役に分けて、並べて直す。作業役は2つまでであ�
 このスキルを呼ばれたセッションは、調整役である。調整役は、issue を分け、作業役を起こし、終わりに記録を書く。issue は直さない。
 作業役の手順は、[`worker-takes-each-assigned-issue-from-investigation-to-merge.md`](worker-takes-each-assigned-issue-from-investigation-to-merge.md) にある。
 
-どのリポジトリでも使える。リポジトリごとに違うものは、次のように書く。
+作業役は、pstack と superpowers のプラグインを使う。入っていることが前提である。
+
+リポジトリごとに違うものは、次のように書く。
 
 - `<owner>/<repo>`: `git remote get-url origin` で分かる。
 - `<既定ブランチ>`: `gh api repos/<owner>/<repo> --jq .default_branch` で分かる。
-- リポジトリの約束: `AGENTS.md`、`CLAUDE.md`、`README.md` に書いてあること。コミットメッセージ、PR の題と本文、作業記録は、約束にある言語で書く。約束になければ、日本語で書く。
+- リポジトリの約束: `AGENTS.md`、`CLAUDE.md`、`README.md` に書いてあること。コミットメッセージ、PR の題と本文、作業記録は、約束が決めた言語で書く。決めていなければ、リポジトリの文書と同じ言語で書く。
 
 扱う issue は、引数に番号があればその issue だけである。
-引数がなければ、リポジトリの「次にやること」の一覧から取る。この一覧は、`README.md` か、リポジトリの約束が指す文書にある、これから進める issue を順に並べた節である。手順1でこの一覧を上から読み、番号が挙がっていて、まだ開いている issue を、書かれた順に扱う。「#73 から #83」のような範囲は、その間の番号をすべて含む。issue の番号がない項目（所有者が確かめる項目など）は、扱わずに飛ばす。
+引数がなければ、リポジトリの「次にやること」の一覧から取る。この一覧とは、見出しに「次にやること」とある節か、リポジトリの約束が「次にやること」として名指しした節である。ロードマップや既知の問題のような、似た節は一覧とみなさない。手順1でこの一覧を上から読み、番号が挙がっていて、まだ開いている issue を、書かれた順に扱う。「#73 から #83」のような範囲は、その間の番号をすべて含む。issue の番号がない項目（所有者が確かめる項目など）は、扱わずに飛ばす。
 「次にやること」の一覧がないリポジトリでは、開いている issue のすべてを、番号の小さい順に扱う。
 扱う issue が1件もなければ、何もせずに「終わるとき」へ進み、そう報告する。
 途中で立てた issue は、この実行では扱わない。次の実行が拾う。
@@ -79,7 +81,7 @@ gh api 'repos/<owner>/<repo>/issues?state=open&per_page=100&page=1' \
 ```
 
 - `status` は `queued`、`skipped`、`done` のどれかである。`done` は PR をマージしたことを表す。
-- 所有者の判断が要る issue と、1つの PR に収まらない issue は `skipped` にする。`skipped` の issue に依存する issue も `skipped` にする。
+- 所有者の判断が要る issue と、1つの PR に収まらない issue は `skipped` にする。質問や相談のように、直すことが決まっていない issue も、所有者の判断が要る。`skipped` の issue に依存する issue も `skipped` にする。
 - `related_code` は、その issue が触りそうなファイルの見込みである。issue の本文と、コードの検索から出す。
 - `assigned_to_worker` は 1 か 2 で、`queued` の issue にだけ書く。
   - 依存でつながる issue は、同じ作業役に渡す。`related_code` が重なる issue も、同じ作業役に渡す。2つの作業役が同じファイルを書くと、後からマージする側が衝突するからである。
@@ -103,6 +105,7 @@ git push --force-with-lease -u origin <ブランチ>
 
 ```
 <このスキルのディレクトリ>/worker-takes-each-assigned-issue-from-investigation-to-merge.md を読み、その手順で、issue #<番号>、#<番号> を、この順に片付ける。
+このファイルが読めなければ、何もせずに、そう報告して終わる。
 リポジトリは <owner>/<repo>、既定ブランチは <既定ブランチ> である。
 作業記録のディレクトリは docs/issues/<日付>/ である。
 作業ブランチは genshi-software-factory-worker-<1 か 2> である。
@@ -114,7 +117,7 @@ git push --force-with-lease -u origin <ブランチ>
 | 起こし方 | `create_session`。`source_url` にこのリポジトリ、`outcome_branch` に依頼と同じ作業ブランチ | Agent ツール。`isolation: "worktree"` |
 | 報告の届き方 | 作業役の `send_message` が、新しいターンとして届く。調整役のセッション ID は `get_session` で分かる | Agent ツールの結果 |
 
-クラウド環境の作業役は、新しいコンテナで動く。環境のセットアップスクリプトが、このスキルを同じ場所に入れることを前提にしている。
+クラウド環境の作業役は、新しいコンテナで動く。環境のセットアップスクリプトが、このスキルを同じ場所に入れていなければ、作業役は手順を読めない。
 
 2つの作業役は、1つの返事の中で続けて起こす。起こしたら、報告を待つ。クラウド環境では、ターンを終える。
 

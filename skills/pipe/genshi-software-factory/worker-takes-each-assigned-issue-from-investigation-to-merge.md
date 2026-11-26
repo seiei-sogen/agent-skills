@@ -7,7 +7,7 @@ Genshi Software Factory（[`SKILL.md`](SKILL.md)）の調整役から、issue �
 書くのは、渡された issue の `docs/issues/<日付>/issue-<番号>/` だけである。
 リポジトリの「次にやること」の一覧と、`docs/issues/<日付>/issue-assignment-to-workers.json` は書かない。調整役が、実行の終わりに書く。
 
-リポジトリの約束とは、`AGENTS.md`、`CLAUDE.md`、`README.md` に書いてあることである。コミットメッセージ、PR の題と本文、作業記録は、約束にある言語で書く。約束になければ、日本語で書く。
+リポジトリの約束とは、`AGENTS.md`、`CLAUDE.md`、`README.md` に書いてあることである。コミットメッセージ、PR の題と本文、作業記録は、約束が決めた言語で書く。決めていなければ、リポジトリの文書と同じ言語で書く。
 
 計画と実行は、pstack の poteto-mode で行う。始める前に、Skill ツールで `pstack:poteto-mode` を呼ぶ。
 手順2から5は、issue に合う poteto-mode の playbook（Bug fix、Feature、Refactoring など）に従って進め、その計画を `fix-plan.adoc` に書く。
@@ -17,7 +17,7 @@ PR の題と本文、CI の待ち方、マージは、poteto-mode の Opening a 
 
 ### 1. 作業ブランチを用意する
 
-最新の `origin/<既定ブランチ>` から作る。名前は、調整役に渡された名前があればそれ、なければ `issue-<番号>` にする。
+最新の `origin/<既定ブランチ>` から作る。名前は、調整役に渡された名前にする。
 前の issue と同じ名前を使い回すこともあるので、作り直す形にする。
 `--prune` を付けて全体を取るのは、手順6の `--force-with-lease` がリモートのブランチのいまの位置を知っている必要があるからである。
 
@@ -94,7 +94,7 @@ issue の本文とコメントに照らして、計画を3回見直す。毎回�
 計画に従い、`/superpowers:test-driven-development` で実装する。計画と違うことをしたら、計画にそう書き足す。
 
 この手順は、CI が行う検査を、手元ですべて通せば終わりである。
-検査のコマンドは、リポジトリの約束と、CI の設定（`.github/workflows/` など）から見つける。手元で行えない検査は CI に任せ、手順6の PR の本文にそう書く。
+検査のコマンドは、リポジトリの約束と、CI の設定（`.github/workflows/` など）から見つける。手元で行えない検査は CI に任せ、手順6の PR の本文にそう書く。デプロイやリリースの手順は、検査ではないので実行しない。
 
 ### 5. コードレビューで直す
 
@@ -150,14 +150,20 @@ gh api repos/<owner>/<repo>/pulls/<PR 番号> --jq '.mergeable | tostring'
 CI が落ちたら、原因を直して push し、PR の本文をいまの内容に合わせて更新する（`gh api -X PATCH repos/<owner>/<repo>/pulls/<PR 番号> -F body=@<本文のファイル>`）。そしてまた待つ。
 もう1つの作業役のマージと合わさって初めて壊れたものも、この PR で直す。PR の CI は、push したときの既定ブランチと合わせた結果を検査している。
 
-push した最後のコミットの check run が1件以上あり、そのすべてが `completed` で `success` になったら、もう一度 `mergeable` を見る。`true` なら、squash でマージする。リポジトリが squash を許していなければ、許している方法でマージする。
-CI のないリポジトリでは、check run を待たない。手順4の検査が通っていて、`mergeable` が `true` なら、マージする。
+push した最後のコミットに、check run か commit status が1件以上あり、次の2つがそろったら、もう一度 `mergeable` を見る。`true` なら、squash でマージする。
+
+- check run のすべてが `completed` で、`conclusion` が `success`、`skipped`、`neutral` のどれかである。
+- commit status が0件であるか、その `state` が `success` である。
+
+CI のないリポジトリでは、待たない。CI の設定がなく、既定ブランチの最新のコミットにも check run と commit status が1件もなければ、CI はない。手順4の検査が通っていて、`mergeable` が `true` なら、マージする。
+リポジトリが squash を許していなければ、許している方法でマージする。それでもマージが断られたら（レビューが必須になっているなど）、そこで止める。
 待つあいだに既定ブランチが進んでいても、衝突していなければ、取り込み直さずにマージする。
 手元では、作業ブランチをリモートから消す。クラウド環境ではブランチを消せないので残し、購読をやめる。残したブランチは、次の issue の手順6で上書きされる。
 
 ```bash
 gh api repos/<owner>/<repo>/commits/<SHA>/check-runs \
   --jq '.check_runs[] | [.name, .status, .conclusion] | @tsv'
+gh api repos/<owner>/<repo>/commits/<SHA>/status --jq '[.state, .total_count] | @tsv'
 gh api -X PUT repos/<owner>/<repo>/pulls/<PR 番号>/merge -f merge_method=squash -f sha=<SHA>
 gh api -X DELETE repos/<owner>/<repo>/git/refs/heads/<ブランチ>  # 手元だけ
 ```
@@ -182,7 +188,7 @@ git merge --no-edit origin/<既定ブランチ>
 
 ## 終わるとき
 
-渡された issue がなくなったら終わる。原因の分からないまま CI が落ち続けるときも、そこで止める。
+渡された issue がなくなったら終わる。原因の分からないまま CI が落ち続けるときと、マージが断られたときも、そこで止める。
 最後に、次を調整役へ報告する。クラウド環境では、`send_message` で、依頼にあったセッションへ送る。
 
 - マージした PR と、閉じた issue。
