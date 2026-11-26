@@ -1,0 +1,3 @@
+interface:
+  display_name: "nippo-only-update"
+  short_description: "日報に載っている課題の Backlog ステータスと、足りない PR・ブランチを更新します"
